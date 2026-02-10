@@ -1,7 +1,7 @@
 import type { ScrapedPrompt, SummaryResult } from "../types";
 
 /**
- * Local Client-Side Summarization
+ * Local Client-Side Compilation
  * Works without any API calls - perfect fallback when AI is unavailable
  */
 
@@ -101,11 +101,11 @@ export class LocalSummarizer {
     const paragraph = sentences.join(" ");
 
     // Add signature
-    return paragraph + "\n\n⚡ Summary by Local Client-Side Logic (Fallback)";
+    return paragraph + "\n\n⚡ Compiled by 1-prompt Local Logic (Fallback)";
   }
 
   /**
-   * Main summarization method
+   * Main compilation method
    */
   async summarize(prompts: ScrapedPrompt[]): Promise<SummaryResult> {
     if (prompts.length === 0) {
@@ -122,8 +122,10 @@ export class LocalSummarizer {
           const session = await ai.languageModel.create();
 
           // Prepare simple prompt
-          const content = prompts.map((p) => p.content).join("\n");
-          const promptText = `Summarize these prompts into a single, consolidated paragraph. No filler. No intro. Just the action items:\n\n${content}`;
+          const content = prompts.map((p) => p.content).join("\n\n");
+          const CONSOLIDATION_RULES_LOCAL = `CORE DIRECTIVE: Compile user intent into a single, cohesive paragraph. Output a single paragraph with no headers or meta-commentary. Apply latest-wins conflict resolution and preserve explicit negations. Flag ambiguity with [?].`;
+
+          const promptText = `${CONSOLIDATION_RULES_LOCAL}\n\nSummarize these prompts into a single, consolidated paragraph (paste-ready):\n\n${content}`;
 
           // Generate
           const result = await session.prompt(promptText);
@@ -131,14 +133,14 @@ export class LocalSummarizer {
           return {
             original: prompts,
             summary:
-              result + "\n\n⚡ Summary by Local Gemini Nano (Chrome Built-in)",
+              result + "\n\n⚡ Compiled by 1-prompt Local AI (Gemini Nano)",
             promptCount: { before: prompts.length, after: prompts.length },
           };
         }
       }
     } catch (e) {
       console.warn(
-        "[LocalSummarizer] Gemini Nano failed or not available, falling back to logic:",
+        "[LocalSummarizer] Gemini Nano failed or not available, falling back to compilation logic:",
         e,
       );
     }

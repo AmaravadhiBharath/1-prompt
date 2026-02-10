@@ -87,7 +87,7 @@ export abstract class BaseAdapter implements PlatformAdapter {
     try {
       nodes = Array.from((root as ParentNode).querySelectorAll(selector));
     } catch (e) {
-      console.warn("[1prompt] Invalid selector:", selector);
+      console.warn("[1-prompt] Invalid selector:", selector);
     }
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);

@@ -782,7 +782,7 @@ html,
 }
 
 /* --- SUMMARY SECTION --- */
-.kb-summary-section {
+.kb-compile-section {
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -790,7 +790,7 @@ html,
   overflow-y: auto;
 }
 
-.kb-summary-content {
+.kb-compile-content {
   font-size: 16px;
   line-height: 1.6;
   color: var(--kb-text-primary);

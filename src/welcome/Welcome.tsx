@@ -319,7 +319,7 @@ const Welcome: React.FC = () => {
       const hasExtensionAPI =
         !!(window.chrome && chrome.runtime && chrome.runtime.id) && !isPolyfill;
       const hasMarkerAttribute = document.documentElement.hasAttribute(
-        "data-1prompt-installed",
+        "data-1-prompt-installed",
       );
       const installed = hasExtensionAPI || hasMarkerAttribute;
       setIsInstalled(!!installed);
@@ -562,7 +562,7 @@ const Welcome: React.FC = () => {
                 style={{ animationDelay: "0.2s" }}
               >
                 <h1 className="hero-title-new">
-                  1Prompt : Capture & Compile in One Click
+                  1-prompt : Capture & Compile in One Click
                 </h1>
                 <p className="hero-subtitle-new">
                   Eliminate repetitive manual inputs. Preserve intent across
@@ -577,7 +577,7 @@ const Welcome: React.FC = () => {
                         navigate("/install");
                       } else {
                         window.open(
-                          "https://chromewebstore.google.com/detail/1prompt/pckiikjlgoimpnimojpfpnfndilaogol",
+                          "https://chromewebstore.google.com/detail/1-prompt/pckiikjlgoimpnimojpfpnfndilaogol",
                           "_blank",
                         );
                       }

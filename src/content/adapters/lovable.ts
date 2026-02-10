@@ -83,7 +83,7 @@ export class LovableAdapter extends BaseAdapter {
 
   scrapePrompts(): ScrapedPrompt[] {
     console.log(
-      "[1prompt] Lovable Extraction Engine starting (v1.1.0 - ba96d2c multi-position)...",
+      "[1-prompt] Lovable Extraction Engine starting (v1.1.0 - ba96d2c multi-position)...",
     );
 
     const prompts: ScrapedPrompt[] = [];
@@ -91,7 +91,7 @@ export class LovableAdapter extends BaseAdapter {
 
     // Get all prose elements
     const proseElements = this.deepQuerySelectorAll('[class*="prose"]');
-    console.log(`[1prompt] Found ${proseElements.length} total prose elements`);
+    console.log(`[1-prompt] Found ${proseElements.length} total prose elements`);
 
     proseElements.forEach((el) => {
       const element = el as HTMLElement;
@@ -123,7 +123,7 @@ export class LovableAdapter extends BaseAdapter {
       }
     });
 
-    console.log(`[1prompt] Total user prompts extracted: ${prompts.length}`);
+    console.log(`[1-prompt] Total user prompts extracted: ${prompts.length}`);
     return prompts;
   }
 

@@ -5,7 +5,7 @@ import { enhancedAISummarizer } from "../config/enhanced-ai-summarizer";
 import { dynamicConfigLoader } from "../config/dynamic-loader";
 
 // Cloudflare Worker URL - API keys stored server-side
-const BACKEND_URL = "https://1prompt-backend.amaravadhibharath.workers.dev";
+const BACKEND_URL = "https://1-prompt-backend.amaravadhibharath.workers.dev";
 
 export interface SummaryOptions {
   format?: "paragraph" | "points" | "JSON" | "XML";
@@ -22,7 +22,7 @@ export interface SummaryOptions {
 const CONSOLIDATION_RULES = `[INTENT COMPILATION PROTOCOL v5.1 - ENTERPRISE]
 
 CORE DIRECTIVE: Compile user intent into a single, cohesive paragraph.
-PHILOSOPHY: 1prompt does not summarize conversations. It compiles intent into a unified narrative.
+PHILOSOPHY: 1-prompt does not summarize conversations. It compiles intent into a unified narrative.
 
 ═══════════════════════════════════════════════════════════════════════════════
 SECTION A: OUTPUT FORMAT
@@ -310,7 +310,7 @@ export class AISummarizer {
     }
 
     console.log(
-      `[AISummarizer] 📝 Starting AI summarization for ${prompts.length} prompts`,
+      `[AISummarizer] 📝 Starting AI compilation for ${prompts.length} prompts`,
     );
 
     try {
@@ -340,7 +340,7 @@ export class AISummarizer {
   }
 
   /**
-   * Legacy backend summarization method (kept for compatibility)
+   * Legacy backend compilation method (kept for compatibility)
    */
   private async legacySummarize(
     prompts: ScrapedPrompt[],
@@ -431,10 +431,10 @@ export class AISummarizer {
         error?.message || error,
       );
       console.error(
-        "[AISummarizer] ⚠️ Falling back to local client-side summarization...",
+        "[AISummarizer] ⚠️ Falling back to local client-side compilation...",
       );
 
-      // Fallback to local client-side summarization
+      // Fallback to local client-side compilation
       try {
         const localResult = await localSummarizer.summarize(prompts);
         console.log(
@@ -443,7 +443,7 @@ export class AISummarizer {
         return localResult;
       } catch (localError) {
         console.error(
-          "[AISummarizer] ❌ Local summarization also failed:",
+          "[AISummarizer] ❌ Local compilation also failed:",
           localError,
         );
         // Final fallback: just join prompts

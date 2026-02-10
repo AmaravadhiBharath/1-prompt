@@ -60,7 +60,7 @@ export class GenericAdapter extends BaseAdapter {
     // Safety Cap: Limit to 1000 prompts to prevent memory issues
     if (messages.length > 1000) {
       console.warn(
-        "[1prompt] Truncating extraction at 1000 prompts safety limit",
+        "[1-prompt] Truncating extraction at 1000 prompts safety limit",
       );
       messages = messages.slice(0, 1000);
     }
@@ -178,11 +178,11 @@ export class GenericAdapter extends BaseAdapter {
         lowerText.includes("the cow, dog, and") ||
         lowerText.includes("yellow frog") ||
         lowerText.includes("calm problem-solving") ||
-        lowerText.includes("sahai turns") ||
+        lowerText.includes("1-prompt turns") ||
         lowerText.includes("scattered ai conversations") ||
         lowerText.includes("actionable workflow") ||
         lowerText.includes("work with ai with an edge") ||
-        lowerText.includes("generates summaries of all prompts") ||
+        lowerText.includes("compiles all prompts into actionable") ||
         lowerText.includes("no duplicates") ||
         lowerText.includes("cancel out the conflict") ||
         /^(\d+\.|-|\*|•)?\s*(the image shows|image of|this image depicts)/i.test(

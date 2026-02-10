@@ -40,7 +40,7 @@ export async function getAuthToken(): Promise<string | null> {
   });
 }
 
-const STORAGE_KEY = "promptExtractor_user";
+const STORAGE_KEY = "oneprompt_user";
 
 // Default tier limits (can be overridden by Firebase admin)
 let TIER_LIMITS: Record<UserTier, number> = {

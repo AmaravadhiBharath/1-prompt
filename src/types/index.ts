@@ -1,4 +1,4 @@
-// Core types for the 1prompt extension
+// Core types for the 1-prompt extension
 
 export interface ScrapedPrompt {
   content: string;

@@ -209,13 +209,13 @@ export function getScrollConfig(platformName: string | null): ScrollConfig {
 
   if (config) {
     console.log(
-      `[1prompt] Platform: ${config.name} (${mode.toUpperCase()} mode)`,
+      `[1-prompt] Platform: ${config.name} (${mode.toUpperCase()} mode)`,
     );
     return config;
   }
 
   // Fast defaults for unknown platforms
-  console.log(`[1prompt] Platform: ${name} (FAST mode - default)`);
+  console.log(`[1-prompt] Platform: ${name} (FAST mode - default)`);
   return {
     name: name,
     topAttempts: 15,

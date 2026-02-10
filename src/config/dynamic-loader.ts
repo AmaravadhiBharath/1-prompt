@@ -316,7 +316,7 @@ export class DynamicConfigLoader {
     }
 
     // Fallback to hardcoded admin endpoint (you can change this)
-    return "https://1prompt-backend.amaravadhibharath.workers.dev/admin/ai-config";
+    return "https://1-prompt-backend.amaravadhibharath.workers.dev/admin/ai-config";
   }
 
   /**

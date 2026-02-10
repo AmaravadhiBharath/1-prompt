@@ -334,19 +334,20 @@ export default function OnePromptApp() {
   const handleCopy = async () => {
     // Filter out the AI signature line from copy
     const cleanContent = (content: string) => {
-      return content.replace(/\n\n⚡ Summary by .*$/, "");
+      // Remove local compilation signature if present
+      return content.replace(/\n\n⚡ Compiled by .*$/, "");
     };
 
     const promptsToCopy =
       selectedPrompts.length > 0
         ? selectedPrompts
-            .map((i) =>
-              cleanContent(extractionResult?.prompts[i].content || ""),
-            )
-            .join("\n\n")
+          .map((i) =>
+            cleanContent(extractionResult?.prompts[i].content || ""),
+          )
+          .join("\n\n")
         : extractionResult?.prompts
-            .map((p) => cleanContent(p.content))
-            .join("\n\n");
+          .map((p) => cleanContent(p.content))
+          .join("\n\n");
 
     if (promptsToCopy) {
       await navigator.clipboard.writeText(promptsToCopy);
@@ -648,7 +649,7 @@ export default function OnePromptApp() {
                 <label
                   style={{ display: "block", fontWeight: 600, marginBottom: 4 }}
                 >
-                  Extraction Mode
+                  Capture Mode
                 </label>
                 <select
                   value={extractionSource}
@@ -797,10 +798,17 @@ export default function OnePromptApp() {
 
       <div className="kb-results-card">
         {mode === "compile" && extractionResult?.summary ? (
-          <div className="kb-summary-section">
-            <div className="kb-summary-content">{extractionResult.summary}</div>
-            {extractionResult.summary.includes("Local Client-Side Logic") && (
-              <div style={{ marginTop: 12 }}>
+          <div className="kb-compile-section">
+            <div className="kb-compile-content">{extractionResult.summary}</div>
+            {extractionResult.summary.includes("1-prompt Local Logic") && (
+              <div
+                style={{
+                  fontSize: 10,
+                  marginTop: 8,
+                  opacity: 0.6,
+                  textAlign: "center",
+                }}
+              >
                 {aiError && (
                   <div
                     style={{
@@ -816,26 +824,22 @@ export default function OnePromptApp() {
                     <strong>Cloud AI Error:</strong> {aiError}
                   </div>
                 )}
-                <button
-                  className="kb-footer-btn-secondary"
+                Local fallback used.{" "}
+                <span
                   style={{
-                    width: "100%",
-                    borderRadius: 12,
-                    padding: "8px 0",
-                    fontSize: 13,
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    color: "var(--kb-logo-vibrant)",
                   }}
-                  onClick={async () => {
-                    setLoading(true);
-                    setIsRefining(true);
-                    setAiError(null);
-                    // Trigger a manual re-summarization of EXISTING prompts
+                  onClick={() => {
+                    // Trigger a manual re-compilation of EXISTING prompts
                     chrome.runtime.sendMessage({
                       action: "RE_SUMMARIZE",
                     });
                   }}
                 >
                   {isRefining ? "✨ Refining..." : "✨ Refine with Cloud AI"}
-                </button>
+                </span>
               </div>
             )}
             <div
@@ -888,7 +892,7 @@ export default function OnePromptApp() {
                 }
               }}
             >
-              {copySuccess ? "Copied!" : "Copy Summary"}
+              {copySuccess ? "Copied!" : "Copy Compiled"}
             </button>
           ) : selectedPrompts.length > 0 ? (
             <>

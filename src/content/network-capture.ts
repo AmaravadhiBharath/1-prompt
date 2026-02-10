@@ -1,5 +1,5 @@
 /**
- * Network Interception Module for 1prompt
+ * Network Interception Module for 1-prompt
  *
  * Intercepts fetch/XHR requests to AI platforms to capture prompts
  * with 100% accuracy - no DOM dependency, no timing issues.
@@ -128,8 +128,8 @@ const PAYLOAD_EXTRACTORS: Record<string, PayloadExtractor> = {
 export function getNetworkInterceptorScript(): string {
   return `
 (function() {
-  if (window.__sahaiNetworkInterceptor) return;
-  window.__sahaiNetworkInterceptor = true;
+  if (window.__onepromptNetworkInterceptor) return;
+  window.__onepromptNetworkInterceptor = true;
 
   const API_PATTERNS = ${JSON.stringify(API_PATTERNS, (_key, value) => {
     if (value instanceof RegExp) return value.source;
@@ -168,20 +168,20 @@ export function getNetworkInterceptorScript(): string {
     try {
       return extractor(body);
     } catch (e) {
-      console.error('[1prompt Network] Extract error:', e);
+      console.error('[1-prompt Network] Extract error:', e);
       return null;
     }
   }
 
   function sendToContentScript(prompt, platform, url) {
     window.postMessage({
-      type: 'SAHAI_NETWORK_CAPTURE',
+      type: 'ONEPROMPT_NETWORK_CAPTURE',
       prompt: prompt,
       platform: platform,
       url: url,
       timestamp: Date.now(),
     }, '*');
-    console.log('[1prompt Network] Captured prompt:', prompt.substring(0, 50) + '...');
+    console.log('[1-prompt Network] Captured prompt:', prompt.substring(0, 50) + '...');
   }
 
   // Intercept fetch
@@ -221,14 +221,14 @@ export function getNetworkInterceptorScript(): string {
   const originalXHRSend = XMLHttpRequest.prototype.send;
 
   XMLHttpRequest.prototype.open = function(method, url) {
-    this._sahaiMethod = method;
-    this._sahaiUrl = url;
+    this._onepromptMethod = method;
+    this._onepromptUrl = url;
     return originalXHROpen.apply(this, arguments);
   };
 
   XMLHttpRequest.prototype.send = function(body) {
-    if (this._sahaiMethod?.toUpperCase() === 'POST' && this._sahaiUrl) {
-      const platform = detectPlatform(this._sahaiUrl);
+    if (this._onepromptMethod?.toUpperCase() === 'POST' && this._onepromptUrl) {
+      const platform = detectPlatform(this._onepromptUrl);
       
       if (platform && body) {
         try {
@@ -240,7 +240,7 @@ export function getNetworkInterceptorScript(): string {
           if (parsedBody) {
             const prompt = extractPrompt(platform, parsedBody);
             if (prompt && prompt.trim().length > 0) {
-              sendToContentScript(prompt, platform, this._sahaiUrl);
+              sendToContentScript(prompt, platform, this._onepromptUrl);
             }
           }
         } catch (e) {
@@ -252,7 +252,7 @@ export function getNetworkInterceptorScript(): string {
     return originalXHRSend.apply(this, arguments);
   };
 
-  console.log('[1prompt Network] Interceptor installed');
+  console.log('[1-prompt Network] Interceptor installed');
 })();
 `;
 }
@@ -263,12 +263,12 @@ export function initNetworkCaptureListener(
 ) {
   window.addEventListener("message", (event) => {
     if (event.source !== window) return;
-    if (event.data?.type !== "SAHAI_NETWORK_CAPTURE") return;
+    if (event.data?.type !== "ONEPROMPT_NETWORK_CAPTURE") return;
 
     const { prompt, platform } = event.data;
     if (prompt && platform) {
       console.log(
-        `[1prompt] Network captured prompt from ${platform}:`,
+        `[1-prompt] Network captured prompt from ${platform}:`,
         prompt.substring(0, 50) + "...",
       );
       onCapture(prompt, platform);
@@ -282,5 +282,5 @@ export function injectNetworkInterceptor() {
   script.textContent = getNetworkInterceptorScript();
   (document.head || document.documentElement).appendChild(script);
   script.remove(); // Clean up - script already executed
-  console.log("[1prompt] Network interceptor injected");
+  console.log("[1-prompt] Network interceptor injected");
 }

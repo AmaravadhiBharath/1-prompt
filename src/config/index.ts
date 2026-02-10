@@ -28,7 +28,7 @@ const BUNDLED_CONFIG: Config = {
   backend: {
     url:
       (import.meta as any).env.VITE_BACKEND_URL ||
-      "https://1prompt-backend.amaravadhibharath.workers.dev",
+      "https://1-prompt-backend.amaravadhibharath.workers.dev",
   },
   features: {
     telemetryEnabled: true,

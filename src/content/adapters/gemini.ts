@@ -26,7 +26,7 @@ export class GeminiAdapter extends BaseAdapter {
     );
 
     // Filter to keep only the top-most elements (avoid splitting one message into multiple prompts)
-    console.log(`[1prompt] Gemini candidates found: ${candidates.length}`);
+    console.log(`[1-prompt] Gemini candidates found: ${candidates.length}`);
     const topLevelElements = candidates.filter((el) => {
       return !candidates.some((other) => other !== el && other.contains(el));
     });

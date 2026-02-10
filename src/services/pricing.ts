@@ -1,8 +1,8 @@
 /**
  * Pricing Tiers Configuration
- * Basic (Guest): 10 captures/day/device, no history, login optional.
- * Go: Free (was $1/mo), Unlimited captures, 10 compiles/day/device, history, sync, pin.
- * Pro: $10/mo, Unlimited all, advanced models, support.
+ * Basic (Guest): Unlimited captures, 10 compiles/day (simulated), no history, login optional.
+ * Go: Free, Unlimited captures, Unlimited compiles, history, sync, pin.
+ * Pro: $9/mo, Unlimited all, advanced models, support.
  */
 
 import { config } from "../config";
@@ -104,8 +104,8 @@ export const PRO_PRICING = {
  */
 export async function getUserTier(): Promise<UserTier> {
   try {
-    const userData = await chrome.storage.local.get(["promptExtractor_user"]);
-    const user = userData.promptExtractor_user;
+    const userData = await chrome.storage.local.get(["oneprompt_user"]);
+    const user = userData.oneprompt_user;
 
     if (!user) {
       return "guest";

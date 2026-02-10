@@ -5,8 +5,8 @@ import type { ExtractionResult, ScrapedPrompt } from "../types";
 
 // Detect if on 1-prompt.in and mark as installed
 if (window.location.hostname.includes("1-prompt.in")) {
-  document.documentElement.setAttribute("data-1prompt-installed", "true");
-  console.log("[1prompt] Extension detected on 1-prompt.in");
+  document.documentElement.setAttribute("data-1-prompt-installed", "true");
+  console.log("[1-prompt] Extension detected on 1-prompt.in");
 }
 
 // Global lock to prevent concurrent extractions
@@ -21,7 +21,7 @@ let platformName = getPlatformName();
 function updateAdapter() {
   adapter = getAdapter();
   platformName = getPlatformName();
-  // console.log(`[1prompt] Adapter updated: ${platformName || 'unknown'}`);
+  // console.log(`[1-prompt] Adapter updated: ${platformName || 'unknown'}`);
 
   // Update debug info (commented out for production)
   // (window as any).__pe_debug = {
@@ -47,9 +47,9 @@ function broadcastStatus() {
 // Initialize Remote Config (fire and forget)
 RemoteConfigService.getInstance().initialize();
 
-// console.log('[1prompt] Content script loaded v1.1.0');
-// console.log(`[1prompt] URL: ${window.location.href}`);
-// console.log(`[1prompt] Platform detected: ${platformName || 'unknown'}`);
+// console.log('[1-prompt] Content script loaded v1.1.0');
+// console.log(`[1-prompt] URL: ${window.location.href}`);
+// console.log(`[1-prompt] Platform detected: ${platformName || 'unknown'}`);
 
 // Session storage for captured prompts (new prompts only)
 let sessionPrompts: ScrapedPrompt[] = [];
@@ -65,7 +65,7 @@ let sessionPrompts: ScrapedPrompt[] = [];
 
 if (!adapter) {
   console.warn(
-    "[1prompt] No adapter found for this page. Buttons will not be shown.",
+    "[1-prompt] No adapter found for this page. Buttons will not be shown.",
   );
 }
 
@@ -184,7 +184,7 @@ function capturePrompt(): string | null {
   const text = getInputText(input);
 
   if (text && text.length > 0) {
-    console.log("[1prompt] Captured prompt:", text.slice(0, 50) + "...");
+    console.log("[1-prompt] Captured prompt:", text.slice(0, 50) + "...");
     return text;
   }
 
@@ -275,7 +275,7 @@ function addToSession(text: string) {
 
   // PII FILTER - Skip sensitive data
   if (containsSensitiveData(content)) {
-    console.log("[1prompt] Skipping prompt with sensitive data (PII detected)");
+    console.log("[1-prompt] Skipping prompt with sensitive data (PII detected)");
     return;
   }
 
@@ -285,7 +285,7 @@ function addToSession(text: string) {
     lowerContent.includes("selected option:") ||
     lowerContent.includes("choice:")
   ) {
-    console.log("[1prompt] Skipping system choice capture");
+    console.log("[1-prompt] Skipping system choice capture");
     return;
   }
 
@@ -296,7 +296,7 @@ function addToSession(text: string) {
   );
 
   if (isDuplicate) {
-    console.log("[1prompt] Skipping duplicate prompt");
+    console.log("[1-prompt] Skipping duplicate prompt");
     return;
   }
 
@@ -324,7 +324,7 @@ function addToSession(text: string) {
     });
 
   console.log(
-    `[1prompt] Session prompts for ${conversationId}: ${sessionPrompts.length}`,
+    `[1-prompt] Session prompts for ${conversationId}: ${sessionPrompts.length}`,
   );
 
   // Send to background for persistent storage with retry
@@ -339,7 +339,7 @@ function addToSession(text: string) {
       (response) => {
         if (chrome.runtime.lastError) {
           console.warn(
-            "[1prompt] Failed to save prompt:",
+            "[1-prompt] Failed to save prompt:",
             chrome.runtime.lastError.message,
           );
           if (retries > 0) {
@@ -347,11 +347,11 @@ function addToSession(text: string) {
             setTimeout(() => sendToBackground(retries - 1), 500);
           } else {
             console.error(
-              "[1prompt] Could not save prompt after retries. Data saved locally only.",
+              "[1-prompt] Could not save prompt after retries. Data saved locally only.",
             );
           }
         } else if (response?.success) {
-          console.log("[1prompt] Prompt saved to background");
+          console.log("[1-prompt] Prompt saved to background");
         }
       },
     );
@@ -370,11 +370,11 @@ async function loadSessionPrompts() {
     if (data[storageKey]) {
       sessionPrompts = data[storageKey];
       console.log(
-        `[1prompt] Loaded ${sessionPrompts.length} session prompts for conversation`,
+        `[1-prompt] Loaded ${sessionPrompts.length} session prompts for conversation`,
       );
     }
   } catch (e) {
-    console.log("[1prompt] Could not load session prompts");
+    console.log("[1-prompt] Could not load session prompts");
   }
 }
 
@@ -415,7 +415,7 @@ function hookSendButton() {
         true,
       );
 
-      console.log("[1prompt] Hooked send button:", selector);
+      console.log("[1-prompt] Hooked send button:", selector);
     });
   }
 }
@@ -483,7 +483,7 @@ function hookKeyboardSubmit() {
     });
   }
 
-  console.log("[1prompt] Hooked keyboard submit with MutationObserver");
+  console.log("[1-prompt] Hooked keyboard submit with MutationObserver");
 }
 
 // Initialize real-time capture
@@ -520,7 +520,7 @@ function initRealTimeCapture() {
   const urlObserver = new MutationObserver(() => {
     if (location.href !== lastUrl) {
       lastUrl = location.href;
-      console.log("[1prompt] URL changed, reloading session");
+      console.log("[1-prompt] URL changed, reloading session");
 
       // Reset session for new conversation
       sessionPrompts = [];
@@ -539,7 +539,7 @@ function initRealTimeCapture() {
     subtree: true,
   });
 
-  console.log("[1prompt] Real-time capture initialized (optimized)");
+  console.log("[1-prompt] Real-time capture initialized (optimized)");
 }
 
 // Scroll the conversation to the top to load all history
@@ -549,7 +549,7 @@ async function scrollConversation(): Promise<void> {
 
   const container = adapter.getScrollContainer();
   if (!container) {
-    console.warn("[1prompt] No scroll container found, skipping history load");
+    console.warn("[1-prompt] No scroll container found, skipping history load");
     return;
   }
 
@@ -558,11 +558,11 @@ async function scrollConversation(): Promise<void> {
   const tier = getConfigTier(platformName);
 
   console.log(
-    `[1prompt] Starting conversation scroll on container: ${container.tagName}`,
+    `[1-prompt] Starting conversation scroll on container: ${container.tagName}`,
   );
-  console.log(`[1prompt] Platform: ${platformName} (${tier})`);
+  console.log(`[1-prompt] Platform: ${platformName} (${tier})`);
   console.log(
-    `[1prompt] Config: top=${config.topAttempts}, bottom=${config.bottomAttempts}, wait=${config.waitPerScroll}ms, stability=${config.stabilityChecks}`,
+    `[1-prompt] Config: top=${config.topAttempts}, bottom=${config.bottomAttempts}, wait=${config.waitPerScroll}ms, stability=${config.stabilityChecks}`,
   );
 
   // Phase 1: Scroll to BOTTOM to trigger lazy-load of ALL content
@@ -570,7 +570,7 @@ async function scrollConversation(): Promise<void> {
 
   chrome.runtime.sendMessage({
     action: "PROGRESS",
-    message: "1prompt is scrolling to capture your lengthy conversation",
+    message: "1-prompt is scrolling to capture your lengthy conversation",
   });
 
   chrome.runtime.sendMessage({
@@ -579,7 +579,7 @@ async function scrollConversation(): Promise<void> {
   });
 
   console.log(
-    `[1prompt] Phase 1: Scrolling to bottom (${config.bottomAttempts} attempts)...`,
+    `[1-prompt] Phase 1: Scrolling to bottom (${config.bottomAttempts} attempts)...`,
   );
   for (let i = 0; i < config.bottomAttempts; i++) {
     container.scrollTop = container.scrollHeight;
@@ -588,11 +588,11 @@ async function scrollConversation(): Promise<void> {
 
     const currentHeight = container.scrollHeight;
     console.log(
-      `[1prompt] Bottom scroll ${i + 1}/${config.bottomAttempts}: height ${currentHeight}px (max: ${maxHeight}px)`,
+      `[1-prompt] Bottom scroll ${i + 1}/${config.bottomAttempts}: height ${currentHeight}px (max: ${maxHeight}px)`,
     );
 
     if (currentHeight === maxHeight) {
-      console.log("[1prompt] Height stable - all content discovered");
+      console.log("[1-prompt] Height stable - all content discovered");
       break;
     }
     maxHeight = currentHeight;
@@ -601,7 +601,7 @@ async function scrollConversation(): Promise<void> {
   // Phase 2: Scroll to TOP to load oldest messages
   // Virtual scrolling keeps messages in DOM when in viewport
   console.log(
-    `[1prompt] Phase 2: Scrolling to top (${config.topAttempts} attempts)...`,
+    `[1-prompt] Phase 2: Scrolling to top (${config.topAttempts} attempts)...`,
   );
   chrome.runtime.sendMessage({
     action: "PROGRESS",
@@ -618,7 +618,7 @@ async function scrollConversation(): Promise<void> {
 
     const currentHeight = container.scrollHeight;
     console.log(
-      `[1prompt] Top scroll ${i + 1}/${config.topAttempts}: height ${currentHeight}px (max: ${topMaxHeight}px)`,
+      `[1-prompt] Top scroll ${i + 1}/${config.topAttempts}: height ${currentHeight}px (max: ${topMaxHeight}px)`,
     );
 
     // Stop if height stabilizes (no new content loading)
@@ -626,7 +626,7 @@ async function scrollConversation(): Promise<void> {
       topSameHeightCount++;
       if (topSameHeightCount >= config.stabilityChecks) {
         console.log(
-          `[1prompt] Top height stable for ${config.stabilityChecks} checks - all oldest messages loaded`,
+          `[1-prompt] Top height stable for ${config.stabilityChecks} checks - all oldest messages loaded`,
         );
         break;
       }
@@ -637,7 +637,7 @@ async function scrollConversation(): Promise<void> {
   }
 
   console.log(
-    `[1prompt] Scroll complete. Total height: ${container.scrollHeight}px. Ready for extraction.`,
+    `[1-prompt] Scroll complete. Total height: ${container.scrollHeight}px. Ready for extraction.`,
   );
 }
 
@@ -652,16 +652,16 @@ async function extractFromMultiplePositions(
 
   const container = adapter.getScrollContainer();
   if (!container) {
-    console.warn("[1prompt] No scroll container for parallel extraction");
+    console.warn("[1-prompt] No scroll container for parallel extraction");
     return adapter.scrapePrompts();
   }
 
   const config = getScrollConfig(platformName);
   const totalHeight = container.scrollHeight;
   console.log(
-    `[1prompt] Starting parallel extraction from height: ${totalHeight}px`,
+    `[1-prompt] Starting parallel extraction from height: ${totalHeight}px`,
   );
-  console.log(`[1prompt] Using platform wait time: ${config.parallelWait}ms`);
+  console.log(`[1-prompt] Using platform wait time: ${config.parallelWait}ms`);
 
   // Define extraction points: top, 25%, 50%, 75%, bottom
   const extractionPoints = [
@@ -673,13 +673,13 @@ async function extractFromMultiplePositions(
   ];
 
   console.log(
-    `[1prompt] Extracting from ${extractionPoints.length} positions...`,
+    `[1-prompt] Extracting from ${extractionPoints.length} positions...`,
   );
 
   // Extract from each position
   for (const point of extractionPoints) {
     console.log(
-      `[1prompt] [${point.name}] Scrolling to ${Math.round(point.position)}px...`,
+      `[1-prompt] [${point.name}] Scrolling to ${Math.round(point.position)}px...`,
     );
 
     // Scroll to position
@@ -692,7 +692,7 @@ async function extractFromMultiplePositions(
 
     // Extract from this position
     const pointPrompts = await adapter.scrape();
-    console.log(`[1prompt] [${point.name}] Found ${pointPrompts.length} prompts`);
+    console.log(`[1-prompt] [${point.name}] Found ${pointPrompts.length} prompts`);
 
     // Merge without duplicates
     for (const prompt of pointPrompts) {
@@ -702,18 +702,18 @@ async function extractFromMultiplePositions(
         prompt.source = "dom";
         allPrompts.push(prompt);
         console.log(
-          `[1prompt] [${point.name}] Added: ${prompt.content.slice(0, 40)}...`,
+          `[1-prompt] [${point.name}] Added: ${prompt.content.slice(0, 40)}...`,
         );
       } else {
         console.log(
-          `[1prompt] [${point.name}] Duplicate: ${prompt.content.slice(0, 40)}...`,
+          `[1-prompt] [${point.name}] Duplicate: ${prompt.content.slice(0, 40)}...`,
         );
       }
     }
   }
 
   console.log(
-    `[1prompt] Parallel extraction complete: ${allPrompts.length} unique prompts`,
+    `[1-prompt] Parallel extraction complete: ${allPrompts.length} unique prompts`,
   );
   return allPrompts;
 }
@@ -743,7 +743,7 @@ async function extractPrompts(
 
     if (conversationId) {
       try {
-        console.log("[1prompt] Fetching persistent logs for:", conversationId);
+        console.log("[1-prompt] Fetching persistent logs for:", conversationId);
         // Add a timeout to the message call to prevent hanging
         const responsePromise = chrome.runtime.sendMessage({
           action: "GET_CONVERSATION_LOGS",
@@ -763,11 +763,11 @@ async function extractPrompts(
         if (response && response.prompts) {
           persistentPrompts = response.prompts;
           console.log(
-            `[1prompt] Found ${persistentPrompts.length} persistent prompts`,
+            `[1-prompt] Found ${persistentPrompts.length} persistent prompts`,
           );
         }
       } catch (e) {
-        console.error("[1prompt] Failed to fetch persistent logs:", e);
+        console.error("[1-prompt] Failed to fetch persistent logs:", e);
       }
     }
 
@@ -796,23 +796,23 @@ async function extractPrompts(
   let domPrompts: ScrapedPrompt[] = [];
 
   if ((source === "auto" || source === "dom") && adapter) {
-    console.log("[1prompt] Augmenting with DOM scraping...");
+    console.log("[1-prompt] Augmenting with DOM scraping...");
 
     // LOVABLE: Use ba96d2c original slow multi-position extraction
     if (platformName?.toLowerCase() === "lovable") {
       console.log(
-        "[1prompt] Using ba96d2c slow multi-position extraction for Lovable...",
+        "[1-prompt] Using ba96d2c slow multi-position extraction for Lovable...",
       );
       domPrompts = await extractFromMultiplePositions(adapter);
     }
     // OTHER PLATFORMS: Use current fast DOM extraction
     else {
-      console.log(`[1prompt] Using fast DOM extraction for ${platformName}...`);
+      console.log(`[1-prompt] Using fast DOM extraction for ${platformName}...`);
       domPrompts = await adapter.scrape();
     }
 
     console.log(
-      `[1prompt] DOM extraction complete: ${domPrompts.length} prompts`,
+      `[1-prompt] DOM extraction complete: ${domPrompts.length} prompts`,
     );
   }
 
@@ -823,7 +823,7 @@ async function extractPrompts(
 
   // If DOM extraction failed or returned nothing, use captured prompts as primary source
   if (domPrompts.length === 0 && allKeyloggedPrompts.length > 0) {
-    console.log("[1prompt] Using captured prompts as primary source");
+    console.log("[1-prompt] Using captured prompts as primary source");
     return allKeyloggedPrompts
       .map((p, i) => ({ ...p, index: i }))
       .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
@@ -877,7 +877,7 @@ async function extractPrompts(
     const normalizedContent = normalizeForComparison(captured.content);
     if (!addedContent.has(normalizedContent)) {
       console.log(
-        `[1prompt] Adding captured prompt not found in DOM: ${captured.content.slice(0, 40)}...`,
+        `[1-prompt] Adding captured prompt not found in DOM: ${captured.content.slice(0, 40)}...`,
       );
       finalPrompts.push({
         ...captured,
@@ -890,7 +890,7 @@ async function extractPrompts(
 
   // 6. Final result - already in correct order from DOM traversal
   console.log(
-    `[1prompt] Extraction complete: ${finalPrompts.length} prompts (${domPrompts.length} from DOM, ${allKeyloggedPrompts.length} captured)`,
+    `[1-prompt] Extraction complete: ${finalPrompts.length} prompts (${domPrompts.length} from DOM, ${allKeyloggedPrompts.length} captured)`,
   );
   return finalPrompts;
 }
@@ -1105,7 +1105,7 @@ function findInputContainer(): HTMLElement | null {
         element.getAttribute("contenteditable") === "true" ||
         element.tagName === "TEXTAREA"
       ) {
-        // console.log('[1prompt] Skipping selector match because it is a text input area:', selector);
+        // console.log('[1-prompt] Skipping selector match because it is a text input area:', selector);
         continue;
       }
 
@@ -1121,7 +1121,7 @@ function findInputContainer(): HTMLElement | null {
 
       const rect = element.getBoundingClientRect();
       if (rect.height > 450 || rect.height < 20) continue;
-      // console.log('[1prompt] Found input via platform selector:', selector);
+      // console.log('[1-prompt] Found input via platform selector:', selector);
       return element;
     }
   }
@@ -1136,7 +1136,7 @@ function findInputContainer(): HTMLElement | null {
         const rect = container.getBoundingClientRect();
         // The chat box is usually between 40px and 400px
         if (rect.height > 30 && rect.height < 450) {
-          // console.log('[1prompt] Found Claude input container via closest()');
+          // console.log('[1-prompt] Found Claude input container via closest()');
           return container as HTMLElement;
         }
       }
@@ -1154,7 +1154,7 @@ function findInputContainer(): HTMLElement | null {
           style.opacity !== "0";
 
         if (rect.height > 30 && rect.height < 400 && !isEditable && isVisible) {
-          // console.log('[1prompt] Found Claude input container via heuristic at depth', depth);
+          // console.log('[1-prompt] Found Claude input container via heuristic at depth', depth);
           return parent as HTMLElement;
         }
         parent = parent.parentElement;
@@ -1197,7 +1197,7 @@ function findInputContainer(): HTMLElement | null {
         if (hasRadius || hasBg) {
           const rect = parent.getBoundingClientRect();
           if (rect.height < 450) {
-            // console.log('[1prompt] Found container via textarea parent heuristic');
+            // console.log('[1-prompt] Found container via textarea parent heuristic');
             return parent;
           }
         }
@@ -1231,7 +1231,7 @@ function injectStyles() {
 
 // Create Zone 1 button row
 function createZone1(): HTMLElement {
-  // console.log('[1prompt] Creating Zone 1 buttons...');
+  // console.log('[1-prompt] Creating Zone 1 buttons...');
   const zone1 = document.createElement("div");
   zone1.id = "pe-zone1";
   zone1.className = "pe-zone1";
@@ -1241,7 +1241,7 @@ function createZone1(): HTMLElement {
   extractBtn.id = "pe-extract-btn";
   extractBtn.className = "pe-zone1-btn extract";
   extractBtn.textContent = "Capture";
-  extractBtn.title = "Extract raw prompts to 1prompt";
+  extractBtn.title = "Extract raw prompts to 1-prompt";
   extractBtn.addEventListener(
     "click",
     (e) => {
@@ -1303,7 +1303,7 @@ async function handleButtonClick(
   mode: "capture" | "compile",
   button: HTMLButtonElement,
 ) {
-  console.log(`[1prompt] Button clicked: ${mode}`);
+  console.log(`[1-prompt] Button clicked: ${mode}`);
   const isSummarize = mode === "compile";
   const originalText = isSummarize ? "Compile" : "Capture";
 
@@ -1325,13 +1325,13 @@ async function handleButtonClick(
   }
 
   try {
-    console.log("[1prompt] Starting extraction...");
+    console.log("[1-prompt] Starting extraction...");
     const prompts = await extractPrompts();
-    console.log(`[1prompt] Extracted ${prompts.length} prompts`);
+    console.log(`[1-prompt] Extracted ${prompts.length} prompts`);
 
     const result = createExtractionResult(prompts);
 
-    console.log("[1prompt] Sending EXTRACTION_FROM_PAGE to background...");
+    console.log("[1-prompt] Sending EXTRACTION_FROM_PAGE to background...");
     chrome.runtime.sendMessage({
       action: "EXTRACTION_FROM_PAGE",
       result,
@@ -1340,7 +1340,7 @@ async function handleButtonClick(
 
     updateButtonDone(button, originalText);
   } catch (error) {
-    console.error("[1prompt] Error:", error);
+    console.error("[1-prompt] Error:", error);
     button.textContent = "Error";
     setTimeout(() => {
       button.classList.remove("loading");
@@ -1351,7 +1351,7 @@ async function handleButtonClick(
 
 // Create the two-zone layout
 function createZonedLayout() {
-  console.log("[1prompt] Attempting to create zoned layout...");
+  console.log("[1-prompt] Attempting to create zoned layout...");
   if (document.getElementById("pe-zone1")) return;
   if (!adapter) return;
 
@@ -1413,13 +1413,13 @@ function createZonedLayout() {
         const stickyObserver = new MutationObserver(() => {
           // 1. Re-inject buttons if removed
           if (!document.getElementById("pe-zone1")) {
-            console.log("[1prompt] Claude removed buttons, re-injecting...");
+            console.log("[1-prompt] Claude removed buttons, re-injecting...");
             inputContainer.prepend(createZone1());
           }
 
           // 2. Re-apply layout class if removed (prevents overlapping)
           if (!inputContainer.classList.contains("pe-has-zone1-absolute")) {
-            console.log("[1prompt] Claude removed layout class, re-applying...");
+            console.log("[1-prompt] Claude removed layout class, re-applying...");
             inputContainer.classList.add("pe-has-zone1-absolute");
             // Force the style just in case class isn't enough
             inputContainer.style.paddingTop = "48px";
@@ -1434,7 +1434,7 @@ function createZonedLayout() {
       }
     }
 
-    console.log("[1prompt] Zoned layout initialized (Input Container Mode)");
+    console.log("[1-prompt] Zoned layout initialized (Input Container Mode)");
   }
 }
 
@@ -1484,7 +1484,7 @@ async function handlePaste() {
 
   const target = findChatInput();
   if (!target) {
-    console.error("[1prompt] Could not find input field to paste");
+    console.error("[1-prompt] Could not find input field to paste");
     return;
   }
 
@@ -1508,7 +1508,7 @@ async function handlePaste() {
       document.execCommand("insertText", false, textToPaste);
     } catch (e) {
       console.error(
-        "[1prompt] Standard insertText failed, trying direct innerText update",
+        "[1-prompt] Standard insertText failed, trying direct innerText update",
         e,
       );
       // Fallback
@@ -1517,7 +1517,7 @@ async function handlePaste() {
     }
   }
 
-  console.log("[1prompt] Successfully pasted content");
+  console.log("[1-prompt] Successfully pasted content");
   copiedContent = null;
   hidePasteButton();
 }
@@ -1584,7 +1584,7 @@ function initZonedLayout() {
         // Check if URL changed
         if (location.href !== lastUrl) {
           lastUrl = location.href;
-          console.log("[1prompt] URL change detected");
+          console.log("[1-prompt] URL change detected");
         }
 
         const url = window.location.href;
@@ -1635,7 +1635,7 @@ function initZonedLayout() {
             document.getElementById("pe-figma-pill-container")
           ) {
             console.log(
-              "[1prompt] Removing buttons: No longer on supported platform",
+              "[1-prompt] Removing buttons: No longer on supported platform",
             );
             removeZonedLayout();
             document.getElementById("pe-figma-pill-container")?.remove();
@@ -1687,12 +1687,12 @@ function initZonedLayout() {
 // ============================================
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  console.log("[1prompt] Received message:", message.action);
+  console.log("[1-prompt] Received message:", message.action);
 
   switch (message.action) {
     case "URL_CHANGED": {
       // Handle SPA navigation without re-injection
-      console.log("[1prompt] URL changed, resetting session");
+      console.log("[1-prompt] URL changed, resetting session");
       updateAdapter(); // Re-detect platform/adapter
       sessionPrompts = [];
       loadSessionPrompts();
@@ -1716,7 +1716,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     case "EXTRACT_PROMPTS": {
       if (isExtracting) {
         console.warn(
-          "[1prompt] Extraction already in progress, ignoring request",
+          "[1-prompt] Extraction already in progress, ignoring request",
         );
         sendResponse({
           success: false,
@@ -1751,7 +1751,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           sendResponse({ success: true, promptCount: prompts.length });
         })
         .catch((err) => {
-          console.error("[1prompt] Extraction failed:", err);
+          console.error("[1-prompt] Extraction failed:", err);
           if (extractBtn) {
             extractBtn.textContent = "Error";
             setTimeout(() => {

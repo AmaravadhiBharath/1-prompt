@@ -26,7 +26,7 @@ if (typeof self !== "undefined" && typeof window === "undefined") {
   (self as any).window = self;
 }
 
-console.log("[1prompt] Service worker started");
+console.log("[1-prompt] Service worker started");
 
 // Initialize AI summarizer
 initializeAISummarizer();
@@ -43,27 +43,27 @@ try {
         if (Date.now() - lastFetch > CACHE_TTL) {
           const config = (RemoteConfigService.getInstance() as any).config;
           fetchRemoteConfigUpdates(config?.version || 0).catch((err) => {
-            console.error("[1prompt] Remote config update failed:", err);
+            console.error("[1-prompt] Remote config update failed:", err);
           });
         }
       } catch (innerErr) {
         console.error(
-          "[1prompt] Error checking remote config cache:",
+          "[1-prompt] Error checking remote config cache:",
           innerErr,
         );
       }
     })
     .catch((err) => {
-      console.error("[1prompt] Remote config initialization failed:", err);
+      console.error("[1-prompt] Remote config initialization failed:", err);
     });
 } catch (err) {
-  console.error("[1prompt] Critical error initializing remote config:", err);
+  console.error("[1-prompt] Critical error initializing remote config:", err);
 }
 
 // Prevent unhandled rejections from crashing the service worker
 self.addEventListener("unhandledrejection", (event) => {
   console.error(
-    "[1prompt] Unhandled rejection in service worker:",
+    "[1-prompt] Unhandled rejection in service worker:",
     event.reason,
   );
   event.preventDefault(); // Prevent crash if possible
@@ -78,10 +78,10 @@ chrome.alarms.create("syncPrompts", { periodInMinutes: 5 }); // Sync every 5 min
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "keepAlive") {
     // Simple ping to keep service worker alive
-    console.log("[1prompt] Keep-alive ping at", new Date().toISOString());
+    console.log("[1-prompt] Keep-alive ping at", new Date().toISOString());
   } else if (alarm.name === "syncPrompts") {
     // Trigger cloud sync for all active tabs
-    console.log("[1prompt] Triggering prompt sync...");
+    console.log("[1-prompt] Triggering prompt sync...");
     try {
       const tabs = await chrome.tabs.query({
         url: [
@@ -106,7 +106,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         }
       }
     } catch (err) {
-      console.error("[1prompt] Sync alarm error:", err);
+      console.error("[1-prompt] Sync alarm error:", err);
     }
   }
 });
@@ -119,16 +119,16 @@ let pendingTrigger: { timestamp: number } | null = null;
 if (chrome.sidePanel) {
   chrome.sidePanel
     .setPanelBehavior({ openPanelOnActionClick: true })
-    .catch((err) => console.warn("[1prompt] SidePanel setup failed:", err));
+    .catch((err) => console.warn("[1-prompt] SidePanel setup failed:", err));
 } else {
-  console.warn("[1prompt] SidePanel API not available, falling back to popup");
+  console.warn("[1-prompt] SidePanel API not available, falling back to popup");
   chrome.action.setPopup({ popup: "sidepanel/index.html" }); // Reuse sidepanel as popup
 }
 
 // Handle connections from side panel (for initial handshake only)
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name === "sidepanel") {
-    console.log("[1prompt SW] 🟢 Side panel connected");
+    console.log("[1-prompt SW] 🟢 Side panel connected");
 
     // Immediately check and send status when sidepanel connects
     checkActiveTabStatus();
@@ -145,7 +145,7 @@ chrome.runtime.onConnect.addListener((port) => {
 
     // Check for pending trigger (extraction started from page before panel opened)
     if (pendingTrigger && Date.now() - pendingTrigger.timestamp < 3000) {
-      console.log("[1prompt] Replaying pending trigger to new sidepanel");
+      console.log("[1-prompt] Replaying pending trigger to new sidepanel");
       chrome.runtime
         .sendMessage({ action: "EXTRACT_TRIGERED_FROM_PAGE" })
         .catch(() => {});
@@ -157,7 +157,7 @@ chrome.runtime.onConnect.addListener((port) => {
     });
 
     port.onDisconnect.addListener(() => {
-      console.log("[1prompt SW] 🔴 Side panel disconnected");
+      console.log("[1-prompt SW] 🔴 Side panel disconnected");
     });
   }
 });
@@ -169,7 +169,7 @@ async function trackDailyMetrics(_promptCount: number) {
     // TODO: Implement metrics endpoint in backend
     // Placeholder for now
     console.log(
-      "[1prompt] Metrics tracking temporarily disabled during migration",
+      "[1-prompt] Metrics tracking temporarily disabled during migration",
     );
   } catch (e) {
     // Ignore metrics errors
@@ -179,7 +179,7 @@ async function trackDailyMetrics(_promptCount: number) {
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener(
   (message: Message, sender, sendResponse) => {
-    console.log("[1prompt] Received message:", message.action);
+    console.log("[1-prompt] Received message:", message.action);
 
     switch (message.action) {
       case "EXTRACT_PROMPTS":
@@ -196,12 +196,12 @@ chrome.runtime.onMessage.addListener(
         const { userId } = message as SetUserIdMessage;
         if (userId) {
           chrome.storage.local.set({ firebase_current_user_id: userId }, () => {
-            console.log("[1prompt SW] User ID set in local storage:", userId);
+            console.log("[1-prompt SW] User ID set in local storage:", userId);
             sendResponse({ success: true });
           });
         } else {
           chrome.storage.local.remove("firebase_current_user_id", () => {
-            console.log("[1prompt SW] User ID removed from local storage");
+            console.log("[1-prompt SW] User ID removed from local storage");
             sendResponse({ success: true });
           });
         }
@@ -272,33 +272,33 @@ chrome.runtime.onMessage.addListener(
         (async () => {
           try {
             console.log(
-              "[1prompt] OPEN_SIDE_PANEL received from tab:",
+              "[1-prompt] OPEN_SIDE_PANEL received from tab:",
               sender.tab?.id,
             );
             let windowId = sender.tab?.windowId;
             if (!windowId) {
               console.log(
-                "[1prompt] No windowId from sender, querying active tab...",
+                "[1-prompt] No windowId from sender, querying active tab...",
               );
               const [tab] = await chrome.tabs.query({
                 active: true,
                 currentWindow: true,
               });
               windowId = tab?.windowId;
-              console.log("[1prompt] Got windowId from query:", windowId);
+              console.log("[1-prompt] Got windowId from query:", windowId);
             }
 
             if (windowId) {
-              console.log("[1prompt] Opening side panel for window:", windowId);
+              console.log("[1-prompt] Opening side panel for window:", windowId);
               await chrome.sidePanel.open({ windowId });
-              console.log("[1prompt] Side panel opened successfully");
+              console.log("[1-prompt] Side panel opened successfully");
             } else {
               console.error(
-                "[1prompt] Could not find windowId to open side panel",
+                "[1-prompt] Could not find windowId to open side panel",
               );
             }
           } catch (err) {
-            console.error("[1prompt] Failed to open side panel:", err);
+            console.error("[1-prompt] Failed to open side panel:", err);
           }
         })();
         sendResponse({ success: true });
@@ -311,7 +311,7 @@ chrome.runtime.onMessage.addListener(
         lastExtractionResult = result;
 
         console.log(
-          `[1prompt SW] Received EXTRACTION_FROM_PAGE with ${result.prompts.length} prompts, mode: ${mode}`,
+          `[1-prompt SW] Received EXTRACTION_FROM_PAGE with ${result.prompts.length} prompts, mode: ${mode}`,
         );
 
         // Try to open side panel again just in case
@@ -320,10 +320,10 @@ chrome.runtime.onMessage.addListener(
           chrome.sidePanel.open({ windowId }).catch(() => {});
         }
 
-        // If mode is 'compile', run AI summarization first
+        // If mode is 'compile', run AI compilation first
         if (mode === "compile" && result.prompts.length > 0) {
           console.log(
-            "[1prompt SW] Mode is COMPILE - calling AI summarizer...",
+            "[1-prompt SW] Mode is COMPILE - calling AI summarizer...",
           );
           (async () => {
             try {
@@ -332,7 +332,7 @@ chrome.runtime.onMessage.addListener(
                 result.prompts,
                 { userId: userId || undefined },
               );
-              console.log("[1prompt SW] AI summarization complete");
+              console.log("[1-prompt SW] AI compilation complete");
 
               // Broadcast the compiled summary
               chrome.runtime
@@ -349,14 +349,14 @@ chrome.runtime.onMessage.addListener(
                 })
                 .catch(() => {});
             } catch (error: any) {
-              console.error("[1prompt SW] AI summarization failed:", error);
+              console.error("[1-prompt SW] AI compilation failed:", error);
               // Fallback: broadcast raw prompts
               chrome.runtime
                 .sendMessage({
                   action: "EXTRACTION_FROM_PAGE_RESULT",
                   result,
                   mode,
-                  error: error.message || "AI summarization failed",
+                  error: error.message || "AI compilation failed",
                 })
                 .catch(() => {});
             }
@@ -364,7 +364,7 @@ chrome.runtime.onMessage.addListener(
         } else {
           // Mode is 'capture' - broadcast raw prompts immediately
           console.log(
-            "[1prompt SW] Broadcasting EXTRACTION_FROM_PAGE_RESULT via sendMessage...",
+            "[1-prompt SW] Broadcasting EXTRACTION_FROM_PAGE_RESULT via sendMessage...",
           );
           chrome.runtime
             .sendMessage({
@@ -377,7 +377,7 @@ chrome.runtime.onMessage.addListener(
             });
         }
 
-        console.log("[1prompt SW] ✅ Result broadcast complete");
+        console.log("[1-prompt SW] ✅ Result broadcast complete");
         sendResponse({ success: true });
         break;
       }
@@ -387,7 +387,7 @@ chrome.runtime.onMessage.addListener(
         lastExtractionResult = result;
 
         // Only trigger AI if the result comes from a tab (content script)
-        // AND we are in compile mode AND it hasn't been summarized yet.
+        // AND we are in compile mode AND it hasn't been compiled yet.
         if (
           sender.tab &&
           mode === "compile" &&
@@ -395,7 +395,7 @@ chrome.runtime.onMessage.addListener(
           !result.summary
         ) {
           console.log(
-            "[1prompt SW] Mode is COMPILE - calling AI summarizer...",
+            "[1-prompt SW] Mode is COMPILE - calling AI summarizer...",
           );
           (async () => {
             try {
@@ -404,7 +404,7 @@ chrome.runtime.onMessage.addListener(
                 result.prompts,
                 { userId: userId || undefined },
               );
-              console.log("[1prompt SW] AI summarization complete");
+              console.log("[1-prompt SW] AI compilation complete");
 
               // Broadcast the compiled summary
               const updatedResult = {
@@ -414,7 +414,7 @@ chrome.runtime.onMessage.addListener(
                 model: summaryResult.model,
                 provider: summaryResult.provider,
               };
-              lastExtractionResult = updatedResult; // Save summarized version
+              lastExtractionResult = updatedResult; // Save compiled version
 
               broadcastToSidePanels({
                 action: "EXTRACTION_RESULT",
@@ -422,17 +422,17 @@ chrome.runtime.onMessage.addListener(
                 mode,
               });
             } catch (error: any) {
-              console.error("[1prompt SW] AI summarization failed:", error);
+              console.error("[1-prompt SW] AI compilation failed:", error);
               broadcastToSidePanels({
                 action: "EXTRACTION_RESULT",
                 result,
                 mode,
-                error: error.message || "AI summarization failed",
+                error: error.message || "AI compilation failed",
               });
             }
           })();
         } else {
-          // Just broadcast if already summarized (or capture mode)
+          // Just broadcast if already compiled (or capture mode)
           broadcastToSidePanels({
             action: "EXTRACTION_RESULT",
             result,
@@ -452,7 +452,7 @@ chrome.runtime.onMessage.addListener(
           break;
         }
 
-        console.log("[1prompt SW] RE_SUMMARIZE requested");
+        console.log("[1-prompt SW] RE_SUMMARIZE requested");
         (async () => {
           try {
             const userId = await getCurrentUserId();
@@ -476,7 +476,7 @@ chrome.runtime.onMessage.addListener(
               mode: "compile",
             });
           } catch (error: any) {
-            console.error("[1prompt SW] RE_SUMMARIZE failed:", error);
+            console.error("[1-prompt SW] RE_SUMMARIZE failed:", error);
             broadcastToSidePanels({
               action: "EXTRACTION_RESULT",
               result: lastExtractionResult!,
@@ -498,7 +498,7 @@ chrome.runtime.onMessage.addListener(
 
       case "EXTRACT_TRIGERED_FROM_PAGE": {
         console.log(
-          "[1prompt] Broadcasting page extraction trigger to sidepanel",
+          "[1-prompt] Broadcasting page extraction trigger to sidepanel",
         );
         pendingTrigger = { timestamp: Date.now() }; // Cache it
         broadcastToSidePanels(message);
@@ -579,7 +579,7 @@ chrome.runtime.onMessage.addListener(
               const userId = await getCurrentUserId();
               if (userId && conversationLogs.length < 5) {
                 console.log(
-                  "[1prompt] Local logs sparse, fetching from cloud...",
+                  "[1-prompt] Local logs sparse, fetching from cloud...",
                 );
                 const cloudLogs: any[] = []; // Keylogs disabled in current version
 
@@ -645,15 +645,15 @@ chrome.runtime.onMessage.addListener(
 
             // Syncing logic disabled in current version
             console.log(
-              `[1prompt] Processing ${prompts.length} prompts for sync (local only)`,
+              `[1-prompt] Processing ${prompts.length} prompts for sync (local only)`,
             );
 
             console.log(
-              `[1prompt] Queued ${prompts.length} prompts for cloud sync`,
+              `[1-prompt] Queued ${prompts.length} prompts for cloud sync`,
             );
             sendResponse({ success: true, synced: prompts.length });
           } catch (err) {
-            console.error("[1prompt] Sync error:", err);
+            console.error("[1-prompt] Sync error:", err);
             sendResponse({ success: false, error: String(err) });
           }
         }
@@ -734,7 +734,7 @@ chrome.webNavigation?.onHistoryStateUpdated.addListener(async (details) => {
         url: details.url,
       });
       console.log(
-        `[1prompt] Notified content script of URL change for ${platform}`,
+        `[1-prompt] Notified content script of URL change for ${platform}`,
       );
     } catch (err) {
       // Script might have been unloaded, try re-injecting
@@ -750,16 +750,16 @@ chrome.webNavigation?.onHistoryStateUpdated.addListener(async (details) => {
       files: ["content.js"],
     });
     injectedTabs.add(details.tabId);
-    console.log(`[1prompt] Injected content script for ${platform}`);
+    console.log(`[1-prompt] Injected content script for ${platform}`);
   } catch (err) {
     // Permission denied or other error
-    console.warn(`[1prompt] Could not inject content script:`, err);
+    console.warn(`[1-prompt] Could not inject content script:`, err);
   }
 });
 
 // Handle messages from side panel
 async function handleSidePanelMessage(message: Message) {
-  console.log("[1prompt] Side panel message:", message.action);
+  console.log("[1-prompt] Side panel message:", message.action);
 
   switch (message.action) {
     case "EXTRACT_PROMPTS": {
@@ -771,7 +771,7 @@ async function handleSidePanelMessage(message: Message) {
         currentWindow: true,
       });
       if (tab?.id) {
-        console.log("[1prompt] Sending EXTRACT_PROMPTS to tab:", tab.id);
+        console.log("[1-prompt] Sending EXTRACT_PROMPTS to tab:", tab.id);
 
         // Retry logic for when content script might not be ready
         let retryCount = 0;
@@ -782,7 +782,7 @@ async function handleSidePanelMessage(message: Message) {
           messageTimeout = setTimeout(() => {
             if (retryCount < maxRetries) {
               console.warn(
-                `[1prompt] No response from tab ${tab.id}, retrying... (attempt ${retryCount + 1}/${maxRetries})`,
+                `[1-prompt] No response from tab ${tab.id}, retrying... (attempt ${retryCount + 1}/${maxRetries})`,
               );
               retryCount++;
               sendMessage();
@@ -805,12 +805,12 @@ async function handleSidePanelMessage(message: Message) {
               }
               if (chrome.runtime.lastError) {
                 console.error(
-                  "[1prompt] Error sending to tab:",
+                  "[1-prompt] Error sending to tab:",
                   chrome.runtime.lastError,
                 );
                 if (retryCount < maxRetries) {
                   console.warn(
-                    `[1prompt] Retrying message send... (attempt ${retryCount + 1}/${maxRetries})`,
+                    `[1-prompt] Retrying message send... (attempt ${retryCount + 1}/${maxRetries})`,
                   );
                   retryCount++;
                   sendMessage();
@@ -823,7 +823,7 @@ async function handleSidePanelMessage(message: Message) {
                 }
               } else {
                 console.log(
-                  "[1prompt] Content script acknowledged extraction:",
+                  "[1-prompt] Content script acknowledged extraction:",
                   response,
                 );
               }
@@ -847,7 +847,7 @@ async function handleSidePanelMessage(message: Message) {
     }
 
     case "SUMMARIZE_PROMPTS": {
-      // Handle summarization request with Gemini
+      // Handle compilation request with Gemini
       const { prompts, userId, userEmail, authToken } = message as {
         prompts: Array<{ content: string; index: number }>;
         userId?: string;
@@ -856,7 +856,7 @@ async function handleSidePanelMessage(message: Message) {
       };
 
       try {
-        console.log(`[1prompt] Summarizing ${prompts.length} prompts...`);
+        console.log(`[1-prompt] Summarizing ${prompts.length} prompts...`);
         const result = await withKeepAlive(async () => {
           return await aiSummarizer.summarize(prompts, {
             userId,
@@ -864,7 +864,7 @@ async function handleSidePanelMessage(message: Message) {
             authToken,
           });
         });
-        console.log("[1prompt] Summarization successful");
+        console.log("[1-prompt] Compilation successful");
 
         broadcastToSidePanels({
           action: "SUMMARY_RESULT",
@@ -873,7 +873,7 @@ async function handleSidePanelMessage(message: Message) {
         });
       } catch (error) {
         console.error(
-          "[1prompt] AI Summarization error, falling back to local:",
+          "[1-prompt] AI Compilation error, falling back to local:",
           error,
         );
 
@@ -888,11 +888,11 @@ async function handleSidePanelMessage(message: Message) {
             error:
               error instanceof Error
                 ? error.message
-                : "AI Backend unavailable. Using local summarization.",
+                : "AI Backend unavailable. Using local compilation.",
           });
         } catch (localError) {
           console.error(
-            "[1prompt] Local summarization also failed:",
+            "[1-prompt] Local compilation also failed:",
             localError,
           );
 
@@ -907,7 +907,7 @@ async function handleSidePanelMessage(message: Message) {
               promptCount: { before: prompts.length, after: prompts.length },
             },
             success: true,
-            error: "Summarization failed. Showing raw content.",
+            error: "Compilation failed. Showing raw content.",
           });
         }
       }
@@ -925,7 +925,7 @@ function broadcastToSidePanels(message: any) {
 
 // Install handler - show welcome page on first install
 chrome.runtime.onInstalled.addListener(async (details) => {
-  console.log("[1prompt] Extension installed:", details.reason);
+  console.log("[1-prompt] Extension installed:", details.reason);
 
   if (details.reason === "install") {
     // Open welcome page (Live Website /install) on first install
@@ -961,10 +961,10 @@ async function checkActiveTabStatus() {
       active: true,
       currentWindow: true,
     });
-    console.log("[1prompt] Checking tab status:", tab?.url?.substring(0, 50));
+    console.log("[1-prompt] Checking tab status:", tab?.url?.substring(0, 50));
 
     if (!tab?.id) {
-      console.log("[1prompt] No active tab found");
+      console.log("[1-prompt] No active tab found");
       return;
     }
 
@@ -975,7 +975,7 @@ async function checkActiveTabStatus() {
       tab.url.startsWith("edge://") ||
       tab.url.startsWith("about:")
     ) {
-      console.log("[1prompt] Restricted URL, sending unsupported");
+      console.log("[1-prompt] Restricted URL, sending unsupported");
       broadcastToSidePanels({
         action: "STATUS_RESULT",
         supported: false,
@@ -986,7 +986,7 @@ async function checkActiveTabStatus() {
 
     // 1. Fast Check: URL-based detection (Optimistic UI)
     const platform = detectPlatformFromUrl(tab.url);
-    console.log("[1prompt] URL-based platform detection:", platform);
+    console.log("[1-prompt] URL-based platform detection:", platform);
 
     // 2. Verify with Content Script (Source of Truth)
     // Try to ping the content script
@@ -997,13 +997,13 @@ async function checkActiveTabStatus() {
         if (chrome.runtime.lastError) {
           // Content script not ready
           console.log(
-            "[1prompt] Content script not ready:",
+            "[1-prompt] Content script not ready:",
             chrome.runtime.lastError.message,
           );
           if (platform) {
             // Known platform but no content script connection - try to auto-inject!
             console.log(
-              "[1prompt] Auto-injecting content script for",
+              "[1-prompt] Auto-injecting content script for",
               platform,
             );
             try {
@@ -1012,7 +1012,7 @@ async function checkActiveTabStatus() {
                 files: ["content.js"],
               });
               console.log(
-                "[1prompt] ✅ Content script auto-injected successfully",
+                "[1-prompt] ✅ Content script auto-injected successfully",
               );
 
               // Wait a moment for script to initialize, then check status again
@@ -1023,7 +1023,7 @@ async function checkActiveTabStatus() {
                   (retryResponse) => {
                     if (retryResponse) {
                       console.log(
-                        "[1prompt] Content script now responding after auto-inject",
+                        "[1-prompt] Content script now responding after auto-inject",
                       );
                       broadcastToSidePanels(retryResponse);
                     } else {
@@ -1038,7 +1038,7 @@ async function checkActiveTabStatus() {
                 );
               }, 500);
             } catch (injectErr) {
-              console.warn("[1prompt] Auto-inject failed:", injectErr);
+              console.warn("[1-prompt] Auto-inject failed:", injectErr);
               broadcastToSidePanels({
                 action: "STATUS_RESULT",
                 supported: false,
@@ -1055,13 +1055,13 @@ async function checkActiveTabStatus() {
           }
         } else if (response) {
           // Content script responded - use its response as source of truth
-          console.log("[1prompt] Content script responded:", response);
+          console.log("[1-prompt] Content script responded:", response);
           broadcastToSidePanels(response);
         }
       },
     );
   } catch (e) {
-    console.error("[1prompt] Error checking tab status:", e);
+    console.error("[1-prompt] Error checking tab status:", e);
   }
 }
 
@@ -1157,7 +1157,7 @@ function detectPlatformFromUrl(url: string): string | null {
 
 // Keyboard commands handler
 chrome.commands.onCommand.addListener(async (command) => {
-  console.log("[1prompt] Command received:", command);
+  console.log("[1-prompt] Command received:", command);
   if (command === "extract-prompts") {
     const [tab] = await chrome.tabs.query({
       active: true,
@@ -1168,7 +1168,7 @@ chrome.commands.onCommand.addListener(async (command) => {
       try {
         await chrome.sidePanel.open({ windowId: tab.windowId });
       } catch (e) {
-        console.warn("[1prompt] Could not open side panel via command:", e);
+        console.warn("[1-prompt] Could not open side panel via command:", e);
       }
 
       // 2. Trigger extraction

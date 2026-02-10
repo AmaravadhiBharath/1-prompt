@@ -1,5 +1,5 @@
 /**
- * Robust Prompt Storage Service for 1prompt
+ * Robust Prompt Storage Service for 1-prompt
  *
  * Handles:
  * - Memory storage with size limits
@@ -86,7 +86,7 @@ export async function addCapturedPrompt(
   captureMethod: StoredPrompt["captureMethod"],
 ): Promise<boolean> {
   if (!content || content.trim().length === 0) {
-    console.log("[1prompt Storage] Empty prompt, skipping");
+    console.log("[1-prompt Storage] Empty prompt, skipping");
     return false;
   }
 
@@ -101,7 +101,7 @@ export async function addCapturedPrompt(
 
   // Check for duplicate
   if (isDuplicate(prompts, content)) {
-    console.log("[1prompt Storage] Duplicate prompt, skipping");
+    console.log("[1-prompt Storage] Duplicate prompt, skipping");
     return false;
   }
 
@@ -124,10 +124,10 @@ export async function addCapturedPrompt(
   memoryStore.set(storageKey, prompts);
 
   console.log(
-    `[1prompt Storage] Added prompt via ${captureMethod}: "${content.slice(0, 50)}..."`,
+    `[1-prompt Storage] Added prompt via ${captureMethod}: "${content.slice(0, 50)}..."`,
   );
   console.log(
-    `[1prompt Storage] Total prompts for ${conversationId}: ${prompts.length}`,
+    `[1-prompt Storage] Total prompts for ${conversationId}: ${prompts.length}`,
   );
 
   // Persist to local storage
@@ -172,12 +172,12 @@ async function loadFromStorage(storageKey: string): Promise<StoredPrompt[]> {
 
     if (data?.prompts) {
       console.log(
-        `[1prompt Storage] Loaded ${data.prompts.length} prompts from storage`,
+        `[1-prompt Storage] Loaded ${data.prompts.length} prompts from storage`,
       );
       return data.prompts;
     }
   } catch (e) {
-    console.error("[1prompt Storage] Failed to load from storage:", e);
+    console.error("[1-prompt Storage] Failed to load from storage:", e);
   }
   return [];
 }
@@ -201,10 +201,10 @@ async function saveToStorage(
 
     await chrome.storage.local.set({ [storageKey]: data });
     console.log(
-      `[1prompt Storage] Saved ${trimmedPrompts.length} prompts to storage`,
+      `[1-prompt Storage] Saved ${trimmedPrompts.length} prompts to storage`,
     );
   } catch (e) {
-    console.error("[1prompt Storage] Failed to save to storage:", e);
+    console.error("[1-prompt Storage] Failed to save to storage:", e);
   }
 }
 
@@ -231,14 +231,14 @@ function queueForSync(prompt: StoredPrompt): void {
  */
 async function processOfflineQueue(): Promise<void> {
   if (!isOnline) {
-    console.log("[1prompt Storage] Offline, queue will process when online");
+    console.log("[1-prompt Storage] Offline, queue will process when online");
     return;
   }
 
   if (offlineQueue.length === 0) return;
 
   console.log(
-    `[1prompt Storage] Processing ${offlineQueue.length} queued items`,
+    `[1-prompt Storage] Processing ${offlineQueue.length} queued items`,
   );
 
   const itemsToProcess = [...offlineQueue];
@@ -256,12 +256,12 @@ async function processOfflineQueue(): Promise<void> {
       if (response?.success) {
         // Mark as synced in storage
         item.prompt.synced = true;
-        console.log(`[1prompt Storage] Synced prompt: ${item.prompt.id}`);
+        console.log(`[1-prompt Storage] Synced prompt: ${item.prompt.id}`);
       } else {
         throw new Error(response?.error || "Sync failed");
       }
     } catch (e) {
-      console.error("[1prompt Storage] Sync failed:", e);
+      console.error("[1-prompt Storage] Sync failed:", e);
 
       // Retry if under max attempts
       if (item.retryCount < CONFIG.MAX_RETRY_ATTEMPTS) {
@@ -272,7 +272,7 @@ async function processOfflineQueue(): Promise<void> {
         setTimeout(() => processOfflineQueue(), CONFIG.RETRY_DELAY_MS);
       } else {
         console.error(
-          `[1prompt Storage] Max retries reached for prompt: ${item.prompt.id}`,
+          `[1-prompt Storage] Max retries reached for prompt: ${item.prompt.id}`,
         );
       }
     }
@@ -295,7 +295,7 @@ function notifyBackgroundScript(
       conversationId,
     })
     .catch((e) => {
-      console.warn("[1prompt Storage] Failed to notify background:", e);
+      console.warn("[1-prompt Storage] Failed to notify background:", e);
       // Will sync via queue later
     });
 }
@@ -305,13 +305,13 @@ function notifyBackgroundScript(
  */
 function setupConnectivityListeners(): void {
   window.addEventListener("online", () => {
-    console.log("[1prompt Storage] Back online, processing queue");
+    console.log("[1-prompt Storage] Back online, processing queue");
     isOnline = true;
     processOfflineQueue();
   });
 
   window.addEventListener("offline", () => {
-    console.log("[1prompt Storage] Went offline, queuing syncs");
+    console.log("[1-prompt Storage] Went offline, queuing syncs");
     isOnline = false;
   });
 }
@@ -326,7 +326,7 @@ export async function clearConversationPrompts(
   const storageKey = getStorageKey(platform, conversationId);
   memoryStore.delete(storageKey);
   await chrome.storage.local.remove(storageKey);
-  console.log(`[1prompt Storage] Cleared prompts for ${conversationId}`);
+  console.log(`[1-prompt Storage] Cleared prompts for ${conversationId}`);
 }
 
 /**
@@ -360,12 +360,12 @@ export async function syncPromptsToCloud(): Promise<{
   });
 
   if (promptsToSync.length === 0) {
-    console.log("[1prompt Storage] No prompts to sync");
+    console.log("[1-prompt Storage] No prompts to sync");
     return { synced: 0, failed: 0 };
   }
 
   console.log(
-    `[1prompt Storage] Syncing ${promptsToSync.length} prompts to cloud`,
+    `[1-prompt Storage] Syncing ${promptsToSync.length} prompts to cloud`,
   );
 
   try {
@@ -390,14 +390,14 @@ export async function syncPromptsToCloud(): Promise<{
         p.synced = true;
       });
 
-      console.log(`[1prompt Storage] Successfully synced ${synced} prompts`);
+      console.log(`[1-prompt Storage] Successfully synced ${synced} prompts`);
     } else {
       failed = promptsToSync.length;
-      console.error("[1prompt Storage] Cloud sync failed:", response?.error);
+      console.error("[1-prompt Storage] Cloud sync failed:", response?.error);
     }
   } catch (e) {
     failed = promptsToSync.length;
-    console.error("[1prompt Storage] Cloud sync error:", e);
+    console.error("[1-prompt Storage] Cloud sync error:", e);
 
     // Add to offline queue for retry
     for (const prompt of promptsToSync) {
@@ -438,7 +438,7 @@ export async function getStorageStats(): Promise<{
  */
 export function initPromptStorage(): void {
   setupConnectivityListeners();
-  console.log("[1prompt Storage] Prompt storage service initialized");
+  console.log("[1-prompt Storage] Prompt storage service initialized");
 }
 
 // Export config for testing

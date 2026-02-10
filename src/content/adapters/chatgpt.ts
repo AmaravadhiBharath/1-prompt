@@ -21,7 +21,7 @@ export class ChatGPTAdapter extends BaseAdapter {
     );
 
     console.log(
-      `[1prompt] ChatGPT user messages found: ${userMessages.length}`,
+      `[1-prompt] ChatGPT user messages found: ${userMessages.length}`,
     );
 
     userMessages.forEach((el, index) => {
@@ -32,7 +32,7 @@ export class ChatGPTAdapter extends BaseAdapter {
 
       // Skip very long content (AI responses are typically longer)
       if (content.length > 3000) {
-        console.log("[1prompt] Skipping very long content");
+        console.log("[1-prompt] Skipping very long content");
         return;
       }
 
@@ -42,7 +42,7 @@ export class ChatGPTAdapter extends BaseAdapter {
       }
     });
 
-    console.log(`[1prompt] ChatGPT user prompts extracted: ${prompts.length}`);
+    console.log(`[1-prompt] ChatGPT user prompts extracted: ${prompts.length}`);
     return prompts;
   }
 }

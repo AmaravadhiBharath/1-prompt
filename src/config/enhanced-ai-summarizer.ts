@@ -7,7 +7,7 @@ import { localSummarizer } from "../services/local-summarizer";
 const CONSOLIDATION_RULES = `[INTENT COMPILATION PROTOCOL v5.1 - ENTERPRISE]
 
 CORE DIRECTIVE: Compile user intent into a single, cohesive paragraph.
-PHILOSOPHY: 1prompt does not summarize conversations. It compiles intent into a unified narrative.
+PHILOSOPHY: 1-prompt does not summarize conversations. It compiles intent into a unified narrative.
 
 ═══════════════════════════════════════════════════════════════════════════════
 SECTION A: OUTPUT FORMAT
@@ -80,7 +80,7 @@ export interface EnhancedSummaryOptions {
 
 export class EnhancedAISummarizer {
   private static instance: EnhancedAISummarizer;
-  private backendUrl = "https://1prompt-backend.amaravadhibharath.workers.dev";
+  private backendUrl = "https://1-prompt-backend.amaravadhibharath.workers.dev";
 
   private constructor() { }
 
