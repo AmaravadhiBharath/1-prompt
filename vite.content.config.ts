@@ -5,7 +5,7 @@ export default defineConfig({
     build: {
         outDir: 'dist',
         emptyOutDir: false,
-        minify: false, // Keep console.log for debugging
+        minify: true,
         lib: {
             entry: resolve(__dirname, 'src/content/index.ts'),
             name: 'ContentScript',

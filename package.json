@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite build --watch & vite build --config vite.content.config.ts --watch",
-    "build": "rm -rf dist && tsc && vite build && vite build --config vite.content.config.ts",
+    "build": "rm -rf dist && tsc && (vite build & vite build --config vite.content.config.ts & wait)",
     "build:web": "npm run build && node scripts/prepare-web.js",
     "preview": "vite preview"
   },
