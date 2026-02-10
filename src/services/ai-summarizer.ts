@@ -1,15 +1,15 @@
-import type { ScrapedPrompt, SummaryResult } from '../types/index';
-import { resilientFetch } from './resilient-api';
-import { localSummarizer } from './local-summarizer';
-import { enhancedAISummarizer } from '../config/enhanced-ai-summarizer';
-import { dynamicConfigLoader } from '../config/dynamic-loader';
+import type { ScrapedPrompt, SummaryResult } from "../types/index";
+import { resilientFetch } from "./resilient-api";
+import { localSummarizer } from "./local-summarizer";
+import { enhancedAISummarizer } from "../config/enhanced-ai-summarizer";
+import { dynamicConfigLoader } from "../config/dynamic-loader";
 
 // Cloudflare Worker URL - API keys stored server-side
-const BACKEND_URL = 'https://1prompt-backend.amaravadhibharath.workers.dev';
+const BACKEND_URL = "https://1prompt-backend.amaravadhibharath.workers.dev";
 
 export interface SummaryOptions {
-  format?: 'paragraph' | 'points' | 'JSON' | 'XML';
-  tone?: 'normal' | 'professional' | 'creative';
+  format?: "paragraph" | "points" | "JSON" | "XML";
+  tone?: "normal" | "professional" | "creative";
   includeAI?: boolean;
   userId?: string;
   userEmail?: string;
@@ -296,17 +296,22 @@ export class AISummarizer {
    * Summarize extracted prompts using the configured AI provider
    * Now uses the enhanced configuration system for provider flexibility
    */
-  async summarize(prompts: ScrapedPrompt[], options: SummaryOptions = {}): Promise<SummaryResult> {
+  async summarize(
+    prompts: ScrapedPrompt[],
+    options: SummaryOptions = {},
+  ): Promise<SummaryResult> {
     if (!prompts || prompts.length === 0) {
-      console.log('[AISummarizer] 📝 No prompts to summarize');
+      console.log("[AISummarizer] 📝 No prompts to summarize");
       return {
         original: [],
-        summary: '',
+        summary: "",
         promptCount: { before: 0, after: 0 },
       };
     }
 
-    console.log(`[AISummarizer] 📝 Starting AI summarization for ${prompts.length} prompts`);
+    console.log(
+      `[AISummarizer] 📝 Starting AI summarization for ${prompts.length} prompts`,
+    );
 
     try {
       // First, try the enhanced AI summarizer with dynamic configuration
@@ -320,11 +325,15 @@ export class AISummarizer {
         useDirectProvider: false, // Start with backend, fallback to direct
       });
 
-      console.log(`[AISummarizer] ✅ Enhanced AI summary completed via ${result.provider || 'backend'}`);
+      console.log(
+        `[AISummarizer] ✅ Enhanced AI summary completed via ${result.provider || "backend"}`,
+      );
       return result;
-
     } catch (enhancedError) {
-      console.warn('[AISummarizer] ⚠️ Enhanced summarizer failed, trying legacy backend...', enhancedError);
+      console.warn(
+        "[AISummarizer] ⚠️ Enhanced summarizer failed, trying legacy backend...",
+        enhancedError,
+      );
 
       // Fallback to legacy backend method
       return await this.legacySummarize(prompts, options);
@@ -334,16 +343,23 @@ export class AISummarizer {
   /**
    * Legacy backend summarization method (kept for compatibility)
    */
-  private async legacySummarize(prompts: ScrapedPrompt[], options: SummaryOptions = {}): Promise<SummaryResult> {
+  private async legacySummarize(
+    prompts: ScrapedPrompt[],
+    options: SummaryOptions = {},
+  ): Promise<SummaryResult> {
     try {
       // Send raw prompts to backend - let the server handle filtering
       // The client-side filtering was breaking the backend
       const content = prompts
         .map((p, i) => `${i + 1}. ${p.content}`)
-        .join('\n\n');
+        .join("\n\n");
 
-      console.log(`[AISummarizer] ⏱️ Attempting legacy backend at ${BACKEND_URL}`);
-      console.log(`[AISummarizer] 📝 Sending ${prompts.length} raw prompts (${content.length} chars)`);
+      console.log(
+        `[AISummarizer] ⏱️ Attempting legacy backend at ${BACKEND_URL}`,
+      );
+      console.log(
+        `[AISummarizer] 📝 Sending ${prompts.length} raw prompts (${content.length} chars)`,
+      );
 
       // Use dynamic config instead of hardcoded remote config
       const config = await dynamicConfigLoader.getConfig();
@@ -351,10 +367,12 @@ export class AISummarizer {
       const model = config.primary.model;
 
       const response = await resilientFetch(BACKEND_URL, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          ...(options.authToken ? { Authorization: `Bearer ${options.authToken}` } : {})
+          "Content-Type": "application/json",
+          ...(options.authToken
+            ? { Authorization: `Bearer ${options.authToken}` }
+            : {}),
         },
         body: JSON.stringify({
           content,
@@ -364,15 +382,17 @@ export class AISummarizer {
           userId: options.userId,
           userEmail: options.userEmail,
           options: {
-            format: options.format || 'paragraph',
-            tone: options.tone || 'normal',
+            format: options.format || "paragraph",
+            tone: options.tone || "normal",
             includeAI: options.includeAI || false,
-            mode: 'consolidate',
+            mode: "consolidate",
           },
         }),
       });
 
-      console.log(`[AISummarizer] 📡 Backend response: ${response.status} ${response.statusText}`);
+      console.log(
+        `[AISummarizer] 📡 Backend response: ${response.status} ${response.statusText}`,
+      );
 
       if (!response.ok) {
         let errorMsg = `Worker Error: ${response.status}`;
@@ -387,34 +407,46 @@ export class AISummarizer {
       }
 
       const data = await response.json();
-      console.log(`[AISummarizer] ✅ AI Summary received (${data.summary?.length || 0} chars): ${data.summary?.slice(0, 100)}...`);
+      console.log(
+        `[AISummarizer] ✅ AI Summary received (${data.summary?.length || 0} chars): ${data.summary?.slice(0, 100)}...`,
+      );
 
       if (!data.summary || data.summary.trim().length === 0) {
-        console.error('[AISummarizer] ❌ AI returned empty summary');
-        throw new Error('AI returned an empty summary.');
+        console.error("[AISummarizer] ❌ AI returned empty summary");
+        throw new Error("AI returned an empty summary.");
       }
 
       return {
-        original: prompts,  // Keep original for user display
+        original: prompts, // Keep original for user display
         summary: data.summary,
         promptCount: {
           before: prompts.length,
           after: prompts.length,
         },
         model: data.model,
-        provider: data.provider
+        provider: data.provider,
       };
     } catch (error: any) {
-      console.error('[AISummarizer] ❌ Cloud AI failed:', error?.message || error);
-      console.error('[AISummarizer] ⚠️ Falling back to local client-side summarization...');
+      console.error(
+        "[AISummarizer] ❌ Cloud AI failed:",
+        error?.message || error,
+      );
+      console.error(
+        "[AISummarizer] ⚠️ Falling back to local client-side summarization...",
+      );
 
       // Fallback to local client-side summarization
       try {
         const localResult = await localSummarizer.summarize(prompts);
-        console.log('[AISummarizer] ⚙️ Using local summary as fallback (Client-Side)');
+        console.log(
+          "[AISummarizer] ⚙️ Using local summary as fallback (Client-Side)",
+        );
         return localResult;
       } catch (localError) {
-        console.error('[AISummarizer] ❌ Local summarization also failed:', localError);
+        console.error(
+          "[AISummarizer] ❌ Local summarization also failed:",
+          localError,
+        );
         // Final fallback: just join prompts
         throw error;
       }
@@ -427,5 +459,7 @@ export const aiSummarizer = new AISummarizer();
 
 // Initialize (no-op now, kept for compatibility)
 export async function initializeAISummarizer(): Promise<void> {
-  console.log('[AISummarizer] Using Cloudflare Worker backend with smart filtering');
+  console.log(
+    "[AISummarizer] Using Cloudflare Worker backend with smart filtering",
+  );
 }

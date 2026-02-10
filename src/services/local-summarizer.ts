@@ -1,4 +1,4 @@
-import type { ScrapedPrompt, SummaryResult } from '../types';
+import type { ScrapedPrompt, SummaryResult } from "../types";
 
 /**
  * Local Client-Side Summarization
@@ -24,7 +24,10 @@ export class LocalSummarizer {
       // Skip if very similar to existing
       let isSimilar = false;
       for (const existing of result) {
-        if (this.calculateSimilarity(norm, this.normalizeText(existing.content)) > 0.85) {
+        if (
+          this.calculateSimilarity(norm, this.normalizeText(existing.content)) >
+          0.85
+        ) {
           isSimilar = true;
           break;
         }
@@ -46,8 +49,8 @@ export class LocalSummarizer {
     return text
       .toLowerCase()
       .trim()
-      .replace(/\s+/g, ' ')
-      .replace(/[^\w\s]/g, '');
+      .replace(/\s+/g, " ")
+      .replace(/[^\w\s]/g, "");
   }
 
   /**
@@ -65,8 +68,8 @@ export class LocalSummarizer {
     }
 
     // Word-level overlap
-    const wordsA = new Set(a.split(' ').filter(w => w.length > 2));
-    const wordsB = new Set(b.split(' ').filter(w => w.length > 2));
+    const wordsA = new Set(a.split(" ").filter((w) => w.length > 2));
+    const wordsB = new Set(b.split(" ").filter((w) => w.length > 2));
 
     if (!wordsA.size || !wordsB.size) return 0;
 
@@ -78,8 +81,6 @@ export class LocalSummarizer {
     return overlap / Math.max(wordsA.size, wordsB.size);
   }
 
-
-
   /**
    * Format summary output (Consolidated Paragraph)
    */
@@ -88,19 +89,19 @@ export class LocalSummarizer {
 
     // Create a natural language concatenation
     // This is simple logic, but effective for client-side speed
-    const sentences = deduped.map(p => {
+    const sentences = deduped.map((p) => {
       let text = p.content.trim();
-      if (!text.endsWith('.') && !text.endsWith('?') && !text.endsWith('!')) {
-        text += '.';
+      if (!text.endsWith(".") && !text.endsWith("?") && !text.endsWith("!")) {
+        text += ".";
       }
       return text;
     });
 
     // Join them
-    const paragraph = sentences.join(' ');
+    const paragraph = sentences.join(" ");
 
     // Add signature
-    return paragraph + '\n\n⚡ Summary by Local Client-Side Logic (Fallback)';
+    return paragraph + "\n\n⚡ Summary by Local Client-Side Logic (Fallback)";
   }
 
   /**
@@ -108,7 +109,7 @@ export class LocalSummarizer {
    */
   async summarize(prompts: ScrapedPrompt[]): Promise<SummaryResult> {
     if (prompts.length === 0) {
-      throw new Error('No prompts to summarize');
+      throw new Error("No prompts to summarize");
     }
 
     // 1. Try Gemini Nano (Chrome Built-in AI) if available
@@ -116,12 +117,12 @@ export class LocalSummarizer {
       const ai = (window as any).ai;
       if (ai && ai.languageModel) {
         const capabilities = await ai.languageModel.capabilities();
-        if (capabilities.available !== 'no') {
+        if (capabilities.available !== "no") {
           // Create session
           const session = await ai.languageModel.create();
 
           // Prepare simple prompt
-          const content = prompts.map(p => p.content).join('\n');
+          const content = prompts.map((p) => p.content).join("\n");
           const promptText = `Summarize these prompts into a single, consolidated paragraph. No filler. No intro. Just the action items:\n\n${content}`;
 
           // Generate
@@ -129,13 +130,17 @@ export class LocalSummarizer {
 
           return {
             original: prompts,
-            summary: result + "\n\n⚡ Summary by Local Gemini Nano (Chrome Built-in)",
-            promptCount: { before: prompts.length, after: prompts.length }
+            summary:
+              result + "\n\n⚡ Summary by Local Gemini Nano (Chrome Built-in)",
+            promptCount: { before: prompts.length, after: prompts.length },
           };
         }
       }
     } catch (e) {
-      console.warn('[LocalSummarizer] Gemini Nano failed or not available, falling back to logic:', e);
+      console.warn(
+        "[LocalSummarizer] Gemini Nano failed or not available, falling back to logic:",
+        e,
+      );
     }
 
     // 2. Fallback to Smart Logic (Regex)
@@ -152,7 +157,7 @@ export class LocalSummarizer {
         },
       };
     } catch (error) {
-      console.error('[LocalSummarizer] Error:', error);
+      console.error("[LocalSummarizer] Error:", error);
       throw error;
     }
   }

@@ -1,31 +1,67 @@
-import React, { useEffect, useState } from 'react';
-import { HistoryItem } from '../types';
-import { getUserTier, type UserTier } from '../services/pricing';
-import { signInWithGoogle } from '../services/auth';
+import React, { useEffect, useState } from "react";
+import { HistoryItem } from "../types";
+import { getUserTier, type UserTier } from "../services/pricing";
+import { signInWithGoogle } from "../services/auth";
 
 // Icons
 const IconArrowLeft = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M19 12H5M12 19l-7-7 7-7" />
   </svg>
 );
 
 const IconSearch = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <circle cx="11" cy="11" r="8" />
     <line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 );
 
 const IconTrash = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <polyline points="3 6 5 6 21 6" />
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
   </svg>
 );
 
 const IconMessage = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
   </svg>
 );
@@ -49,7 +85,14 @@ const LogoGemini = () => (
 );
 
 const LogoPerplexity = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <circle cx="12" cy="12" r="10" />
     <path d="M12 6v6l4 2" />
   </svg>
@@ -62,19 +105,46 @@ const LogoDeepseek = () => (
 );
 
 const LogoLovable = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
   </svg>
 );
 
 const LogoBolt = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
   </svg>
 );
 
 const LogoCursor = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" />
     <path d="M13 13l6 6" />
   </svg>
@@ -87,7 +157,16 @@ const LogoMetaAI = () => (
 );
 
 const LogoGeneric = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <circle cx="12" cy="12" r="10" />
     <path d="M8 12h8M12 8v8" />
   </svg>
@@ -95,28 +174,30 @@ const LogoGeneric = () => (
 
 const PlatformIcon = ({ platform }: { platform: string }) => {
   const p = platform.toLowerCase();
-  if (p.includes('chatgpt')) return <LogoChatGPT />;
-  if (p.includes('claude')) return <LogoClaude />;
-  if (p.includes('gemini')) return <LogoGemini />;
-  if (p.includes('perplexity')) return <LogoPerplexity />;
-  if (p.includes('deepseek')) return <LogoDeepseek />;
-  if (p.includes('lovable')) return <LogoLovable />;
-  if (p.includes('bolt')) return <LogoBolt />;
-  if (p.includes('cursor')) return <LogoCursor />;
-  if (p.includes('meta')) return <LogoMetaAI />;
+  if (p.includes("chatgpt")) return <LogoChatGPT />;
+  if (p.includes("claude")) return <LogoClaude />;
+  if (p.includes("gemini")) return <LogoGemini />;
+  if (p.includes("perplexity")) return <LogoPerplexity />;
+  if (p.includes("deepseek")) return <LogoDeepseek />;
+  if (p.includes("lovable")) return <LogoLovable />;
+  if (p.includes("bolt")) return <LogoBolt />;
+  if (p.includes("cursor")) return <LogoCursor />;
+  if (p.includes("meta")) return <LogoMetaAI />;
   return <LogoGeneric />;
 };
 
 export default function HistoryPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'capture' | 'compile'>('all');
-  const [tier, setTier] = useState<UserTier>('guest');
+  const [activeFilter, setActiveFilter] = useState<
+    "all" | "capture" | "compile"
+  >("all");
+  const [tier, setTier] = useState<UserTier>("guest");
   const [loadingTier, setLoadingTier] = useState(true);
 
   useEffect(() => {
-    getUserTier().then(t => {
+    getUserTier().then((t) => {
       setTier(t);
       setLoadingTier(false);
     });
@@ -124,9 +205,9 @@ export default function HistoryPage() {
 
   useEffect(() => {
     // Load theme
-    chrome.storage.local.get(['theme', 'extractionHistory'], (result) => {
+    chrome.storage.local.get(["theme", "extractionHistory"], (result) => {
       if (result.theme) {
-        document.documentElement.setAttribute('data-theme', result.theme);
+        document.documentElement.setAttribute("data-theme", result.theme);
       }
       if (result.extractionHistory) {
         setHistory(result.extractionHistory);
@@ -138,48 +219,53 @@ export default function HistoryPage() {
     const groups: { label: string; items: HistoryItem[] }[] = [];
 
     // 1. Separate all Pinned items first for global top section
-    const pinnedItems = items.filter(item => item.isPinned);
+    const pinnedItems = items.filter((item) => item.isPinned);
     if (pinnedItems.length > 0) {
-      groups.push({ label: 'Pinned', items: pinnedItems });
+      groups.push({ label: "Pinned", items: pinnedItems });
     }
 
     // 2. Filter out pinned items from the chronological flow
-    const unpinnedItems = items.filter(item => !item.isPinned);
+    const unpinnedItems = items.filter((item) => !item.isPinned);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    const todayItems = unpinnedItems.filter(item => {
+    const todayItems = unpinnedItems.filter((item) => {
       const d = new Date(item.timestamp);
       d.setHours(0, 0, 0, 0);
       return d.getTime() === today.getTime();
     });
-    if (todayItems.length > 0) groups.push({ label: 'Today', items: todayItems });
+    if (todayItems.length > 0)
+      groups.push({ label: "Today", items: todayItems });
 
-    const yesterdayItems = unpinnedItems.filter(item => {
+    const yesterdayItems = unpinnedItems.filter((item) => {
       const d = new Date(item.timestamp);
       d.setHours(0, 0, 0, 0);
       return d.getTime() === yesterday.getTime();
     });
-    if (yesterdayItems.length > 0) groups.push({ label: 'Yesterday', items: yesterdayItems });
+    if (yesterdayItems.length > 0)
+      groups.push({ label: "Yesterday", items: yesterdayItems });
 
-    const earlierItems = unpinnedItems.filter(item => {
+    const earlierItems = unpinnedItems.filter((item) => {
       const d = new Date(item.timestamp);
       d.setHours(0, 0, 0, 0);
       return d.getTime() < yesterday.getTime();
     });
-    if (earlierItems.length > 0) groups.push({ label: 'Earlier', items: earlierItems });
+    if (earlierItems.length > 0)
+      groups.push({ label: "Earlier", items: earlierItems });
 
     return groups;
   };
 
   const filteredHistory = history
-    .filter(item => {
-      const matchesSearch = item.preview.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    .filter((item) => {
+      const matchesSearch =
+        item.preview.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.platform.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesFilter = activeFilter === 'all' || item.mode === activeFilter;
+      const matchesFilter =
+        activeFilter === "all" || item.mode === activeFilter;
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
@@ -192,7 +278,7 @@ export default function HistoryPage() {
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const newHistory = history.filter(item => item.id !== id);
+    const newHistory = history.filter((item) => item.id !== id);
     setHistory(newHistory);
     chrome.storage.local.set({ extractionHistory: newHistory });
     if (selectedItem?.id === id) {
@@ -202,32 +288,42 @@ export default function HistoryPage() {
 
   if (loadingTier) return null;
 
-  if (tier === 'guest') {
+  if (tier === "guest") {
     return (
-      <div className="history-page" style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        padding: 40,
-        textAlign: 'center'
-      }}>
+      <div
+        className="history-page"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column",
+          padding: 40,
+          textAlign: "center",
+        }}
+      >
         <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
         <h2>History Locked</h2>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 24, padding: '0 20px' }}>
-          Sign in to access your conversation history (Basic users do not have access).
+        <p
+          style={{
+            color: "var(--text-secondary)",
+            marginBottom: 24,
+            padding: "0 20px",
+          }}
+        >
+          Sign in to access your conversation history (Basic users do not have
+          access).
         </p>
         <button
           onClick={signInWithGoogle}
           style={{
-            background: 'var(--kb-logo-vibrant)',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            fontSize: '16px',
+            background: "var(--kb-logo-vibrant)",
+            color: "white",
+            border: "none",
+            padding: "12px 24px",
+            borderRadius: "8px",
+            fontSize: "16px",
             fontWeight: 600,
-            cursor: 'pointer'
+            cursor: "pointer",
           }}
         >
           Sign In with Google
@@ -236,12 +332,12 @@ export default function HistoryPage() {
         <button
           onClick={() => window.close()}
           style={{
-            background: 'transparent',
-            color: 'var(--text-tertiary)',
-            border: 'none',
+            background: "transparent",
+            color: "var(--text-tertiary)",
+            border: "none",
             marginTop: 16,
-            cursor: 'pointer',
-            fontSize: '14px'
+            cursor: "pointer",
+            fontSize: "14px",
           }}
         >
           Close
@@ -272,20 +368,20 @@ export default function HistoryPage() {
           </div>
           <div className="history-filters">
             <button
-              className={`filter-tab ${activeFilter === 'all' ? 'active' : ''}`}
-              onClick={() => setActiveFilter('all')}
+              className={`filter-tab ${activeFilter === "all" ? "active" : ""}`}
+              onClick={() => setActiveFilter("all")}
             >
               All
             </button>
             <button
-              className={`filter-tab ${activeFilter === 'capture' ? 'active' : ''}`}
-              onClick={() => setActiveFilter('capture')}
+              className={`filter-tab ${activeFilter === "capture" ? "active" : ""}`}
+              onClick={() => setActiveFilter("capture")}
             >
               Capture
             </button>
             <button
-              className={`filter-tab ${activeFilter === 'compile' ? 'active' : ''}`}
-              onClick={() => setActiveFilter('compile')}
+              className={`filter-tab ${activeFilter === "compile" ? "active" : ""}`}
+              onClick={() => setActiveFilter("compile")}
             >
               Compile
             </button>
@@ -298,25 +394,32 @@ export default function HistoryPage() {
               <p>No conversations found</p>
             </div>
           ) : (
-            groupedHistory.map(group => (
+            groupedHistory.map((group) => (
               <React.Fragment key={group.label}>
                 <div className="history-date-separator">
                   <span>{group.label}</span>
                 </div>
-                {group.items.map(item => (
+                {group.items.map((item) => (
                   <div
                     key={item.id}
-                    className={`history-item-card ${selectedItem?.id === item.id ? 'active' : ''}`}
+                    className={`history-item-card ${selectedItem?.id === item.id ? "active" : ""}`}
                     onClick={() => setSelectedItem(item)}
                   >
                     <div className="card-top">
                       <div className="platform-badge-pill">
-                        {(!item.platform || item.platform === 'unknown') ? 'LEGACY' : item.platform.toUpperCase()}
+                        {!item.platform || item.platform === "unknown"
+                          ? "LEGACY"
+                          : item.platform.toUpperCase()}
                       </div>
                       <div className="card-top-right">
                         {item.isPinned && (
                           <span className="card-pin-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                            >
                               <path d="M16 12V4H8v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" />
                             </svg>
                           </span>
@@ -327,10 +430,14 @@ export default function HistoryPage() {
                       </div>
                     </div>
 
-                    <h3 className="card-preview-text">{item.preview || 'No content'}</h3>
+                    <h3 className="card-preview-text">
+                      {item.preview || "No content"}
+                    </h3>
 
                     <div className="card-bottom">
-                      <span className="card-count-text">{item.promptCount} prompts</span>
+                      <span className="card-count-text">
+                        {item.promptCount} prompts
+                      </span>
                       <button
                         className="card-delete-btn"
                         onClick={(e) => handleDelete(item.id, e)}
@@ -355,7 +462,12 @@ export default function HistoryPage() {
               <div className="header-info">
                 <div className="platform-badge">
                   <PlatformIcon platform={selectedItem.platform} />
-                  <span>{(!selectedItem.platform || selectedItem.platform === 'unknown') ? 'LEGACY' : selectedItem.platform.toUpperCase()}</span>
+                  <span>
+                    {!selectedItem.platform ||
+                    selectedItem.platform === "unknown"
+                      ? "LEGACY"
+                      : selectedItem.platform.toUpperCase()}
+                  </span>
                 </div>
                 <span className="header-date">
                   {new Date(selectedItem.timestamp).toLocaleString()}
@@ -363,7 +475,8 @@ export default function HistoryPage() {
               </div>
               <div className="header-actions">
                 <div className="stat-pill">
-                  {selectedItem.promptCount} prompts {selectedItem.duration ? `in ${selectedItem.duration}s` : ''}
+                  {selectedItem.promptCount} prompts{" "}
+                  {selectedItem.duration ? `in ${selectedItem.duration}s` : ""}
                 </div>
               </div>
             </div>

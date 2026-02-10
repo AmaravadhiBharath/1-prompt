@@ -5,8 +5,8 @@ import {
   saveUserProfile,
   getQuotas,
   setCurrentUser,
-  checkUserTier
-} from './firebase';
+  checkUserTier,
+} from "./firebase";
 
 export interface ChromeUser {
   id: string;
@@ -15,7 +15,7 @@ export interface ChromeUser {
   picture?: string;
 }
 
-export type UserTier = 'guest' | 'free' | 'go' | 'pro' | 'infi' | 'admin';
+export type UserTier = "guest" | "free" | "go" | "pro" | "infi" | "admin";
 
 export interface UserState {
   user: ChromeUser | null;
@@ -40,7 +40,7 @@ export async function getAuthToken(): Promise<string | null> {
   });
 }
 
-const STORAGE_KEY = 'promptExtractor_user';
+const STORAGE_KEY = "promptExtractor_user";
 
 // Default tier limits (can be overridden by Firebase admin)
 let TIER_LIMITS: Record<UserTier, number> = {
@@ -64,9 +64,9 @@ async function loadQuotas(): Promise<void> {
       infi: quotas.infi || 999,
       admin: 999,
     };
-    console.log('[Auth] Loaded quotas from Firebase:', TIER_LIMITS);
+    console.log("[Auth] Loaded quotas from Firebase:", TIER_LIMITS);
   } catch (error) {
-    console.log('[Auth] Using default quotas');
+    console.log("[Auth] Using default quotas");
   }
 }
 
@@ -93,7 +93,7 @@ async function storeUser(user: ChromeUser | null): Promise<void> {
 // Get usage count
 export async function getUsageCount(): Promise<number> {
   return new Promise((resolve) => {
-    chrome.storage.local.get(['usage_count'], (result) => {
+    chrome.storage.local.get(["usage_count"], (result) => {
       resolve(result.usage_count || 0);
     });
   });
@@ -114,7 +114,7 @@ export async function resetUsage(): Promise<void> {
 
 // Admin emails (hardcoded - only these can use debug tier switcher)
 const ADMIN_EMAILS = [
-  'amaravadhibharath@gmail.com',
+  "amaravadhibharath@gmail.com",
   // Add your other admin emails here
 ];
 
@@ -126,17 +126,19 @@ export function isAdmin(user: ChromeUser | null): boolean {
 // Debug: Get tier override (for admin testing only)
 export async function getDebugTierOverride(): Promise<UserTier | null> {
   return new Promise((resolve) => {
-    chrome.storage.local.get(['debug_tier_override'], (result) => {
+    chrome.storage.local.get(["debug_tier_override"], (result) => {
       resolve(result.debug_tier_override || null);
     });
   });
 }
 
 // Debug: Set tier override (admin only)
-export async function setDebugTierOverride(tier: UserTier | null): Promise<void> {
+export async function setDebugTierOverride(
+  tier: UserTier | null,
+): Promise<void> {
   const user = await getStoredUser();
   if (!isAdmin(user)) {
-    console.warn('[Auth] setDebugTierOverride called by non-admin user');
+    console.warn("[Auth] setDebugTierOverride called by non-admin user");
     return;
   }
 
@@ -147,8 +149,8 @@ export async function setDebugTierOverride(tier: UserTier | null): Promise<void>
         resolve();
       });
     } else {
-      chrome.storage.local.remove(['debug_tier_override'], () => {
-        console.log('[Auth] Debug tier override removed');
+      chrome.storage.local.remove(["debug_tier_override"], () => {
+        console.log("[Auth] Debug tier override removed");
         resolve();
       });
     }
@@ -157,7 +159,7 @@ export async function setDebugTierOverride(tier: UserTier | null): Promise<void>
 
 // Get user tier (checks Firebase for tier status)
 export async function getUserTier(user: ChromeUser | null): Promise<UserTier> {
-  if (!user) return 'guest';
+  if (!user) return "guest";
 
   // Check for debug override (admin only)
   if (isAdmin(user)) {
@@ -172,10 +174,10 @@ export async function getUserTier(user: ChromeUser | null): Promise<UserTier> {
     const tier = await checkUserTier(user.email);
     if (tier) return tier;
   } catch (error) {
-    console.log('[Auth] Could not check tier, defaulting to free');
+    console.log("[Auth] Could not check tier, defaulting to free");
   }
 
-  return 'free';
+  return "free";
 }
 
 // Get tier limit
@@ -192,37 +194,51 @@ export async function canExtract(tier: UserTier): Promise<boolean> {
 
 // Sign in with Google
 export async function signInWithGoogle(): Promise<ChromeUser> {
-  console.log('[Auth] Starting Google Sign-In flow...');
+  console.log("[Auth] Starting Google Sign-In flow...");
   return new Promise((resolve, reject) => {
     chrome.identity.getAuthToken({ interactive: true }, async (token) => {
       if (chrome.runtime.lastError || !token) {
-        console.error('[Auth] Google Auth Token failed:', chrome.runtime.lastError);
-        reject(new Error(chrome.runtime.lastError?.message || 'Failed to get auth token'));
+        console.error(
+          "[Auth] Google Auth Token failed:",
+          chrome.runtime.lastError,
+        );
+        reject(
+          new Error(
+            chrome.runtime.lastError?.message || "Failed to get auth token",
+          ),
+        );
         return;
       }
 
-      console.log('[Auth] Google token obtained, fetching user info...');
+      console.log("[Auth] Google token obtained, fetching user info...");
       try {
         // Fetch user info from Google first
-        const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await fetch(
+          "https://www.googleapis.com/oauth2/v2/userinfo",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
 
         if (!response.ok) {
           const errBody = await response.text();
-          console.error('[Auth] User info fetch failed:', response.status, errBody);
-          throw new Error('Failed to fetch user info from Google');
+          console.error(
+            "[Auth] User info fetch failed:",
+            response.status,
+            errBody,
+          );
+          throw new Error("Failed to fetch user info from Google");
         }
 
         const data = await response.json();
         const user: ChromeUser = {
           id: data.id,
           email: data.email,
-          name: data.name || data.email.split('@')[0],
+          name: data.name || data.email.split("@")[0],
           picture: data.picture,
         };
 
-        console.log('[Auth] Authenticated as:', user.email);
+        console.log("[Auth] Authenticated as:", user.email);
 
         // Set the current user ID for subsequent requests
         await setCurrentUser(user.id);
@@ -236,14 +252,14 @@ export async function signInWithGoogle(): Promise<ChromeUser> {
         // Load quotas from Backend
         await loadQuotas();
 
-        console.log('[Auth] Complete sign-in flow finished successfully');
+        console.log("[Auth] Complete sign-in flow finished successfully");
         resolve(user);
       } catch (error: any) {
-        console.error('[Auth] Sign-in flow interrupted:', error);
+        console.error("[Auth] Sign-in flow interrupted:", error);
         // Revoke the token on error so the user can try again fresh
         if (token) {
           chrome.identity.removeCachedAuthToken({ token }, () => {
-            console.log('[Auth] Cached token removed due to error');
+            console.log("[Auth] Cached token removed due to error");
           });
         }
         reject(error);
@@ -275,9 +291,14 @@ export async function signOut(): Promise<void> {
 }
 
 // Subscribe to auth changes
-export function subscribeToAuthChanges(callback: (user: ChromeUser | null) => void): () => void {
-  const listener = (changes: { [key: string]: chrome.storage.StorageChange }, area: string) => {
-    if (area === 'local' && changes[STORAGE_KEY]) {
+export function subscribeToAuthChanges(
+  callback: (user: ChromeUser | null) => void,
+): () => void {
+  const listener = (
+    changes: { [key: string]: chrome.storage.StorageChange },
+    area: string,
+  ) => {
+    if (area === "local" && changes[STORAGE_KEY]) {
       callback(changes[STORAGE_KEY].newValue || null);
     }
   };
@@ -301,12 +322,12 @@ export async function initializeAuth(): Promise<UserState> {
   // We trigger these but return the user state immediately
   loadQuotas().catch(console.error);
 
-  // Minimal return for instant render. 
-  // Detailed tier info will come in subsequent updates if needed, 
+  // Minimal return for instant render.
+  // Detailed tier info will come in subsequent updates if needed,
   // or we rely on defaults/cached values.
   return {
     user,
-    tier: 'free', // Default safe tier until verified
+    tier: "free", // Default safe tier until verified
     usage: { used, limit: 10 },
     isLoading: false,
   };

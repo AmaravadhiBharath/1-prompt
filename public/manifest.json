@@ -62,10 +62,7 @@
     "type": "module"
   },
   "externally_connectable": {
-    "matches": [
-      "https://1-prompt.in/*",
-      "https://www.1-prompt.in/*"
-    ]
+    "matches": ["https://1-prompt.in/*", "https://www.1-prompt.in/*"]
   },
   "content_scripts": [
     {
@@ -86,9 +83,7 @@
         "https://meta.ai/*",
         "https://www.meta.ai/*"
       ],
-      "js": [
-        "content.js"
-      ],
+      "js": ["content.js"],
       "run_at": "document_start"
     }
   ],

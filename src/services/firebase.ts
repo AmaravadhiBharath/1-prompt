@@ -5,21 +5,21 @@
  * - Quotas and Tier check via Cloudflare Worker
  */
 
-import { config } from '../config';
-import { resilientFetch } from './resilient-api';
+import { config } from "../config";
+import { resilientFetch } from "./resilient-api";
 
-const USER_ID_KEY = 'prompt_extractor_user_id';
+const USER_ID_KEY = "prompt_extractor_user_id";
 
 // Helper to get backend headers
 async function getHeaders() {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json'
+    "Content-Type": "application/json",
   };
 
   // Get Google Access Token from Chrome identity API
   const token = await getAuthToken();
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   return headers;
@@ -55,7 +55,7 @@ export async function setCurrentUser(userId: string | null): Promise<void> {
     await chrome.storage.session.remove([USER_ID_KEY]);
     await chrome.storage.local.remove([USER_ID_KEY]);
   }
-  console.log('[Backend] User set:', userId ? 'logged in' : 'logged out');
+  console.log("[Backend] User set:", userId ? "logged in" : "logged out");
 }
 
 /**
@@ -64,7 +64,7 @@ export async function setCurrentUser(userId: string | null): Promise<void> {
 export async function signOutFromBackend(): Promise<void> {
   await chrome.storage.session.remove([USER_ID_KEY]);
   await chrome.storage.local.remove([USER_ID_KEY]);
-  console.log('[Backend] Signed out');
+  console.log("[Backend] Signed out");
 }
 
 /**
@@ -85,7 +85,7 @@ export interface CloudHistoryItem {
   id: string;
   platform: string;
   promptCount: number;
-  mode: 'capture' | 'compile';
+  mode: "capture" | "compile";
   timestamp: number;
   preview: string;
   prompts: Array<{ content: string; index: number }>;
@@ -97,32 +97,40 @@ export interface CloudHistoryItem {
 /**
  * Save history item to Cloudflare via API
  */
-export async function saveHistoryToCloud(_userId: string, item: CloudHistoryItem): Promise<void> {
+export async function saveHistoryToCloud(
+  _userId: string,
+  item: CloudHistoryItem,
+): Promise<void> {
   try {
     const response = await resilientFetch(`${config.backend.url}/history`, {
-      method: 'POST',
+      method: "POST",
       headers: await getHeaders(),
-      body: JSON.stringify({ item })
+      body: JSON.stringify({ item }),
     });
 
     if (!response.ok) {
       throw new Error(`Backend error: ${response.status}`);
     }
-    console.log('[Backend] Saved history:', item.id);
+    console.log("[Backend] Saved history:", item.id);
   } catch (error) {
-    console.error('[Backend] Save history error:', error);
+    console.error("[Backend] Save history error:", error);
   }
 }
 
 /**
  * Get history from Cloudflare via API
  */
-export async function getHistoryFromCloud(userId: string): Promise<CloudHistoryItem[]> {
+export async function getHistoryFromCloud(
+  userId: string,
+): Promise<CloudHistoryItem[]> {
   try {
-    const response = await resilientFetch(`${config.backend.url}/history?userId=${userId}`, {
-      method: 'GET',
-      headers: await getHeaders()
-    });
+    const response = await resilientFetch(
+      `${config.backend.url}/history?userId=${userId}`,
+      {
+        method: "GET",
+        headers: await getHeaders(),
+      },
+    );
 
     if (!response.ok) {
       if (response.status === 404) return [];
@@ -132,7 +140,7 @@ export async function getHistoryFromCloud(userId: string): Promise<CloudHistoryI
     const data = await response.json();
     return data.history || [];
   } catch (error) {
-    console.error('[Backend] Get history error:', error);
+    console.error("[Backend] Get history error:", error);
     throw error;
   }
 }
@@ -140,19 +148,25 @@ export async function getHistoryFromCloud(userId: string): Promise<CloudHistoryI
 /**
  * Delete history item via API
  */
-export async function deleteHistoryFromCloud(_userId: string, itemId: string): Promise<void> {
+export async function deleteHistoryFromCloud(
+  _userId: string,
+  itemId: string,
+): Promise<void> {
   try {
-    const response = await resilientFetch(`${config.backend.url}/history/${itemId}`, {
-      method: 'DELETE',
-      headers: await getHeaders()
-    });
+    const response = await resilientFetch(
+      `${config.backend.url}/history/${itemId}`,
+      {
+        method: "DELETE",
+        headers: await getHeaders(),
+      },
+    );
 
     if (!response.ok) {
       throw new Error(`Backend error: ${response.status}`);
     }
-    console.log('[Backend] Deleted history:', itemId);
+    console.log("[Backend] Deleted history:", itemId);
   } catch (error) {
-    console.error('[Backend] Delete history error:', error);
+    console.error("[Backend] Delete history error:", error);
     throw error;
   }
 }
@@ -163,16 +177,16 @@ export async function deleteHistoryFromCloud(_userId: string, itemId: string): P
 export async function clearHistoryFromCloud(_userId: string): Promise<void> {
   try {
     const response = await resilientFetch(`${config.backend.url}/history`, {
-      method: 'DELETE',
-      headers: await getHeaders()
+      method: "DELETE",
+      headers: await getHeaders(),
     });
 
     if (!response.ok) {
       throw new Error(`Backend error: ${response.status}`);
     }
-    console.log('[Backend] Cleared all history');
+    console.log("[Backend] Cleared all history");
   } catch (error) {
-    console.error('[Backend] Clear history error:', error);
+    console.error("[Backend] Clear history error:", error);
     throw error;
   }
 }
@@ -188,21 +202,24 @@ export async function saveUserProfile(user: {
   id: string;
   email: string;
   name: string;
-  picture?: string
+  picture?: string;
 }): Promise<void> {
   try {
-    const response = await resilientFetch(`${config.backend.url}/user/profile`, {
-      method: 'POST',
-      headers: await getHeaders(),
-      body: JSON.stringify(user)
-    });
+    const response = await resilientFetch(
+      `${config.backend.url}/user/profile`,
+      {
+        method: "POST",
+        headers: await getHeaders(),
+        body: JSON.stringify(user),
+      },
+    );
 
     if (!response.ok) {
       throw new Error(`Backend error: ${response.status}`);
     }
-    console.log('[Backend] Saved user profile');
+    console.log("[Backend] Saved user profile");
   } catch (error) {
-    console.warn('[Backend] Save profile failed (non-critical):', error);
+    console.warn("[Backend] Save profile failed (non-critical):", error);
   }
 }
 
@@ -218,24 +235,33 @@ export interface Quotas {
   infi?: number;
 }
 
-const DEFAULT_QUOTAS: Quotas = { guest: 3, free: 10, go: 25, pro: 100, infi: 999 };
+const DEFAULT_QUOTAS: Quotas = {
+  guest: 3,
+  free: 10,
+  go: 25,
+  pro: 100,
+  infi: 999,
+};
 
 /**
  * Get admin-configured quotas from Backend
  */
 export async function getQuotas(): Promise<Quotas> {
   try {
-    const response = await resilientFetch(`${config.backend.url}/config/quotas`, {
-      method: 'GET',
-      headers: await getHeaders()
-    });
+    const response = await resilientFetch(
+      `${config.backend.url}/config/quotas`,
+      {
+        method: "GET",
+        headers: await getHeaders(),
+      },
+    );
 
     if (!response.ok) return DEFAULT_QUOTAS;
 
     const data = await response.json();
     return data.quotas || DEFAULT_QUOTAS;
   } catch (error) {
-    console.error('[Backend] Get quotas error:', error);
+    console.error("[Backend] Get quotas error:", error);
     return DEFAULT_QUOTAS;
   }
 }
@@ -243,12 +269,14 @@ export async function getQuotas(): Promise<Quotas> {
 /**
  * Check user tier from Backend
  */
-export async function checkUserTier(email: string): Promise<'free' | 'go' | 'pro' | 'infi' | 'admin' | null> {
+export async function checkUserTier(
+  email: string,
+): Promise<"free" | "go" | "pro" | "infi" | "admin" | null> {
   try {
     const response = await resilientFetch(`${config.backend.url}/user/tier`, {
-      method: 'POST',
+      method: "POST",
       headers: await getHeaders(),
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email }),
     });
 
     if (!response.ok) return null;
@@ -256,7 +284,7 @@ export async function checkUserTier(email: string): Promise<'free' | 'go' | 'pro
     const data = await response.json();
     return data.tier || null;
   } catch (error) {
-    console.error('[Backend] Check user tier error:', error);
+    console.error("[Backend] Check user tier error:", error);
     return null;
   }
 }
@@ -270,11 +298,11 @@ export async function checkUserTier(email: string): Promise<'free' | 'go' | 'pro
  */
 export function mergeHistory(
   local: CloudHistoryItem[],
-  cloud: CloudHistoryItem[]
+  cloud: CloudHistoryItem[],
 ): CloudHistoryItem[] {
   if (!cloud || !Array.isArray(cloud)) return local;
 
-  const cloudIds = new Set(cloud.map(item => item.id));
+  const cloudIds = new Set(cloud.map((item) => item.id));
   const merged = [...cloud];
 
   for (const localItem of local) {

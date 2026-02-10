@@ -26,9 +26,15 @@
   --m3-on-surface-variant: #44474f;
   --m3-outline: #757780;
 
-  --m3-surface-1: linear-gradient(0deg, rgba(2, 101, 220, 0.05), rgba(2, 101, 220, 0.05)), #fdfbff;
-  --m3-surface-2: linear-gradient(0deg, rgba(2, 101, 220, 0.08), rgba(2, 101, 220, 0.08)), #fdfbff;
-  --m3-surface-3: linear-gradient(0deg, rgba(2, 101, 220, 0.11), rgba(2, 101, 220, 0.11)), #fdfbff;
+  --m3-surface-1:
+    linear-gradient(0deg, rgba(2, 101, 220, 0.05), rgba(2, 101, 220, 0.05)),
+    #fdfbff;
+  --m3-surface-2:
+    linear-gradient(0deg, rgba(2, 101, 220, 0.08), rgba(2, 101, 220, 0.08)),
+    #fdfbff;
+  --m3-surface-3:
+    linear-gradient(0deg, rgba(2, 101, 220, 0.11), rgba(2, 101, 220, 0.11)),
+    #fdfbff;
 
   /* Adobe Precision Tokens */
   --adobe-gray-50: #ffffff;
@@ -57,7 +63,7 @@
   /* M3 Container default */
   --radius-full: 9999px;
 
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 
   --shadow-1: 0 1px 3px 1px rgba(0, 0, 0, 0.15), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-2: 0 2px 6px 2px rgba(0, 0, 0, 0.15), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
@@ -81,9 +87,15 @@
   --m3-on-surface-variant: #c4c6d0;
   --m3-outline: #8e9099;
 
-  --m3-surface-1: linear-gradient(0deg, rgba(173, 198, 255, 0.05), rgba(173, 198, 255, 0.05)), #111318;
-  --m3-surface-2: linear-gradient(0deg, rgba(173, 198, 255, 0.08), rgba(173, 198, 255, 0.08)), #111318;
-  --m3-surface-3: linear-gradient(0deg, rgba(173, 198, 255, 0.11), rgba(173, 198, 255, 0.11)), #111318;
+  --m3-surface-1:
+    linear-gradient(0deg, rgba(173, 198, 255, 0.05), rgba(173, 198, 255, 0.05)),
+    #111318;
+  --m3-surface-2:
+    linear-gradient(0deg, rgba(173, 198, 255, 0.08), rgba(173, 198, 255, 0.08)),
+    #111318;
+  --m3-surface-3:
+    linear-gradient(0deg, rgba(173, 198, 255, 0.11), rgba(173, 198, 255, 0.11)),
+    #111318;
 
   --adobe-gray-900: #ffffff;
   --adobe-gray-800: #f8f8f8;
@@ -189,16 +201,22 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: box-shadow 0.2s, background-color 0.2s;
+  transition:
+    box-shadow 0.2s,
+    background-color 0.2s;
 }
 
 .m3-button-filled:hover {
   box-shadow: var(--shadow-1);
-  background: linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)), var(--m3-primary);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)),
+    var(--m3-primary);
 }
 
 .m3-button-filled:active {
-  background: linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.12)), var(--m3-primary);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.12)),
+    var(--m3-primary);
 }
 
 .m3-button-tonal {
@@ -216,7 +234,9 @@ body {
 
 .m3-button-tonal:hover {
   box-shadow: var(--shadow-1);
-  background: linear-gradient(rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.04)), var(--m3-secondary-container);
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.04)),
+    var(--m3-secondary-container);
 }
 
 .m3-top-app-bar {

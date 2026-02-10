@@ -1,11 +1,11 @@
-import { BaseAdapter } from './base';
-import type { ScrapedPrompt } from '../../types';
+import { BaseAdapter } from "./base";
+import type { ScrapedPrompt } from "../../types";
 
 export class GeminiAdapter extends BaseAdapter {
-  name = 'Gemini';
+  name = "Gemini";
 
   detect(): boolean {
-    return location.hostname.includes('gemini.google.com');
+    return location.hostname.includes("gemini.google.com");
   }
 
   scrapePrompts(): ScrapedPrompt[] {
@@ -13,20 +13,22 @@ export class GeminiAdapter extends BaseAdapter {
     const seen = new Set<string>();
 
     // Find all potential prompt elements
-    const candidates = this.deepQuerySelectorAll([
-      'user-query',
-      '[class*="user-query"]',
-      '[class*="query-text"]',
-      '.query-content',
-      '.user-message',
-      '[data-query]',
-      'div[data-message-author-role="user"]'
-    ].join(', '));
+    const candidates = this.deepQuerySelectorAll(
+      [
+        "user-query",
+        '[class*="user-query"]',
+        '[class*="query-text"]',
+        ".query-content",
+        ".user-message",
+        "[data-query]",
+        'div[data-message-author-role="user"]',
+      ].join(", "),
+    );
 
     // Filter to keep only the top-most elements (avoid splitting one message into multiple prompts)
     console.log(`[1prompt] Gemini candidates found: ${candidates.length}`);
-    const topLevelElements = candidates.filter(el => {
-      return !candidates.some(other => other !== el && other.contains(el));
+    const topLevelElements = candidates.filter((el) => {
+      return !candidates.some((other) => other !== el && other.contains(el));
     });
 
     topLevelElements.forEach((el, index) => {
@@ -41,11 +43,17 @@ export class GeminiAdapter extends BaseAdapter {
     if (prompts.length === 0) {
       const main = document.querySelector('main, [role="main"]');
       if (main) {
-        const turns = main.querySelectorAll('[class*="turn"], [class*="message"]');
+        const turns = main.querySelectorAll(
+          '[class*="turn"], [class*="message"]',
+        );
         let promptIndex = 0;
         turns.forEach((turn) => {
           const classList = turn.className.toLowerCase();
-          if (classList.includes('model') || classList.includes('response') || classList.includes('answer')) {
+          if (
+            classList.includes("model") ||
+            classList.includes("response") ||
+            classList.includes("answer")
+          ) {
             return;
           }
           const content = this.cleanText(this.getVisibleText(turn));

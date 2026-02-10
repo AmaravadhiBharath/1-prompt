@@ -5,10 +5,10 @@
  * Pro: $10/mo, Unlimited all, advanced models, support.
  */
 
-import { config } from '../config';
-import { getAuthToken } from './firebase';
+import { config } from "../config";
+import { getAuthToken } from "./firebase";
 
-export type UserTier = 'guest' | 'free' | 'go' | 'pro' | 'infi' | 'admin';
+export type UserTier = "guest" | "free" | "go" | "pro" | "infi" | "admin";
 
 export interface PricingConfig {
   tier: UserTier;
@@ -23,8 +23,9 @@ export interface PricingConfig {
 }
 
 export const PRICING_TIERS: Record<UserTier, PricingConfig> = {
-  guest: { // Basic
-    tier: 'guest',
+  guest: {
+    // Basic
+    tier: "guest",
     maxCaptures: -1, // Unlimited
     maxCompiles: -1, // Unlimited
     hasHistory: false,
@@ -32,10 +33,10 @@ export const PRICING_TIERS: Record<UserTier, PricingConfig> = {
     hasGenerateMode2: false,
     requiresAuth: false,
     deviceLocked: true,
-    canPin: false
+    canPin: false,
   },
   free: {
-    tier: 'free',
+    tier: "free",
     maxCaptures: -1,
     maxCompiles: -1, // Unlimited
     hasHistory: true,
@@ -43,10 +44,10 @@ export const PRICING_TIERS: Record<UserTier, PricingConfig> = {
     hasGenerateMode2: false,
     requiresAuth: true,
     deviceLocked: false,
-    canPin: true
+    canPin: true,
   },
   go: {
-    tier: 'go',
+    tier: "go",
     maxCaptures: -1,
     maxCompiles: -1, // Unlimited
     hasHistory: true,
@@ -54,10 +55,10 @@ export const PRICING_TIERS: Record<UserTier, PricingConfig> = {
     hasGenerateMode2: false,
     requiresAuth: true,
     deviceLocked: false,
-    canPin: true
+    canPin: true,
   },
   pro: {
-    tier: 'pro',
+    tier: "pro",
     maxCaptures: -1,
     maxCompiles: -1,
     hasHistory: true,
@@ -65,10 +66,10 @@ export const PRICING_TIERS: Record<UserTier, PricingConfig> = {
     hasGenerateMode2: true,
     requiresAuth: true,
     deviceLocked: false,
-    canPin: true
+    canPin: true,
   },
   infi: {
-    tier: 'infi',
+    tier: "infi",
     maxCaptures: -1,
     maxCompiles: -1,
     hasHistory: true,
@@ -76,10 +77,10 @@ export const PRICING_TIERS: Record<UserTier, PricingConfig> = {
     hasGenerateMode2: true,
     requiresAuth: true,
     deviceLocked: false,
-    canPin: true
+    canPin: true,
   },
   admin: {
-    tier: 'admin',
+    tier: "admin",
     maxCaptures: -1,
     maxCompiles: -1,
     hasHistory: true,
@@ -87,15 +88,15 @@ export const PRICING_TIERS: Record<UserTier, PricingConfig> = {
     hasGenerateMode2: true,
     requiresAuth: true,
     deviceLocked: false,
-    canPin: true
-  }
+    canPin: true,
+  },
 };
 
 export const PRO_PRICING = {
   regularPrice: 9,
   offerPrice: 5,
-  currency: 'USD',
-  billingPeriod: 'month'
+  currency: "USD",
+  billingPeriod: "month",
 };
 
 /**
@@ -103,37 +104,43 @@ export const PRO_PRICING = {
  */
 export async function getUserTier(): Promise<UserTier> {
   try {
-    const userData = await chrome.storage.local.get(['promptExtractor_user']);
+    const userData = await chrome.storage.local.get(["promptExtractor_user"]);
     const user = userData.promptExtractor_user;
 
     if (!user) {
-      return 'guest';
+      return "guest";
     }
 
     // Check cache (5 mins)
-    const cacheKey = 'tierCache';
+    const cacheKey = "tierCache";
     const cache = await chrome.storage.local.get([cacheKey]);
-    const cached = cache[cacheKey] as { tier: UserTier; timestamp: number; userId: string } | undefined;
+    const cached = cache[cacheKey] as
+      | { tier: UserTier; timestamp: number; userId: string }
+      | undefined;
 
     const now = Date.now();
     const CACHE_DURATION = 5 * 60 * 1000;
 
-    if (cached && cached.userId === user.id && (now - cached.timestamp) < CACHE_DURATION) {
+    if (
+      cached &&
+      cached.userId === user.id &&
+      now - cached.timestamp < CACHE_DURATION
+    ) {
       return cached.tier;
     }
 
     // Fetch from backend
     const token = await getAuthToken();
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json'
+      "Content-Type": "application/json",
     };
 
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     const response = await fetch(`${config.backend.url}/user/tier`, {
-      method: 'POST',
+      method: "POST",
       headers,
       body: JSON.stringify({
         userId: user.id,
@@ -141,22 +148,21 @@ export async function getUserTier(): Promise<UserTier> {
       }),
     });
 
-    if (!response.ok) throw new Error('Tier check failed');
+    if (!response.ok) throw new Error("Tier check failed");
 
     const data = await response.json();
     const tier = data.tier as UserTier;
 
     await chrome.storage.local.set({
       [cacheKey]: { tier, timestamp: now, userId: user.id },
-      userTier: tier
+      userTier: tier,
     });
 
     return tier;
-
   } catch (error) {
-    console.error('[Pricing] Tier check error:', error);
-    const fallback = await chrome.storage.local.get(['userTier']);
-    return (fallback.userTier as UserTier) || 'guest';
+    console.error("[Pricing] Tier check error:", error);
+    const fallback = await chrome.storage.local.get(["userTier"]);
+    return (fallback.userTier as UserTier) || "guest";
   }
 }
 
@@ -164,17 +170,17 @@ export async function getUserTier(): Promise<UserTier> {
  * Invalidate tier cache
  */
 export async function invalidateTierCache(): Promise<void> {
-  await chrome.storage.local.remove(['tierCache']);
+  await chrome.storage.local.remove(["tierCache"]);
 }
 
 /**
  * Get device ID for guest user locking
  */
 export function getDeviceId(): string {
-  let deviceId = localStorage.getItem('deviceId');
+  let deviceId = localStorage.getItem("deviceId");
   if (!deviceId) {
     deviceId = crypto.randomUUID();
-    localStorage.setItem('deviceId', deviceId);
+    localStorage.setItem("deviceId", deviceId);
   }
   return deviceId;
 }
@@ -185,12 +191,12 @@ interface DailyUsage {
   compiles: number;
 }
 
-const USAGE_KEY = 'daily_usage_stats';
+const USAGE_KEY = "daily_usage_stats";
 
 async function getDailyUsage(): Promise<DailyUsage> {
   return new Promise((resolve) => {
     chrome.storage.local.get([USAGE_KEY], (data) => {
-      const today = new Date().toLocaleDateString('en-CA');
+      const today = new Date().toLocaleDateString("en-CA");
       const stats = data[USAGE_KEY] as DailyUsage | undefined;
 
       if (!stats || stats.date !== today) {
@@ -204,7 +210,11 @@ async function getDailyUsage(): Promise<DailyUsage> {
   });
 }
 
-export async function canUserCapture(): Promise<{ allowed: boolean; remaining?: number; reason?: string }> {
+export async function canUserCapture(): Promise<{
+  allowed: boolean;
+  remaining?: number;
+  reason?: string;
+}> {
   const tier = await getUserTier();
   const limit = PRICING_TIERS[tier].maxCaptures;
 
@@ -214,24 +224,39 @@ export async function canUserCapture(): Promise<{ allowed: boolean; remaining?: 
   const remaining = limit - usage.captures;
 
   if (remaining <= 0) {
-    return { allowed: false, reason: 'Daily capture limit reached. Sign in for unlimited captures!' };
+    return {
+      allowed: false,
+      reason: "Daily capture limit reached. Sign in for unlimited captures!",
+    };
   }
 
   return { allowed: true, remaining };
 }
 
-export async function canUserCompile(): Promise<{ allowed: boolean; remaining?: number; reason?: string }> {
+export async function canUserCompile(): Promise<{
+  allowed: boolean;
+  remaining?: number;
+  reason?: string;
+}> {
   const tier = await getUserTier();
   const limit = PRICING_TIERS[tier].maxCompiles;
 
   if (limit === -1) return { allowed: true };
-  if (limit === 0) return { allowed: false, reason: 'Compiling is available on Go and Pro plans. Sign in to try!' };
+  if (limit === 0)
+    return {
+      allowed: false,
+      reason: "Compiling is available on Go and Pro plans. Sign in to try!",
+    };
 
   const usage = await getDailyUsage();
   const remaining = limit - usage.compiles;
 
   if (remaining <= 0) {
-    return { allowed: false, reason: 'Daily compile limit reached. Upgrade to Pro for unlimited compiles!' };
+    return {
+      allowed: false,
+      reason:
+        "Daily compile limit reached. Upgrade to Pro for unlimited compiles!",
+    };
   }
 
   return { allowed: true, remaining };
@@ -251,14 +276,22 @@ export async function incrementCompile(): Promise<void> {
 
 export function getTierFeatures(tier: UserTier) {
   const config = PRICING_TIERS[tier];
-  let displayName = 'Pro';
-  if (tier === 'guest') displayName = 'Basic';
-  else if (tier === 'free' || tier === 'go') displayName = 'Go';
+  let displayName = "Pro";
+  if (tier === "guest") displayName = "Basic";
+  else if (tier === "free" || tier === "go") displayName = "Go";
 
   return {
     ...config,
     displayName,
-    captureText: config.maxCaptures === -1 ? 'Unlimited Captures' : `${config.maxCaptures}/day Captures`,
-    compileText: config.maxCompiles === -1 ? 'Unlimited Compiles' : (config.maxCompiles === 0 ? 'No Compiles' : `${config.maxCompiles}/day Compiles`)
+    captureText:
+      config.maxCaptures === -1
+        ? "Unlimited Captures"
+        : `${config.maxCaptures}/day Captures`,
+    compileText:
+      config.maxCompiles === -1
+        ? "Unlimited Compiles"
+        : config.maxCompiles === 0
+          ? "No Compiles"
+          : `${config.maxCompiles}/day Compiles`,
   };
 }

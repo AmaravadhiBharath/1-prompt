@@ -1,11 +1,11 @@
-import { BaseAdapter } from './base';
-import type { ScrapedPrompt } from '../../types';
+import { BaseAdapter } from "./base";
+import type { ScrapedPrompt } from "../../types";
 
 export class ClaudeAdapter extends BaseAdapter {
-  name = 'Claude';
+  name = "Claude";
 
   detect(): boolean {
-    return location.hostname.includes('claude.ai');
+    return location.hostname.includes("claude.ai");
   }
 
   scrapePrompts(): ScrapedPrompt[] {
@@ -13,16 +13,18 @@ export class ClaudeAdapter extends BaseAdapter {
     const seen = new Set<string>();
 
     // Find all potential prompt elements
-    const candidates = this.deepQuerySelectorAll([
-      '[data-testid="human-message"]',
-      '.human-message',
-      '[class*="human"]',
-      '[class*="message"]:not([class*="assistant"]):not([class*="ai"]):not([class*="claude"])'
-    ].join(', '));
+    const candidates = this.deepQuerySelectorAll(
+      [
+        '[data-testid="human-message"]',
+        ".human-message",
+        '[class*="human"]',
+        '[class*="message"]:not([class*="assistant"]):not([class*="ai"]):not([class*="claude"])',
+      ].join(", "),
+    );
 
     // Filter to keep only the top-most elements
-    const topLevelElements = candidates.filter(el => {
-      return !candidates.some(other => other !== el && other.contains(el));
+    const topLevelElements = candidates.filter((el) => {
+      return !candidates.some((other) => other !== el && other.contains(el));
     });
 
     topLevelElements.forEach((el, index) => {

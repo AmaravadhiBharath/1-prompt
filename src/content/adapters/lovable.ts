@@ -1,11 +1,11 @@
-import { BaseAdapter } from './base';
-import type { ScrapedPrompt } from '../../types';
+import { BaseAdapter } from "./base";
+import type { ScrapedPrompt } from "../../types";
 
 export class LovableAdapter extends BaseAdapter {
-  name = 'Lovable';
+  name = "Lovable";
 
   detect(): boolean {
-    return location.hostname.includes('lovable.dev');
+    return location.hostname.includes("lovable.dev");
   }
 
   /**
@@ -17,25 +17,24 @@ export class LovableAdapter extends BaseAdapter {
 
     // Remove only actual UI elements
     const uiSelectors = [
-      'button',
-      'svg',
-      'path',
+      "button",
+      "svg",
+      "path",
       '[role="button"]',
       '[aria-hidden="true"]',
-      '.lucide',
+      ".lucide",
       '[class*="chevron"]',
       '[class*="tooltip"]',
       '[class*="badge"]',
-      'nav',
-      'header',
-      'footer',
-      'aside'
+      "nav",
+      "header",
+      "footer",
+      "aside",
     ];
 
-    clone.querySelectorAll(uiSelectors.join(', ')).forEach(el => el.remove());
+    clone.querySelectorAll(uiSelectors.join(", ")).forEach((el) => el.remove());
     return this.cleanText(this.getVisibleText(clone));
   }
-
 
   /**
    * Determine if a prose element is a user prompt based on DOM structure
@@ -46,12 +45,12 @@ export class LovableAdapter extends BaseAdapter {
     const classes = element.className;
 
     // User prompts have whitespace-normal class
-    if (classes.includes('whitespace-normal')) {
+    if (classes.includes("whitespace-normal")) {
       return true;
     }
 
     // AI responses have prose-h1:mb-2 class - explicitly reject these
-    if (classes.includes('prose-h1:mb-2')) {
+    if (classes.includes("prose-h1:mb-2")) {
       return false;
     }
 
@@ -62,10 +61,16 @@ export class LovableAdapter extends BaseAdapter {
     let depth = 0;
     while (curr && depth < 5) {
       const parentClasses = curr.className;
-      if (parentClasses.includes('justify-end') || parentClasses.includes('ml-auto')) {
+      if (
+        parentClasses.includes("justify-end") ||
+        parentClasses.includes("ml-auto")
+      ) {
         return true;
       }
-      if (parentClasses.includes('assistant') || parentClasses.includes('bot')) {
+      if (
+        parentClasses.includes("assistant") ||
+        parentClasses.includes("bot")
+      ) {
         return false;
       }
       curr = curr.parentElement;
@@ -77,16 +82,18 @@ export class LovableAdapter extends BaseAdapter {
   }
 
   scrapePrompts(): ScrapedPrompt[] {
-    console.log('[SahAI] Lovable Extraction Engine starting (v1.1.0 - ba96d2c multi-position)...');
+    console.log(
+      "[SahAI] Lovable Extraction Engine starting (v1.1.0 - ba96d2c multi-position)...",
+    );
 
     const prompts: ScrapedPrompt[] = [];
     const seen = new Set<string>();
 
-    // Get all prose elements 
+    // Get all prose elements
     const proseElements = this.deepQuerySelectorAll('[class*="prose"]');
     console.log(`[SahAI] Found ${proseElements.length} total prose elements`);
 
-    proseElements.forEach(el => {
+    proseElements.forEach((el) => {
       const element = el as HTMLElement;
 
       // FILTER: Only extract user prompts (skip AI responses)
@@ -94,7 +101,7 @@ export class LovableAdapter extends BaseAdapter {
         return;
       }
 
-      const text = element.textContent?.trim() || '';
+      const text = element.textContent?.trim() || "";
 
       // Skip if too short or too long
       if (text.length < 2 || text.length > 5000) {
@@ -121,18 +128,18 @@ export class LovableAdapter extends BaseAdapter {
   }
 
   public getScrollContainer(): HTMLElement | null {
-    let container = document.querySelector('main') as HTMLElement;
+    let container = document.querySelector("main") as HTMLElement;
     if (container && container.scrollHeight > container.clientHeight) {
       return container;
     }
 
     const selectors = [
-      '.flex.flex-col.overflow-y-auto',
+      ".flex.flex-col.overflow-y-auto",
       '[class*="overflow-y-auto"]',
       '[class*="chat-container"]',
       '[class*="messages-container"]',
-      '.flex-1.overflow-y-auto',
-      '[role="region"]'
+      ".flex-1.overflow-y-auto",
+      '[role="region"]',
     ];
 
     for (const selector of selectors) {

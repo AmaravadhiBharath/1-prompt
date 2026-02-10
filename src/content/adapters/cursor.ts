@@ -1,12 +1,14 @@
-import { BaseAdapter } from './base';
-import type { ScrapedPrompt } from '../../types';
+import { BaseAdapter } from "./base";
+import type { ScrapedPrompt } from "../../types";
 
 export class CursorAdapter extends BaseAdapter {
-  name = 'Cursor';
+  name = "Cursor";
 
   detect(): boolean {
-    return location.hostname.includes('cursor.sh') ||
-      location.hostname.includes('cursor.com');
+    return (
+      location.hostname.includes("cursor.sh") ||
+      location.hostname.includes("cursor.com")
+    );
   }
 
   scrapePrompts(): ScrapedPrompt[] {
@@ -14,7 +16,9 @@ export class CursorAdapter extends BaseAdapter {
     const seen = new Set<string>();
 
     // Strategy 1: User message elements
-    const userMessages = document.querySelectorAll('[class*="user-message"], [class*="UserMessage"], [data-role="user"]');
+    const userMessages = document.querySelectorAll(
+      '[class*="user-message"], [class*="UserMessage"], [data-role="user"]',
+    );
     userMessages.forEach((el, index) => {
       const content = this.cleanText(this.getVisibleText(el));
       if (content && !this.isUIElement(content) && !seen.has(content)) {
@@ -26,12 +30,19 @@ export class CursorAdapter extends BaseAdapter {
     if (prompts.length > 0) return prompts;
 
     // Strategy 2: Chat interface
-    const chatMessages = document.querySelectorAll('[class*="chat"] [class*="message"], [class*="conversation"] [class*="turn"]');
+    const chatMessages = document.querySelectorAll(
+      '[class*="chat"] [class*="message"], [class*="conversation"] [class*="turn"]',
+    );
     let promptIndex = 0;
     chatMessages.forEach((msg) => {
       const classList = msg.className.toLowerCase();
       // Skip AI responses
-      if (classList.includes('assistant') || classList.includes('bot') || classList.includes('ai') || classList.includes('response')) {
+      if (
+        classList.includes("assistant") ||
+        classList.includes("bot") ||
+        classList.includes("ai") ||
+        classList.includes("response")
+      ) {
         return;
       }
       const content = this.cleanText(this.getVisibleText(msg));
@@ -43,7 +54,9 @@ export class CursorAdapter extends BaseAdapter {
 
     // Strategy 3: Command palette or prompt history
     if (prompts.length === 0) {
-      const commands = document.querySelectorAll('[class*="command"], [class*="prompt-history"], [class*="input-history"]');
+      const commands = document.querySelectorAll(
+        '[class*="command"], [class*="prompt-history"], [class*="input-history"]',
+      );
       commands.forEach((el, index) => {
         const content = this.cleanText(this.getVisibleText(el));
         if (content && content.length > 5 && !seen.has(content)) {

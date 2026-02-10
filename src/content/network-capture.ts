@@ -1,9 +1,9 @@
 /**
  * Network Interception Module for 1prompt
- * 
+ *
  * Intercepts fetch/XHR requests to AI platforms to capture prompts
  * with 100% accuracy - no DOM dependency, no timing issues.
- * 
+ *
  * This is injected into the page context (not content script)
  * to access the actual network layer.
  */
@@ -24,30 +24,12 @@ const API_PATTERNS: Record<string, RegExp[]> = {
     /gemini\.google\.com\/.*\/generate/,
     /generativelanguage\.googleapis\.com/,
   ],
-  perplexity: [
-    /api\.perplexity\.ai\/chat/,
-    /perplexity\.ai\/api\/query/,
-  ],
-  deepseek: [
-    /chat\.deepseek\.com\/api\/chat/,
-    /api\.deepseek\.com\/v1\/chat/,
-  ],
-  lovable: [
-    /lovable\.dev\/api\/chat/,
-    /api\.lovable\.dev\/.*\/messages/,
-  ],
-  bolt: [
-    /bolt\.new\/api\/chat/,
-    /api\.bolt\.new\/.*\/messages/,
-  ],
-  cursor: [
-    /cursor\.sh\/api\/chat/,
-    /api\.cursor\.com\/.*\/messages/,
-  ],
-  'meta-ai': [
-    /meta\.ai\/api\/chat/,
-    /graph\.meta\.com\/.*\/messages/,
-  ],
+  perplexity: [/api\.perplexity\.ai\/chat/, /perplexity\.ai\/api\/query/],
+  deepseek: [/chat\.deepseek\.com\/api\/chat/, /api\.deepseek\.com\/v1\/chat/],
+  lovable: [/lovable\.dev\/api\/chat/, /api\.lovable\.dev\/.*\/messages/],
+  bolt: [/bolt\.new\/api\/chat/, /api\.bolt\.new\/.*\/messages/],
+  cursor: [/cursor\.sh\/api\/chat/, /api\.cursor\.com\/.*\/messages/],
+  "meta-ai": [/meta\.ai\/api\/chat/, /graph\.meta\.com\/.*\/messages/],
 };
 
 // Platform-specific payload extractors
@@ -59,15 +41,15 @@ const PAYLOAD_EXTRACTORS: Record<string, PayloadExtractor> = {
   chatgpt: (body) => {
     // ChatGPT format: { messages: [{ role: 'user', content: '...' }] }
     if (body?.messages) {
-      const userMessages = body.messages.filter((m: any) => m.role === 'user');
+      const userMessages = body.messages.filter((m: any) => m.role === "user");
       const lastUser = userMessages[userMessages.length - 1];
       return lastUser?.content || null;
     }
     // Alternative format
     if (body?.prompt) return body.prompt;
-    if (body?.action === 'next' && body?.messages) {
+    if (body?.action === "next" && body?.messages) {
       const msg = body.messages[0];
-      if (msg?.content?.parts) return msg.content.parts.join('\n');
+      if (msg?.content?.parts) return msg.content.parts.join("\n");
     }
     return null;
   },
@@ -76,7 +58,9 @@ const PAYLOAD_EXTRACTORS: Record<string, PayloadExtractor> = {
     // Claude format: { prompt: '...' } or { messages: [...] }
     if (body?.prompt) return body.prompt;
     if (body?.messages) {
-      const userMessages = body.messages.filter((m: any) => m.role === 'user' || m.role === 'human');
+      const userMessages = body.messages.filter(
+        (m: any) => m.role === "user" || m.role === "human",
+      );
       const lastUser = userMessages[userMessages.length - 1];
       return lastUser?.content || null;
     }
@@ -88,7 +72,7 @@ const PAYLOAD_EXTRACTORS: Record<string, PayloadExtractor> = {
     if (body?.contents) {
       const lastContent = body.contents[body.contents.length - 1];
       if (lastContent?.parts) {
-        return lastContent.parts.map((p: any) => p.text).join('\n');
+        return lastContent.parts.map((p: any) => p.text).join("\n");
       }
     }
     if (body?.prompt) return body.prompt;
@@ -98,7 +82,7 @@ const PAYLOAD_EXTRACTORS: Record<string, PayloadExtractor> = {
   perplexity: (body) => {
     if (body?.query) return body.query;
     if (body?.messages) {
-      const userMessages = body.messages.filter((m: any) => m.role === 'user');
+      const userMessages = body.messages.filter((m: any) => m.role === "user");
       const lastUser = userMessages[userMessages.length - 1];
       return lastUser?.content || null;
     }
@@ -107,7 +91,7 @@ const PAYLOAD_EXTRACTORS: Record<string, PayloadExtractor> = {
 
   deepseek: (body) => {
     if (body?.messages) {
-      const userMessages = body.messages.filter((m: any) => m.role === 'user');
+      const userMessages = body.messages.filter((m: any) => m.role === "user");
       const lastUser = userMessages[userMessages.length - 1];
       return lastUser?.content || null;
     }
@@ -133,7 +117,7 @@ const PAYLOAD_EXTRACTORS: Record<string, PayloadExtractor> = {
     return null;
   },
 
-  'meta-ai': (body) => {
+  "meta-ai": (body) => {
     if (body?.message) return body.message;
     if (body?.prompt) return body.prompt;
     return null;
@@ -166,7 +150,7 @@ export function getNetworkInterceptorScript(): string {
     lovable: ${PAYLOAD_EXTRACTORS.lovable.toString()},
     bolt: ${PAYLOAD_EXTRACTORS.bolt.toString()},
     cursor: ${PAYLOAD_EXTRACTORS.cursor.toString()},
-    'meta-ai': ${PAYLOAD_EXTRACTORS['meta-ai'].toString()},
+    'meta-ai': ${PAYLOAD_EXTRACTORS["meta-ai"].toString()},
   };
 
   function detectPlatform(url) {
@@ -274,14 +258,19 @@ export function getNetworkInterceptorScript(): string {
 }
 
 // Initialize network capture listener in content script
-export function initNetworkCaptureListener(onCapture: (prompt: string, platform: string) => void) {
-  window.addEventListener('message', (event) => {
+export function initNetworkCaptureListener(
+  onCapture: (prompt: string, platform: string) => void,
+) {
+  window.addEventListener("message", (event) => {
     if (event.source !== window) return;
-    if (event.data?.type !== 'SAHAI_NETWORK_CAPTURE') return;
+    if (event.data?.type !== "SAHAI_NETWORK_CAPTURE") return;
 
     const { prompt, platform } = event.data;
     if (prompt && platform) {
-      console.log(`[1prompt] Network captured prompt from ${platform}:`, prompt.substring(0, 50) + '...');
+      console.log(
+        `[1prompt] Network captured prompt from ${platform}:`,
+        prompt.substring(0, 50) + "...",
+      );
       onCapture(prompt, platform);
     }
   });
@@ -289,9 +278,9 @@ export function initNetworkCaptureListener(onCapture: (prompt: string, platform:
 
 // Inject the interceptor script into the page
 export function injectNetworkInterceptor() {
-  const script = document.createElement('script');
+  const script = document.createElement("script");
   script.textContent = getNetworkInterceptorScript();
   (document.head || document.documentElement).appendChild(script);
   script.remove(); // Clean up - script already executed
-  console.log('[1prompt] Network interceptor injected');
+  console.log("[1prompt] Network interceptor injected");
 }

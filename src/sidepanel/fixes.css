@@ -118,7 +118,6 @@
 
 /* Static fallback when animations are disabled */
 @media (prefers-reduced-motion: reduce) {
-
   .onboarding-icon,
   .celebration-icon,
   .empty-hero,
@@ -321,7 +320,6 @@ button {
 }
 
 /* @keyframes spin is defined in oneprompt.css */
-
 
 .loading-indicator p {
   font-size: var(--font-base);

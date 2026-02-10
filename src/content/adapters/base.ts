@@ -1,5 +1,8 @@
-import type { PlatformAdapter, ScrapedPrompt } from '../../types';
-import { selectorRegistry, type SelectorStrategy } from '../../services/selector-registry';
+import type { PlatformAdapter, ScrapedPrompt } from "../../types";
+import {
+  selectorRegistry,
+  type SelectorStrategy,
+} from "../../services/selector-registry";
 
 // Base class with common utilities for adapters
 export abstract class BaseAdapter implements PlatformAdapter {
@@ -39,7 +42,7 @@ export abstract class BaseAdapter implements PlatformAdapter {
       console.log(`[BaseAdapter] Using remote config for ${hostname}`);
       return this.executeStrategy(config);
     } catch (e) {
-      console.warn('[BaseAdapter] Remote scrape error:', e);
+      console.warn("[BaseAdapter] Remote scrape error:", e);
       return [];
     }
   }
@@ -54,12 +57,17 @@ export abstract class BaseAdapter implements PlatformAdapter {
 
         for (const el of elements) {
           // Check exclusions
-          if (strategy.excludeSelectors?.some(s => el.matches(s))) continue;
+          if (strategy.excludeSelectors?.some((s) => el.matches(s))) continue;
 
           const content = this.cleanText(this.getVisibleText(el));
           const minLength = strategy.minContentLength || 3;
 
-          if (content && content.length >= minLength && !seen.has(content) && !this.isUIElement(content)) {
+          if (
+            content &&
+            content.length >= minLength &&
+            !seen.has(content) &&
+            !this.isUIElement(content)
+          ) {
             seen.add(content);
             prompts.push({ content, index: prompts.length });
           }
@@ -71,12 +79,15 @@ export abstract class BaseAdapter implements PlatformAdapter {
   }
 
   // Utility: Deep query selector that pierces shadow DOM
-  protected deepQuerySelectorAll(selector: string, root: Node = document): Element[] {
+  protected deepQuerySelectorAll(
+    selector: string,
+    root: Node = document,
+  ): Element[] {
     let nodes: Element[] = [];
     try {
       nodes = Array.from((root as ParentNode).querySelectorAll(selector));
     } catch (e) {
-      console.warn('[1prompt] Invalid selector:', selector);
+      console.warn("[1prompt] Invalid selector:", selector);
     }
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
@@ -84,7 +95,10 @@ export abstract class BaseAdapter implements PlatformAdapter {
     while ((node = walker.nextNode())) {
       const el = node as Element;
       if (el.shadowRoot) {
-        nodes = [...nodes, ...this.deepQuerySelectorAll(selector, el.shadowRoot)];
+        nodes = [
+          ...nodes,
+          ...this.deepQuerySelectorAll(selector, el.shadowRoot),
+        ];
       }
     }
     return nodes;
@@ -92,33 +106,32 @@ export abstract class BaseAdapter implements PlatformAdapter {
 
   // Utility: Clean text content
   protected cleanText(text: string): string {
-    return text
-      .replace(/\s+/g, ' ')
-      .trim();
+    return text.replace(/\s+/g, " ").trim();
   }
 
   // Utility: Check if text is UI noise
   protected isUIElement(text: string): boolean {
-    const uiPatterns = /^(copy|regenerate|share|edit|delete|save|retry|cancel|submit|send|stop|continue|new chat|clear)$/i;
+    const uiPatterns =
+      /^(copy|regenerate|share|edit|delete|save|retry|cancel|submit|send|stop|continue|new chat|clear)$/i;
     return uiPatterns.test(text.trim()) || text.trim().length < 3;
   }
 
   // Utility: Extract visible text from element
   protected getVisibleText(element: Element): string {
     const el = element as HTMLElement;
-    return el.innerText || el.textContent || '';
+    return el.innerText || el.textContent || "";
   }
 
   // Utility: Find the main scroll container for the chat
   public getScrollContainer(): HTMLElement | null {
     // Common scroll container patterns
     const selectors = [
-      'main',
+      "main",
       '[class*="scroll-area"]',
       '[class*="messages-container"]',
       '[class*="chat-scroll"]',
       'div[style*="overflow-y: auto"]',
-      'div[style*="overflow-y: scroll"]'
+      'div[style*="overflow-y: scroll"]',
     ];
 
     for (const selector of selectors) {
@@ -127,13 +140,16 @@ export abstract class BaseAdapter implements PlatformAdapter {
     }
 
     // Fallback: find the largest scrollable element
-    const allDivs = Array.from(document.querySelectorAll('div'));
+    const allDivs = Array.from(document.querySelectorAll("div"));
     let largest: HTMLElement | null = null;
     let maxScroll = 0;
 
     for (const div of allDivs) {
       const scroll = div.scrollHeight;
-      if (scroll > maxScroll && window.getComputedStyle(div).overflowY !== 'hidden') {
+      if (
+        scroll > maxScroll &&
+        window.getComputedStyle(div).overflowY !== "hidden"
+      ) {
         maxScroll = scroll;
         largest = div;
       }

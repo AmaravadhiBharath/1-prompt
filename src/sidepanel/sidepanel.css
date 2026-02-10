@@ -3,7 +3,6 @@
    Modern, minimal, upmarket. No corporate design system.
    ═══════════════════════════════════════════════════ */
 
-
 :root {
   /* Light Theme */
   --bg: #ffffff;
@@ -335,7 +334,12 @@ body {
    ═══════════════════════════════════════════════════ */
 
 .skeleton-item {
-  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border-light) 50%, var(--bg-secondary) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--border-light) 50%,
+    var(--bg-secondary) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   height: 60px;

@@ -1,4 +1,3 @@
-
 interface SelectorConfig {
   userSelectors?: string[];
   buttonSelectors?: string[];
@@ -9,7 +8,7 @@ export interface RemoteConfig {
   version: number;
   platforms: Record<string, SelectorConfig>;
   aiConfig?: {
-    defaultProvider: 'auto' | 'openai' | 'anthropic' | 'gemini';
+    defaultProvider: "auto" | "openai" | "anthropic" | "gemini";
     model?: string;
   };
 }
@@ -19,32 +18,33 @@ const DEFAULT_CONFIG: RemoteConfig = {
   version: 1,
   platforms: {
     chatgpt: {
-      userSelectors: ['[data-message-author-role="user"]', '.user-message'],
+      userSelectors: ['[data-message-author-role="user"]', ".user-message"],
       buttonSelectors: ['button[data-testid="send-button"]'],
-      inputSelectors: ['#prompt-textarea']
+      inputSelectors: ["#prompt-textarea"],
     },
     claude: {
-      userSelectors: ['.font-user-message', '[data-test-id="user-message"]'],
+      userSelectors: [".font-user-message", '[data-test-id="user-message"]'],
       buttonSelectors: ['button[aria-label="Send Message"]'],
-      inputSelectors: ['div[contenteditable="true"]']
+      inputSelectors: ['div[contenteditable="true"]'],
     },
     // Add other platforms as needed
   },
   aiConfig: {
-    defaultProvider: 'auto'
-  }
+    defaultProvider: "auto",
+  },
 };
 
-export const STORAGE_KEY = 'remote_selector_config';
-export const REMOTE_URL = 'https://raw.githubusercontent.com/bharathamaravadi/sauce-config/main/selectors.json'; // Replace with your actual URL
+export const STORAGE_KEY = "remote_selector_config";
+export const REMOTE_URL =
+  "https://raw.githubusercontent.com/bharathamaravadi/sauce-config/main/selectors.json"; // Replace with your actual URL
 export const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
-export const LAST_FETCH_KEY = 'remote_config_last_fetch';
+export const LAST_FETCH_KEY = "remote_config_last_fetch";
 
 export class RemoteConfigService {
   private static instance: RemoteConfigService;
   private config: RemoteConfig = DEFAULT_CONFIG;
 
-  private constructor() { }
+  private constructor() {}
 
   static getInstance(): RemoteConfigService {
     if (!RemoteConfigService.instance) {
@@ -55,7 +55,10 @@ export class RemoteConfigService {
 
   async initialize(): Promise<void> {
     // 1. Load from local storage first (fast)
-    const stored = await chrome.storage.local.get([STORAGE_KEY, LAST_FETCH_KEY]);
+    const stored = await chrome.storage.local.get([
+      STORAGE_KEY,
+      LAST_FETCH_KEY,
+    ]);
     if (stored[STORAGE_KEY]) {
       this.config = { ...DEFAULT_CONFIG, ...stored[STORAGE_KEY] };
     }
