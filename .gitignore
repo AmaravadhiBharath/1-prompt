@@ -30,7 +30,7 @@ typings/
 .stylelintcache
 
 # Output directory
-
+dist/
 build/
 out/
 

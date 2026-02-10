@@ -23,6 +23,7 @@ export interface Env {
     GEMINI_API_KEY?: string;
     AI_PROVIDER?: string;
     AI_MODEL?: string;
+    ADMIN_EMAILS?: string; // Comma-separated list of admin emails (set via wrangler secret)
 }
 
 // CORS Headers - Restricted to extension only
@@ -37,13 +38,10 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id',
     };
 
-    // Allow ANY chrome-extension origin to prevent CORS blocks during dev/updates
-    if (origin && origin.startsWith('chrome-extension://')) {
-        headers['Access-Control-Allow-Origin'] = origin;
-    } else if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    // Only allow known extension origins (no blanket chrome-extension:// wildcard)
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
         headers['Access-Control-Allow-Origin'] = origin;
     } else {
-        // Fallback for non-extension origins (limited security)
         headers['Access-Control-Allow-Origin'] = ALLOWED_ORIGINS[0];
     }
 
@@ -340,7 +338,9 @@ async function handleCheckTier(req: Request, env: Env, headers: Record<string, s
 
     // 1. Admin check (highest priority)
     // SECURE: Use verifiedEmail from the SIGNED token payload, not the request body
-    if (verifiedEmail && (verifiedEmail === 'bharathamaravadi@gmail.com' || verifiedEmail === 'bharath.amaravadi@gmail.com')) {
+    // Admin emails are configured via: wrangler secret put ADMIN_EMAILS
+    const adminEmails = (env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+    if (verifiedEmail && adminEmails.includes(verifiedEmail.toLowerCase())) {
         return new Response(JSON.stringify({ tier: 'admin' }), { headers });
     }
 

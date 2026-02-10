@@ -1,1 +1,0 @@
-import"./auth.js";import{c as e,j as t,R as o}from"./vendor.js";import{W as r}from"./index2.js";/* empty css     */import"./firebase.js";e.createRoot(document.getElementById("root")).render(t.jsx(o.StrictMode,{children:t.jsx(r,{})}));

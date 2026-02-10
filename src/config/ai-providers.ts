@@ -233,9 +233,9 @@ export class GeminiProvider implements AIProviderInterface {
 
   async chat(request: AIRequest): Promise<AIResponse> {
     const model = this.config.model || 'gemini-1.5-flash';
-    const endpoint = this.config.endpoint || 
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
-    
+    const endpoint = this.config.endpoint ||
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
     // Convert OpenAI format to Gemini format
     const contents = request.messages
       .filter(m => m.role !== 'system')
@@ -245,7 +245,7 @@ export class GeminiProvider implements AIProviderInterface {
       }));
 
     const systemInstruction = request.messages.find(m => m.role === 'system')?.content;
-    
+
     const body: any = {
       contents,
       generationConfig: {
@@ -264,6 +264,7 @@ export class GeminiProvider implements AIProviderInterface {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-goog-api-key': this.apiKey,
       },
       body: JSON.stringify(body),
     });
@@ -292,8 +293,8 @@ export class GeminiProvider implements AIProviderInterface {
     try {
       const model = this.config.model || 'gemini-1.5-flash';
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}?key=${this.apiKey}`,
-        { method: 'GET' }
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}`,
+        { method: 'GET', headers: { 'x-goog-api-key': this.apiKey } }
       );
       return response.ok;
     } catch {
