@@ -27,25 +27,37 @@ export interface Env {
 }
 
 // CORS Headers - Restricted to extension only
+// CORS Headers - Restricted to extension only
 const ALLOWED_ORIGINS = [
     'chrome-extension://opdaaehibnkaabelcjhoefnfmebciekj', // Store version (published)
     'chrome-extension://pckiikjlgoimpnimojpfpnfndilaogol', // Production ID
     'chrome-extension://gapafgdcpbmleogkpcogjccjekgkpidb', // Current Local ID
 ];
 
-function getCorsHeaders(origin: string | null): Record<string, string> {
+interface ExtendedEnv extends Env {
+    ALLOW_DEV_EXT?: string;
+}
+
+function getCorsHeaders(origin: string | null, env: ExtendedEnv): Record<string, string> {
     const headers: Record<string, string> = {
         'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS, DELETE',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id',
     };
 
-    // Allow ANY chrome-extension origin to prevent CORS blocks during dev/updates
+    const allowDevExt = env.ALLOW_DEV_EXT === 'true';
+
+    // Allow ANY chrome-extension origin ONLY if ALLOW_DEV_EXT is set (development)
     if (origin && origin.startsWith('chrome-extension://')) {
-        headers['Access-Control-Allow-Origin'] = origin;
+        if (allowDevExt || ALLOWED_ORIGINS.includes(origin)) {
+            headers['Access-Control-Allow-Origin'] = origin;
+        } else {
+            // Fallback for non-whitelisted extensions in production
+            headers['Access-Control-Allow-Origin'] = ALLOWED_ORIGINS[0];
+        }
     } else if (origin && ALLOWED_ORIGINS.includes(origin)) {
         headers['Access-Control-Allow-Origin'] = origin;
     } else {
-        // Fallback for non-extension origins (limited security)
+        // Fallback or specific default
         headers['Access-Control-Allow-Origin'] = ALLOWED_ORIGINS[0];
     }
 
@@ -63,7 +75,7 @@ export default {
 
         // Handle CORS preflight
         const origin = request.headers.get('Origin');
-        const headers = getCorsHeaders(origin);
+        const headers = getCorsHeaders(origin, env);
 
         if (request.method === 'OPTIONS') {
             return new Response(null, { headers });
@@ -157,7 +169,7 @@ export default {
             console.error('Unhandled error:', e);
             return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
                 status: 500,
-                headers: getCorsHeaders(request.headers.get('Origin'))
+                headers: getCorsHeaders(request.headers.get('Origin'), env)
             });
         }
     },

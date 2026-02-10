@@ -4,6 +4,9 @@
   "description": "Extract user prompts from AI chat platforms in One Click",
   "author": "Bharath Amaravadhi <Cursor Layout LLP>",
   "homepage": "https://1-prompt.in",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite build --watch & vite build --config vite.content.config.ts --watch",
@@ -26,7 +29,9 @@
     "tailwindcss": "^3.4.4",
     "typescript": "^5.5.2",
     "vite": "^7.3.1",
-    "wrangler": "^4.62.0"
+    "wrangler": "^4.62.0",
+    "prettier": "^3.3.3",
+    "eslint": "^9.9.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-arm64": "*",

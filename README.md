@@ -47,3 +47,32 @@ This software and its associated logic (the "Intent Engine") are the sole proper
 - Commercial use without explicit written consent from the owners.
 
 By using this software, you agree to these terms.
+
+---
+
+## 👨‍💻 Development & Security
+
+### CORS & Dev Mode
+To allow any local extension to connect to your backend during development, set `ALLOW_DEV_EXT=true` in your Cloudflare environment variables. In production, this should be `false` or unset.
+
+### Verification Commands
+**1. Test Backend CORS:**
+```bash
+curl -H "Origin: chrome-extension://gapafgdcpbmleogkpcogjccjekgkpidb" -I https://1prompt-backend.amaravadhibharath.workers.dev/
+```
+
+**2. Test Gemini API (Direct):**
+```bash
+curl -X POST "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" \
+  -H "x-goog-api-key: $GEMINI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"contents":[{"parts":[{"text":"Write a one line summary of 1-prompt extension."}]}]}'
+```
+
+**3. Test Summarization Endpoint:**
+```bash
+curl -X POST 'https://1prompt-backend.amaravadhibharath.workers.dev/' \
+  -H "Content-Type: application/json" \
+  -H "Origin: chrome-extension://gapafgdcpbmleogkpcogjccjekgkpidb" \
+  -d '{"prompts":[{"content":"Hello AI"}], "platform":"test"}'
+```
