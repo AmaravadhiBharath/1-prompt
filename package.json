@@ -5,7 +5,8 @@
   "author": "Bharath Amaravadhi <Cursor Layout LLP>",
   "homepage": "https://1-prompt.in",
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=20.19.0",
+    "npm": ">=9.6.0"
   },
   "type": "module",
   "scripts": {
