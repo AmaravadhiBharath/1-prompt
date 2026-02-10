@@ -1,6 +1,3 @@
-var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 (function() {
   "use strict";
   const BUNDLED_CONFIG = {
@@ -24,10 +21,8 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
   };
   class ConfigService {
-    constructor() {
-      __publicField(this, "config", BUNDLED_CONFIG);
-      __publicField(this, "loaded", false);
-    }
+    config = BUNDLED_CONFIG;
+    loaded = false;
     async load() {
       if (this.loaded) return this.config;
       try {
@@ -73,9 +68,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
   const CACHE_KEY = "prompt_extractor_selectors";
   const CACHE_TTL = 3600 * 1e3;
   class SelectorRegistryService {
-    constructor() {
-      __publicField(this, "registry", null);
-    }
+    registry = null;
     /**
      * Get selectors for a specific platform hostname
      */
@@ -194,14 +187,13 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       }
     }
     executeStrategy(strategy) {
-      var _a;
       const prompts = [];
       const seen = /* @__PURE__ */ new Set();
       if (strategy.promptSelectors) {
         for (const selector of strategy.promptSelectors) {
           const elements = this.deepQuerySelectorAll(selector);
           for (const el of elements) {
-            if ((_a = strategy.excludeSelectors) == null ? void 0 : _a.some((s) => el.matches(s))) continue;
+            if (strategy.excludeSelectors?.some((s) => el.matches(s))) continue;
             const content = this.cleanText(this.getVisibleText(el));
             const minLength = strategy.minContentLength || 3;
             if (content && content.length >= minLength && !seen.has(content) && !this.isUIElement(content)) {
@@ -273,10 +265,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
   }
   class ChatGPTAdapter extends BaseAdapter {
-    constructor() {
-      super(...arguments);
-      __publicField(this, "name", "ChatGPT");
-    }
+    name = "ChatGPT";
     detect() {
       return location.hostname.includes("chatgpt.com") || location.hostname.includes("chat.openai.com");
     }
@@ -302,10 +291,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
   }
   class ClaudeAdapter extends BaseAdapter {
-    constructor() {
-      super(...arguments);
-      __publicField(this, "name", "Claude");
-    }
+    name = "Claude";
     detect() {
       return location.hostname.includes("claude.ai");
     }
@@ -332,10 +318,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
   }
   class GeminiAdapter extends BaseAdapter {
-    constructor() {
-      super(...arguments);
-      __publicField(this, "name", "Gemini");
-    }
+    name = "Gemini";
     detect() {
       return location.hostname.includes("gemini.google.com");
     }
@@ -384,10 +367,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
   }
   class PerplexityAdapter extends BaseAdapter {
-    constructor() {
-      super(...arguments);
-      __publicField(this, "name", "Perplexity");
-    }
+    name = "Perplexity";
     detect() {
       return location.hostname.includes("perplexity.ai");
     }
@@ -433,10 +413,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
   }
   class DeepSeekAdapter extends BaseAdapter {
-    constructor() {
-      super(...arguments);
-      __publicField(this, "name", "DeepSeek");
-    }
+    name = "DeepSeek";
     detect() {
       return location.hostname.includes("deepseek.com");
     }
@@ -485,10 +462,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
   }
   class LovableAdapter extends BaseAdapter {
-    constructor() {
-      super(...arguments);
-      __publicField(this, "name", "Lovable");
-    }
+    name = "Lovable";
     detect() {
       return location.hostname.includes("lovable.dev");
     }
@@ -551,12 +525,11 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       const proseElements = this.deepQuerySelectorAll('[class*="prose"]');
       console.log(`[SahAI] Found ${proseElements.length} total prose elements`);
       proseElements.forEach((el) => {
-        var _a;
         const element = el;
         if (!this.isUserPrompt(element)) {
           return;
         }
-        const text = ((_a = element.textContent) == null ? void 0 : _a.trim()) || "";
+        const text = element.textContent?.trim() || "";
         if (text.length < 2 || text.length > 5e3) {
           return;
         }
@@ -595,10 +568,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
   }
   class BoltAdapter extends BaseAdapter {
-    constructor() {
-      super(...arguments);
-      __publicField(this, "name", "Bolt");
-    }
+    name = "Bolt";
     detect() {
       return location.hostname.includes("bolt.new");
     }
@@ -644,10 +614,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
   }
   class CursorAdapter extends BaseAdapter {
-    constructor() {
-      super(...arguments);
-      __publicField(this, "name", "Cursor");
-    }
+    name = "Cursor";
     detect() {
       return location.hostname.includes("cursor.sh") || location.hostname.includes("cursor.com");
     }
@@ -690,10 +657,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
   }
   class MetaAIAdapter extends BaseAdapter {
-    constructor() {
-      super(...arguments);
-      __publicField(this, "name", "Meta AI");
-    }
+    name = "Meta AI";
     detect() {
       return location.hostname.includes("meta.ai");
     }
@@ -745,10 +709,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
   }
   class GenericAdapter extends BaseAdapter {
-    constructor() {
-      super(...arguments);
-      __publicField(this, "name", "generic");
-    }
+    name = "generic";
     detect() {
       return true;
     }
@@ -771,8 +732,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         const userQueries = getShadowElements("user-query");
         if (userQueries.length > 0) {
           return userQueries.map((el, idx) => {
-            var _a;
-            const content = (_a = el.innerText) == null ? void 0 : _a.trim();
+            const content = el.innerText?.trim();
             return content && content.length > 0 ? { content, index: idx } : null;
           }).filter((p) => p !== null);
         }
@@ -803,14 +763,13 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       return document.body;
     }
     extractMessages(root) {
-      var _a;
       const fragments = [];
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
       let node;
       while (node = walker.nextNode()) {
-        const text = ((_a = node.textContent) == null ? void 0 : _a.trim()) || "";
+        const text = node.textContent?.trim() || "";
         const parent = node.parentElement;
-        if (text.length < 2 || this.isSystemNoise(text) || (parent == null ? void 0 : parent.tagName.toLowerCase()) === "model-response" || (parent == null ? void 0 : parent.classList.contains("model-response-text")) || (parent == null ? void 0 : parent.getAttribute("data-message-author-role")) === "assistant") continue;
+        if (text.length < 2 || this.isSystemNoise(text) || parent?.tagName.toLowerCase() === "model-response" || parent?.classList.contains("model-response-text") || parent?.getAttribute("data-message-author-role") === "assistant") continue;
         const lowerText = text.toLowerCase();
         if ([
           /should be written (about|on|for)/i,
@@ -906,15 +865,16 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
   };
   const STORAGE_KEY = "remote_selector_config";
   const LAST_FETCH_KEY = "remote_config_last_fetch";
-  const _RemoteConfigService = class _RemoteConfigService {
+  class RemoteConfigService {
+    static instance;
+    config = DEFAULT_CONFIG;
     constructor() {
-      __publicField(this, "config", DEFAULT_CONFIG);
     }
     static getInstance() {
-      if (!_RemoteConfigService.instance) {
-        _RemoteConfigService.instance = new _RemoteConfigService();
+      if (!RemoteConfigService.instance) {
+        RemoteConfigService.instance = new RemoteConfigService();
       }
-      return _RemoteConfigService.instance;
+      return RemoteConfigService.instance;
     }
     async initialize() {
       const stored = await chrome.storage.local.get([STORAGE_KEY, LAST_FETCH_KEY]);
@@ -930,9 +890,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     getAIConfig() {
       return this.config.aiConfig || DEFAULT_CONFIG.aiConfig;
     }
-  };
-  __publicField(_RemoteConfigService, "instance");
-  let RemoteConfigService = _RemoteConfigService;
+  }
   const SLOW_CONFIG = {
     lovable: {
       name: "Lovable",
@@ -1250,13 +1208,12 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     return null;
   }
   function getInputText(element) {
-    var _a, _b;
     if (!element) return "";
     if (element instanceof HTMLTextAreaElement) {
       return element.value.trim();
     }
     if (element.getAttribute("contenteditable") === "true") {
-      return ((_a = element.innerText) == null ? void 0 : _a.trim()) || ((_b = element.textContent) == null ? void 0 : _b.trim()) || "";
+      return element.innerText?.trim() || element.textContent?.trim() || "";
     }
     return "";
   }
@@ -1339,7 +1296,6 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     return patterns.some((p) => p.test(text));
   }
   function addToSession(text) {
-    var _a;
     if (!text || text.trim().length === 0) return;
     const conversationId = getConversationId();
     const content = text.trim();
@@ -1368,7 +1324,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     };
     sessionPrompts.push(prompt);
     const storageKey = getStorageKey();
-    (_a = chrome.storage.session) == null ? void 0 : _a.set({
+    chrome.storage.session?.set({
       [storageKey]: sessionPrompts
     }).catch(() => {
       chrome.storage.local.set({
@@ -1390,7 +1346,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
           } else {
             console.error("[SahAI] Could not save prompt after retries. Data saved locally only.");
           }
-        } else if (response == null ? void 0 : response.success) {
+        } else if (response?.success) {
           console.log("[SahAI] Prompt saved to background");
         }
       });
@@ -1398,10 +1354,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     sendToBackground();
   }
   async function loadSessionPrompts() {
-    var _a;
     try {
       const storageKey = getStorageKey();
-      const data = await ((_a = chrome.storage.session) == null ? void 0 : _a.get(storageKey)) || await chrome.storage.local.get(storageKey);
+      const data = await chrome.storage.session?.get(storageKey) || await chrome.storage.local.get(storageKey);
       if (data[storageKey]) {
         sessionPrompts = data[storageKey];
         console.log(`[SahAI] Loaded ${sessionPrompts.length} session prompts for conversation`);
@@ -1658,7 +1613,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     let domPrompts = [];
     if ((source === "auto" || source === "dom") && adapter) {
       console.log("[SahAI] Augmenting with DOM scraping...");
-      if ((platformName == null ? void 0 : platformName.toLowerCase()) === "lovable") {
+      if (platformName?.toLowerCase() === "lovable") {
         console.log("[SahAI] Using ba96d2c slow multi-position extraction for Lovable...");
         domPrompts = await extractFromMultiplePositions(adapter);
       } else {
@@ -2240,7 +2195,6 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       checkScheduled = true;
       const scheduleIdleCheck = window.requestIdleCallback || ((cb) => setTimeout(cb, 100));
       scheduleIdleCheck(() => {
-        var _a, _b;
         checkScheduled = false;
         if (location.href !== lastUrl) {
           lastUrl = location.href;
@@ -2264,7 +2218,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
           const hasZone1 = !!document.getElementById("pe-zone1");
           const hasFigmaPill = !!document.getElementById("pe-figma-pill-container");
           if (hasFigmaPill) {
-            (_a = document.getElementById("pe-figma-pill-container")) == null ? void 0 : _a.remove();
+            document.getElementById("pe-figma-pill-container")?.remove();
           }
           if (!hasZone1 && shouldShowZone1 && adapter) {
             createZonedLayout();
@@ -2273,7 +2227,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
           if (document.getElementById("pe-zone1") || document.getElementById("pe-figma-pill-container")) {
             console.log("[SahAI] Removing buttons: No longer on supported platform");
             removeZonedLayout();
-            (_b = document.getElementById("pe-figma-pill-container")) == null ? void 0 : _b.remove();
+            document.getElementById("pe-figma-pill-container")?.remove();
           }
         }
         const currentHasPrompts = adapter ? adapter.scrapePrompts().length > 0 : false;

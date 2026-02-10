@@ -1,18 +1,15 @@
 const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./pricing.js","./firebase.js"])))=>i.map(i=>d[i]);
-var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 import { g as getAuthToken, i as initializeAuth, s as subscribeToAuthChanges, a as signOut, b as signInWithGoogle } from "./auth.js";
-import { r as reactExports, j as jsxRuntimeExports, c as client } from "./vendor.js";
+import { r as reactExports, j as jsxRuntimeExports, R as ReactDOM } from "./vendor.js";
 import { r as resilientFetch, c as config, g as getHistoryFromCloud, m as mergeHistory, s as saveHistoryToCloud } from "./firebase.js";
 import { _ as __vitePreload } from "./preload-helper.js";
 import { PRO_PRICING, getUserTier, incrementCompile, incrementCapture, canUserCompile, canUserCapture } from "./pricing.js";
 class TelemetryService {
+  queue = [];
+  enabled = false;
+  // Default to false for privacy
+  consentGiven = false;
   constructor() {
-    __publicField(this, "queue", []);
-    __publicField(this, "enabled", false);
-    // Default to false for privacy
-    __publicField(this, "consentGiven", false);
     if (typeof chrome !== "undefined" && chrome.storage) {
       chrome.storage.local.get("telemetryConsent", (data) => {
         this.consentGiven = !!data.telemetryConsent;
@@ -84,31 +81,29 @@ const telemetry = new TelemetryService();
 class ErrorBoundary extends reactExports.Component {
   constructor(props) {
     super(props);
-    __publicField(this, "handleReset", () => {
-      this.setState({ hasError: false, error: null });
-    });
     this.state = { hasError: false, error: null };
   }
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
   componentDidCatch(error, errorInfo) {
-    var _a, _b;
     console.error("[ErrorBoundary] Caught error:", error, errorInfo);
     telemetry.track("ui_crash", {
       error: error.message,
-      stack: (_a = error.stack) == null ? void 0 : _a.slice(0, 500),
-      component: (_b = errorInfo.componentStack) == null ? void 0 : _b.slice(0, 200)
+      stack: error.stack?.slice(0, 500),
+      component: errorInfo.componentStack?.slice(0, 200)
     });
   }
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
+  };
   render() {
-    var _a;
     if (this.state.hasError) {
       return this.props.fallback || /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "error-boundary-container", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "error-boundary-content", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "error-boundary-emoji", children: "😵" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "error-boundary-title", children: "Something went wrong" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "error-boundary-desc", children: ((_a = this.state.error) == null ? void 0 : _a.message) || "An unexpected error occurred" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "error-boundary-desc", children: this.state.error?.message || "An unexpected error occurred" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             "button",
             {
@@ -261,7 +256,7 @@ function OnePromptApp() {
     const checkStatus = () => {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const activeTab = tabs[0];
-        if (activeTab == null ? void 0 : activeTab.id) {
+        if (activeTab?.id) {
           const url = activeTab.url || "";
           let tempPlatform = null;
           if (url.includes("chatgpt.com")) tempPlatform = "chatgpt";
@@ -348,7 +343,6 @@ function OnePromptApp() {
   };
   reactExports.useEffect(() => {
     const messageListener = async (msg) => {
-      var _a, _b;
       if (msg.action === "EXTRACTION_RESULT" || msg.action === "EXTRACTION_FROM_PAGE_RESULT") {
         if (msg.error) {
           setAiError(msg.error);
@@ -379,9 +373,9 @@ function OnePromptApp() {
         const newItem = {
           id: Date.now().toString(),
           timestamp: Date.now(),
-          platform: ((_a = msg.result.metadata) == null ? void 0 : _a.platform) || msg.result.platform || "Unknown",
+          platform: msg.result.metadata?.platform || msg.result.platform || "Unknown",
           promptCount: msg.result.prompts.length,
-          preview: msg.result.summary ? msg.result.summary.substring(0, 100) + "..." : (((_b = msg.result.prompts[0]) == null ? void 0 : _b.content) || "").substring(0, 100) + "...",
+          preview: msg.result.summary ? msg.result.summary.substring(0, 100) + "..." : (msg.result.prompts[0]?.content || "").substring(0, 100) + "...",
           prompts: msg.result.prompts,
           summary: msg.result.summary,
           model: msg.result.model,
@@ -444,8 +438,7 @@ function OnePromptApp() {
     setLoading(true);
     startTimer();
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      var _a;
-      if ((_a = tabs[0]) == null ? void 0 : _a.id) {
+      if (tabs[0]?.id) {
         chrome.tabs.sendMessage(tabs[0].id, { action: "EXTRACT_PROMPTS", mode: m, extractionSource });
       }
     });
@@ -454,7 +447,7 @@ function OnePromptApp() {
     const cleanContent = (content) => {
       return content.replace(/\n\n⚡ Summary by .*$/, "");
     };
-    const promptsToCopy = selectedPrompts.length > 0 ? selectedPrompts.map((i) => cleanContent((extractionResult == null ? void 0 : extractionResult.prompts[i].content) || "")).join("\n\n") : extractionResult == null ? void 0 : extractionResult.prompts.map((p) => cleanContent(p.content)).join("\n\n");
+    const promptsToCopy = selectedPrompts.length > 0 ? selectedPrompts.map((i) => cleanContent(extractionResult?.prompts[i].content || "")).join("\n\n") : extractionResult?.prompts.map((p) => cleanContent(p.content)).join("\n\n");
     if (promptsToCopy) {
       await navigator.clipboard.writeText(promptsToCopy);
     }
@@ -555,10 +548,7 @@ function OnePromptApp() {
       "Lost"
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "kb-text-body", children: "Handshake missing. Please refresh to continue." }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "kb-btn-refresh", onClick: () => chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      var _a;
-      return ((_a = tabs[0]) == null ? void 0 : _a.id) && chrome.tabs.reload(tabs[0].id);
-    }), children: "Refresh" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "kb-btn-refresh", onClick: () => chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => tabs[0]?.id && chrome.tabs.reload(tabs[0].id)), children: "Refresh" }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "kb-shortcut-hint", children: navigator.platform.includes("Mac") ? "Cmd + R" : "Ctrl + R" })
   ] });
   const renderConnected = () => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "kb-screen-content", children: [
@@ -657,9 +647,9 @@ function OnePromptApp() {
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "kb-stats-bar", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "kb-stats-text", style: { marginBottom: 0 }, children: [
         "Captured ",
-        (extractionResult == null ? void 0 : extractionResult.prompts.length) || 0,
+        extractionResult?.prompts.length || 0,
         " prompts in ",
-        (extractionTime == null ? void 0 : extractionTime.toFixed(0)) || liveTime.toFixed(0),
+        extractionTime?.toFixed(0) || liveTime.toFixed(0),
         " s"
       ] }),
       tier !== "guest" && /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -673,7 +663,7 @@ function OnePromptApp() {
       )
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "kb-results-card", children: [
-      mode === "compile" && (extractionResult == null ? void 0 : extractionResult.summary) ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "kb-summary-section", children: [
+      mode === "compile" && extractionResult?.summary ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "kb-summary-section", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "kb-summary-content", children: extractionResult.summary }),
         extractionResult.summary.includes("Local Client-Side Logic") && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { marginTop: 12 }, children: [
           aiError && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: {
@@ -720,7 +710,7 @@ function OnePromptApp() {
             ]
           }
         ) })
-      ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "kb-results-scroll", children: extractionResult == null ? void 0 : extractionResult.prompts.map((p, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "kb-results-scroll", children: extractionResult?.prompts.map((p, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
         "div",
         {
           className: `kb-result-item ${selectedPrompts.includes(i) ? "selected" : ""}`,
@@ -732,8 +722,8 @@ function OnePromptApp() {
         },
         i
       )) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "kb-card-footer", children: mode === "compile" && (extractionResult == null ? void 0 : extractionResult.summary) ? /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "kb-footer-btn-primary", onClick: () => {
-        if (extractionResult == null ? void 0 : extractionResult.summary) {
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "kb-card-footer", children: mode === "compile" && extractionResult?.summary ? /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "kb-footer-btn-primary", onClick: () => {
+        if (extractionResult?.summary) {
           chrome.runtime.sendMessage({ action: "COPY_TEXT", text: extractionResult.summary });
           setCopySuccess(true);
           setTimeout(() => setCopySuccess(false), 2e3);
@@ -890,7 +880,7 @@ function OnePromptApp() {
     )
   ] });
 }
-const root = client.createRoot(document.getElementById("root"));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(ErrorBoundary, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(OnePromptApp, {}) })
 );

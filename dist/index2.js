@@ -1,4 +1,4 @@
-import { r as reactExports, R as React, j as jsxRuntimeExports } from "./vendor.js";
+import { r as reactExports, a as React, j as jsxRuntimeExports } from "./vendor.js";
 import { b as signInWithGoogle } from "./auth.js";
 const features = [
   {

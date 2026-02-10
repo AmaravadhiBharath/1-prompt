@@ -1,5 +1,5 @@
 import { b as signInWithGoogle } from "./auth.js";
-import { r as reactExports, j as jsxRuntimeExports, R as React, c as client } from "./vendor.js";
+import { r as reactExports, j as jsxRuntimeExports, a as React, R as ReactDOM } from "./vendor.js";
 import { getUserTier } from "./pricing.js";
 /* empty css      */
 import "./firebase.js";
@@ -114,7 +114,7 @@ function HistoryPage() {
     const newHistory = history.filter((item) => item.id !== id);
     setHistory(newHistory);
     chrome.storage.local.set({ extractionHistory: newHistory });
-    if ((selectedItem == null ? void 0 : selectedItem.id) === id) {
+    if (selectedItem?.id === id) {
       setSelectedItem(null);
     }
   };
@@ -216,7 +216,7 @@ function HistoryPage() {
         group.items.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
           "div",
           {
-            className: `history-item-card ${(selectedItem == null ? void 0 : selectedItem.id) === item.id ? "active" : ""}`,
+            className: `history-item-card ${selectedItem?.id === item.id ? "active" : ""}`,
             onClick: () => setSelectedItem(item),
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-top", children: [
@@ -679,6 +679,6 @@ function HistoryPage() {
       ` })
   ] });
 }
-client.createRoot(document.getElementById("root")).render(
+ReactDOM.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(HistoryPage, {}) })
 );

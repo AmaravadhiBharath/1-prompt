@@ -1,6 +1,3 @@
-var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 const BUNDLED_CONFIG = {
   backend: {
     url: "https://1prompt-backend.amaravadhibharath.workers.dev"
@@ -22,10 +19,8 @@ const BUNDLED_CONFIG = {
   }
 };
 class ConfigService {
-  constructor() {
-    __publicField(this, "config", BUNDLED_CONFIG);
-    __publicField(this, "loaded", false);
-  }
+  config = BUNDLED_CONFIG;
+  loaded = false;
   async load() {
     if (this.loaded) return this.config;
     try {
@@ -73,12 +68,12 @@ const index = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.definePropert
   config
 }, Symbol.toStringTag, { value: "Module" }));
 class CircuitBreaker {
+  state = "CLOSED";
+  failures = 0;
+  lastFailureTime = 0;
+  successCount = 0;
+  config;
   constructor(config2) {
-    __publicField(this, "state", "CLOSED");
-    __publicField(this, "failures", 0);
-    __publicField(this, "lastFailureTime", 0);
-    __publicField(this, "successCount", 0);
-    __publicField(this, "config");
     this.config = config2;
   }
   async execute(fn) {

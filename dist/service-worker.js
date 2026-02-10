@@ -1,7 +1,3 @@
-var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-var _a;
 import { r as resilientFetch, c as config, h as getCurrentUserId } from "./firebase.js";
 import { _ as __vitePreload } from "./preload-helper.js";
 class LocalSummarizer {
@@ -199,11 +195,10 @@ const PROVIDER_MODELS = {
   // Auto-selection
 };
 function getEnvVar(key, fallback) {
-  var _a2;
   if (typeof globalThis !== "undefined" && define_globalThis_process_env_default) {
     return define_globalThis_process_env_default[key] || fallback;
   }
-  if (typeof window !== "undefined" && ((_a2 = window.process) == null ? void 0 : _a2.env)) {
+  if (typeof window !== "undefined" && window.process?.env) {
     return window.process.env[key] || fallback;
   }
   return fallback;
@@ -284,18 +279,15 @@ function getProviderApiKey(provider, config2) {
   throw new Error(`No API key found for provider ${provider}. Set ${envKeys[provider]} environment variable or configure in config file.`);
 }
 class OpenAIProvider {
-  constructor() {
-    __publicField(this, "name", "openai");
-    __publicField(this, "models", ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]);
-    __publicField(this, "config");
-    __publicField(this, "apiKey");
-  }
+  name = "openai";
+  models = ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"];
+  config;
+  apiKey;
   async initialize(config2) {
     this.config = config2;
     this.apiKey = getProviderApiKey("openai", config2);
   }
   async chat(request) {
-    var _a2, _b, _c, _d, _e;
     const endpoint = this.config.endpoint || "https://api.openai.com/v1/chat/completions";
     const body = {
       model: this.config.model || "gpt-4o-mini",
@@ -318,11 +310,11 @@ class OpenAIProvider {
     }
     const data = await response.json();
     return {
-      content: ((_b = (_a2 = data.choices[0]) == null ? void 0 : _a2.message) == null ? void 0 : _b.content) || "",
+      content: data.choices[0]?.message?.content || "",
       usage: {
-        promptTokens: ((_c = data.usage) == null ? void 0 : _c.prompt_tokens) || 0,
-        completionTokens: ((_d = data.usage) == null ? void 0 : _d.completion_tokens) || 0,
-        totalTokens: ((_e = data.usage) == null ? void 0 : _e.total_tokens) || 0
+        promptTokens: data.usage?.prompt_tokens || 0,
+        completionTokens: data.usage?.completion_tokens || 0,
+        totalTokens: data.usage?.total_tokens || 0
       },
       model: data.model,
       provider: "openai"
@@ -346,18 +338,15 @@ class OpenAIProvider {
   }
 }
 class AnthropicProvider {
-  constructor() {
-    __publicField(this, "name", "anthropic");
-    __publicField(this, "models", ["claude-3-5-sonnet-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"]);
-    __publicField(this, "config");
-    __publicField(this, "apiKey");
-  }
+  name = "anthropic";
+  models = ["claude-3-5-sonnet-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"];
+  config;
+  apiKey;
   async initialize(config2) {
     this.config = config2;
     this.apiKey = getProviderApiKey("anthropic", config2);
   }
   async chat(request) {
-    var _a2, _b, _c, _d, _e;
     const endpoint = this.config.endpoint || "https://api.anthropic.com/v1/messages";
     const systemMessage = request.messages.find((m) => m.role === "system");
     const chatMessages = request.messages.filter((m) => m.role !== "system");
@@ -365,7 +354,7 @@ class AnthropicProvider {
       model: this.config.model || "claude-3-haiku-20240307",
       max_tokens: request.maxTokens || this.config.maxTokens || 4e3,
       temperature: request.temperature || this.config.temperature || 0.3,
-      system: systemMessage == null ? void 0 : systemMessage.content,
+      system: systemMessage?.content,
       messages: chatMessages.map((m) => ({
         role: m.role === "assistant" ? "assistant" : "user",
         content: m.content
@@ -386,11 +375,11 @@ class AnthropicProvider {
     }
     const data = await response.json();
     return {
-      content: ((_a2 = data.content[0]) == null ? void 0 : _a2.text) || "",
+      content: data.content[0]?.text || "",
       usage: {
-        promptTokens: ((_b = data.usage) == null ? void 0 : _b.input_tokens) || 0,
-        completionTokens: ((_c = data.usage) == null ? void 0 : _c.output_tokens) || 0,
-        totalTokens: (((_d = data.usage) == null ? void 0 : _d.input_tokens) || 0) + (((_e = data.usage) == null ? void 0 : _e.output_tokens) || 0)
+        promptTokens: data.usage?.input_tokens || 0,
+        completionTokens: data.usage?.output_tokens || 0,
+        totalTokens: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0)
       },
       model: data.model,
       provider: "anthropic"
@@ -421,25 +410,22 @@ class AnthropicProvider {
   }
 }
 class GeminiProvider {
-  constructor() {
-    __publicField(this, "name", "gemini");
-    __publicField(this, "models", ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"]);
-    __publicField(this, "config");
-    __publicField(this, "apiKey");
-  }
+  name = "gemini";
+  models = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"];
+  config;
+  apiKey;
   async initialize(config2) {
     this.config = config2;
     this.apiKey = getProviderApiKey("gemini", config2);
   }
   async chat(request) {
-    var _a2, _b, _c, _d, _e, _f, _g, _h;
     const model = this.config.model || "gemini-1.5-flash";
     const endpoint = this.config.endpoint || `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
     const contents = request.messages.filter((m) => m.role !== "system").map((m) => ({
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }]
     }));
-    const systemInstruction = (_a2 = request.messages.find((m) => m.role === "system")) == null ? void 0 : _a2.content;
+    const systemInstruction = request.messages.find((m) => m.role === "system")?.content;
     const body = {
       contents,
       generationConfig: {
@@ -464,13 +450,13 @@ class GeminiProvider {
       throw new Error(`Gemini API Error: ${response.status} ${error}`);
     }
     const data = await response.json();
-    const candidate = (_b = data.candidates) == null ? void 0 : _b[0];
+    const candidate = data.candidates?.[0];
     return {
-      content: ((_e = (_d = (_c = candidate == null ? void 0 : candidate.content) == null ? void 0 : _c.parts) == null ? void 0 : _d[0]) == null ? void 0 : _e.text) || "",
+      content: candidate?.content?.parts?.[0]?.text || "",
       usage: {
-        promptTokens: ((_f = data.usageMetadata) == null ? void 0 : _f.promptTokenCount) || 0,
-        completionTokens: ((_g = data.usageMetadata) == null ? void 0 : _g.candidatesTokenCount) || 0,
-        totalTokens: ((_h = data.usageMetadata) == null ? void 0 : _h.totalTokenCount) || 0
+        promptTokens: data.usageMetadata?.promptTokenCount || 0,
+        completionTokens: data.usageMetadata?.candidatesTokenCount || 0,
+        totalTokens: data.usageMetadata?.totalTokenCount || 0
       },
       model,
       provider: "gemini"
@@ -494,12 +480,10 @@ class GeminiProvider {
   }
 }
 class AutoProvider {
-  constructor() {
-    __publicField(this, "name", "auto");
-    __publicField(this, "models", []);
-    __publicField(this, "providers", []);
-    __publicField(this, "selectedProvider", null);
-  }
+  name = "auto";
+  models = [];
+  providers = [];
+  selectedProvider = null;
   async initialize(config2) {
     this.providers = [
       new OpenAIProvider(),
@@ -533,11 +517,11 @@ class AutoProvider {
     return this.selectedProvider !== null;
   }
   getEndpoint() {
-    var _a2;
-    return ((_a2 = this.selectedProvider) == null ? void 0 : _a2.getEndpoint()) || "";
+    return this.selectedProvider?.getEndpoint() || "";
   }
 }
 class AIProviderFactory {
+  static providers = /* @__PURE__ */ new Map();
   static async getProvider(type, config2) {
     if (this.providers.has(type)) {
       const provider2 = this.providers.get(type);
@@ -569,22 +553,22 @@ class AIProviderFactory {
     this.providers.clear();
   }
 }
-__publicField(AIProviderFactory, "providers", /* @__PURE__ */ new Map());
-const _DynamicConfigLoader = class _DynamicConfigLoader {
+class DynamicConfigLoader {
+  static instance;
+  config = DEFAULT_AI_CONFIG;
+  sources = [];
+  lastUpdate = 0;
+  updateInterval = 5 * 60 * 1e3;
+  // 5 minutes
+  isLoading = false;
   constructor() {
-    __publicField(this, "config", DEFAULT_AI_CONFIG);
-    __publicField(this, "sources", []);
-    __publicField(this, "lastUpdate", 0);
-    __publicField(this, "updateInterval", 5 * 60 * 1e3);
-    // 5 minutes
-    __publicField(this, "isLoading", false);
     this.initializeSources();
   }
   static getInstance() {
-    if (!_DynamicConfigLoader.instance) {
-      _DynamicConfigLoader.instance = new _DynamicConfigLoader();
+    if (!DynamicConfigLoader.instance) {
+      DynamicConfigLoader.instance = new DynamicConfigLoader();
     }
-    return _DynamicConfigLoader.instance;
+    return DynamicConfigLoader.instance;
   }
   /**
    * Initialize configuration sources in priority order
@@ -857,9 +841,7 @@ const _DynamicConfigLoader = class _DynamicConfigLoader {
       // Could track which source provided the config
     };
   }
-};
-__publicField(_DynamicConfigLoader, "instance");
-let DynamicConfigLoader = _DynamicConfigLoader;
+}
 const dynamicConfigLoader = DynamicConfigLoader.getInstance();
 const CONSOLIDATION_RULES$1 = `[INTENT COMPILATION PROTOCOL v5.1 - ENTERPRISE]
 
@@ -925,15 +907,16 @@ C2. SPECIFICITY OVERRIDE
 - "Make colorful" → "Use blue and white only" = "Use blue and white only."
 
 [END PROTOCOL v5.1]`;
-const _EnhancedAISummarizer = class _EnhancedAISummarizer {
+class EnhancedAISummarizer {
+  static instance;
+  backendUrl = "https://1prompt-backend.amaravadhibharath.workers.dev";
   constructor() {
-    __publicField(this, "backendUrl", "https://1prompt-backend.amaravadhibharath.workers.dev");
   }
   static getInstance() {
-    if (!_EnhancedAISummarizer.instance) {
-      _EnhancedAISummarizer.instance = new _EnhancedAISummarizer();
+    if (!EnhancedAISummarizer.instance) {
+      EnhancedAISummarizer.instance = new EnhancedAISummarizer();
     }
-    return _EnhancedAISummarizer.instance;
+    return EnhancedAISummarizer.instance;
   }
   /**
    * Summarize prompts using the configured AI provider
@@ -1145,9 +1128,7 @@ ${content}`
     await dynamicConfigLoader.refreshConfig();
     AIProviderFactory.clearCache();
   }
-};
-__publicField(_EnhancedAISummarizer, "instance");
-let EnhancedAISummarizer = _EnhancedAISummarizer;
+}
 const enhancedAISummarizer = EnhancedAISummarizer.getInstance();
 const BACKEND_URL = "https://1prompt-backend.amaravadhibharath.workers.dev";
 const CONSOLIDATION_RULES = `[INTENT COMPILATION PROTOCOL v5.1 - ENTERPRISE]
@@ -1264,7 +1245,6 @@ class AISummarizer {
    * Legacy backend summarization method (kept for compatibility)
    */
   async legacySummarize(prompts, options = {}) {
-    var _a2, _b;
     try {
       const content = prompts.map((p, i) => `${i + 1}. ${p.content}`).join("\n\n");
       console.log(`[AISummarizer] ⏱️ Attempting legacy backend at ${BACKEND_URL}`);
@@ -1306,7 +1286,7 @@ class AISummarizer {
         throw new Error(errorMsg);
       }
       const data = await response.json();
-      console.log(`[AISummarizer] ✅ AI Summary received (${((_a2 = data.summary) == null ? void 0 : _a2.length) || 0} chars): ${(_b = data.summary) == null ? void 0 : _b.slice(0, 100)}...`);
+      console.log(`[AISummarizer] ✅ AI Summary received (${data.summary?.length || 0} chars): ${data.summary?.slice(0, 100)}...`);
       if (!data.summary || data.summary.trim().length === 0) {
         console.error("[AISummarizer] ❌ AI returned empty summary");
         throw new Error("AI returned an empty summary.");
@@ -1323,7 +1303,7 @@ class AISummarizer {
         provider: data.provider
       };
     } catch (error) {
-      console.error("[AISummarizer] ❌ Cloud AI failed:", (error == null ? void 0 : error.message) || error);
+      console.error("[AISummarizer] ❌ Cloud AI failed:", error?.message || error);
       console.error("[AISummarizer] ⚠️ Falling back to local client-side summarization...");
       try {
         const localResult = await localSummarizer.summarize(prompts);
@@ -1363,15 +1343,16 @@ const STORAGE_KEY = "remote_selector_config";
 const REMOTE_URL = "https://raw.githubusercontent.com/bharathamaravadi/sauce-config/main/selectors.json";
 const CACHE_TTL = 24 * 60 * 60 * 1e3;
 const LAST_FETCH_KEY = "remote_config_last_fetch";
-const _RemoteConfigService = class _RemoteConfigService {
+class RemoteConfigService {
+  static instance;
+  config = DEFAULT_CONFIG;
   constructor() {
-    __publicField(this, "config", DEFAULT_CONFIG);
   }
   static getInstance() {
-    if (!_RemoteConfigService.instance) {
-      _RemoteConfigService.instance = new _RemoteConfigService();
+    if (!RemoteConfigService.instance) {
+      RemoteConfigService.instance = new RemoteConfigService();
     }
-    return _RemoteConfigService.instance;
+    return RemoteConfigService.instance;
   }
   async initialize() {
     const stored = await chrome.storage.local.get([STORAGE_KEY, LAST_FETCH_KEY]);
@@ -1387,9 +1368,7 @@ const _RemoteConfigService = class _RemoteConfigService {
   getAIConfig() {
     return this.config.aiConfig || DEFAULT_CONFIG.aiConfig;
   }
-};
-__publicField(_RemoteConfigService, "instance");
-let RemoteConfigService = _RemoteConfigService;
+}
 const remoteConfig = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   CACHE_TTL,
@@ -1428,7 +1407,7 @@ try {
       const lastFetch = stored[LAST_FETCH_KEY] || 0;
       if (Date.now() - lastFetch > CACHE_TTL) {
         const config2 = RemoteConfigService.getInstance().config;
-        fetchRemoteConfigUpdates((config2 == null ? void 0 : config2.version) || 0).catch((err) => {
+        fetchRemoteConfigUpdates(config2?.version || 0).catch((err) => {
           console.error("[1prompt] Remote config update failed:", err);
         });
       }
@@ -1504,7 +1483,6 @@ async function trackDailyMetrics(_promptCount) {
   }
 }
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  var _a2;
   console.log("[1prompt] Received message:", message.action);
   switch (message.action) {
     case "EXTRACT_PROMPTS":
@@ -1544,7 +1522,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       (async () => {
         try {
           const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-          if (tab == null ? void 0 : tab.id) {
+          if (tab?.id) {
             await chrome.scripting.executeScript({
               target: { tabId: tab.id },
               func: (t) => {
@@ -1579,14 +1557,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     case "OPEN_SIDE_PANEL": {
       (async () => {
-        var _a3, _b;
         try {
-          console.log("[1prompt] OPEN_SIDE_PANEL received from tab:", (_a3 = sender.tab) == null ? void 0 : _a3.id);
-          let windowId = (_b = sender.tab) == null ? void 0 : _b.windowId;
+          console.log("[1prompt] OPEN_SIDE_PANEL received from tab:", sender.tab?.id);
+          let windowId = sender.tab?.windowId;
           if (!windowId) {
             console.log("[1prompt] No windowId from sender, querying active tab...");
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            windowId = tab == null ? void 0 : tab.windowId;
+            windowId = tab?.windowId;
             console.log("[1prompt] Got windowId from query:", windowId);
           }
           if (windowId) {
@@ -1607,7 +1584,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const { result, mode } = message;
       lastExtractionResult = result;
       console.log(`[1prompt SW] Received EXTRACTION_FROM_PAGE with ${result.prompts.length} prompts, mode: ${mode}`);
-      const windowId = (_a2 = sender.tab) == null ? void 0 : _a2.windowId;
+      const windowId = sender.tab?.windowId;
       if (windowId) {
         chrome.sidePanel.open({ windowId }).catch(() => {
         });
@@ -1880,7 +1857,7 @@ const injectedTabs = /* @__PURE__ */ new Set();
 chrome.tabs.onRemoved.addListener((tabId) => {
   injectedTabs.delete(tabId);
 });
-(_a = chrome.webNavigation) == null ? void 0 : _a.onHistoryStateUpdated.addListener(async (details) => {
+chrome.webNavigation?.onHistoryStateUpdated.addListener(async (details) => {
   if (details.frameId !== 0) return;
   const platform = detectPlatformFromUrl(details.url);
   if (!platform) return;
@@ -1913,7 +1890,7 @@ async function handleSidePanelMessage(message) {
     case "EXTRACT_PROMPTS": {
       const mode = message.mode;
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab == null ? void 0 : tab.id) {
+      if (tab?.id) {
         console.log("[1prompt] Sending EXTRACT_PROMPTS to tab:", tab.id);
         let retryCount = 0;
         const maxRetries = 3;
@@ -2034,11 +2011,10 @@ chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
   }
 });
 async function checkActiveTabStatus() {
-  var _a2;
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    console.log("[1prompt] Checking tab status:", (_a2 = tab == null ? void 0 : tab.url) == null ? void 0 : _a2.substring(0, 50));
-    if (!(tab == null ? void 0 : tab.id)) {
+    console.log("[1prompt] Checking tab status:", tab?.url?.substring(0, 50));
+    if (!tab?.id) {
       console.log("[1prompt] No active tab found");
       return;
     }
@@ -2144,7 +2120,7 @@ chrome.commands.onCommand.addListener(async (command) => {
   console.log("[1prompt] Command received:", command);
   if (command === "extract-prompts") {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab == null ? void 0 : tab.id) {
+    if (tab?.id) {
       try {
         await chrome.sidePanel.open({ windowId: tab.windowId });
       } catch (e) {

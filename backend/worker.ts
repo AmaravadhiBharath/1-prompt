@@ -21,6 +21,7 @@ export interface Env {
     // Secrets
     API_KEY?: string;
     GEMINI_API_KEY?: string;
+    ADMIN_EMAILS?: string;
     AI_PROVIDER?: string;
     AI_MODEL?: string;
 }
@@ -29,6 +30,7 @@ export interface Env {
 const ALLOWED_ORIGINS = [
     'chrome-extension://opdaaehibnkaabelcjhoefnfmebciekj', // Store version (published)
     'chrome-extension://pckiikjlgoimpnimojpfpnfndilaogol', // Production ID
+    'chrome-extension://gapafgdcpbmleogkpcogjccjekgkpidb', // Current Local ID
 ];
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
@@ -339,8 +341,11 @@ async function handleCheckTier(req: Request, env: Env, headers: Record<string, s
     }
 
     // 1. Admin check (highest priority)
-    // SECURE: Use verifiedEmail from the SIGNED token payload, not the request body
-    if (verifiedEmail && (verifiedEmail === 'bharathamaravadi@gmail.com' || verifiedEmail === 'bharath.amaravadi@gmail.com')) {
+    const adminEmails = (env.ADMIN_EMAILS || 'bharathamaravadi@gmail.com,bharath.amaravadi@gmail.com')
+        .split(',')
+        .map(e => e.trim().toLowerCase());
+
+    if (verifiedEmail && adminEmails.includes(verifiedEmail.toLowerCase())) {
         return new Response(JSON.stringify({ tier: 'admin' }), { headers });
     }
 
@@ -612,7 +617,7 @@ async function handleSummarize(request: Request, env: Env, headers: Record<strin
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${geminiApiKey}`
+                        'x-goog-api-key': geminiApiKey
                     },
                     body: JSON.stringify({
                         contents: [{
@@ -632,7 +637,9 @@ async function handleSummarize(request: Request, env: Env, headers: Record<strin
                             summary: summaryText.trim(),
                             model: 'gemini-2.0-flash',
                             provider: 'gemini'
-                        }), { headers: finalHeaders });
+                        }), {
+                            headers: { ...finalHeaders, 'X-Model-Used': 'gemini-2.0-flash' }
+                        });
                     }
                 } else {
                     const errorBody = await geminiResponse.text();
