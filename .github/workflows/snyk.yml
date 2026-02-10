@@ -7,8 +7,6 @@ on:
 
 jobs:
   snyk:
-    # Only run if SNYK_TOKEN is configured in repo secrets
-    if: ${{ secrets.SNYK_TOKEN != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,12 +17,15 @@ jobs:
           node-version-file: ".nvmrc"
 
       - name: Install Snyk
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         uses: snyk/actions/setup@v1
 
       - name: Install dependencies
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         run: npm ci
 
       - name: Run Snyk test
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: snyk test --all-projects

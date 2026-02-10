@@ -11,6 +11,7 @@ import {
   validateAIConfig,
 } from "./ai-config";
 import { resilientFetch } from "../services/resilient-api";
+import { RemoteConfigService } from "../services/remote-config";
 
 export interface ConfigSource {
   name: string;
@@ -238,11 +239,8 @@ export class DynamicConfigLoader {
    */
   private async loadFromRemoteConfig(): Promise<Partial<AIConfiguration> | null> {
     try {
-      // Use the existing remote config system
-      const remoteConfigService = (
-        await import("../services/remote-config")
-      ).RemoteConfigService.getInstance();
-      const aiConfig = remoteConfigService.getAIConfig();
+      // Use the existing remote config system (static import to allow chunking)
+      const aiConfig = RemoteConfigService.getInstance().getAIConfig();
 
       if (aiConfig && aiConfig.defaultProvider !== "auto") {
         return {
