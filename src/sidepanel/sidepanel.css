@@ -1,0 +1,401 @@
+/* ═══════════════════════════════════════════════════
+   1prompt Sidepanel - Claude/Cowork Aesthetic
+   Modern, minimal, upmarket. No corporate design system.
+   ═══════════════════════════════════════════════════ */
+
+
+:root {
+  /* Light Theme */
+  --bg: #ffffff;
+  --bg-secondary: #f8f8f8;
+  --text-primary: #0a0a0a;
+  --text-secondary: #565656;
+  --text-tertiary: #8b8b8b;
+  --border: #d9d9d9;
+  --border-light: #f0f0f0;
+  --accent: #0066cc;
+  --accent-light: #f0f7ff;
+}
+
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --bg-secondary: #262626;
+  --text-primary: #ececec;
+  --text-secondary: #adadad;
+  --text-tertiary: #8b8b8b;
+  --border: #404040;
+  --border-light: #2a2a2a;
+  --accent: #adc6ff;
+  --accent-light: #0a2850;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+/* ═══════════════════════════════════════════════════
+   SIDEPANEL CONTAINER
+   ═══════════════════════════════════════════════════ */
+
+.sidepanel-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+}
+
+/* ═══════════════════════════════════════════════════
+   TOP BAR
+   ═══════════════════════════════════════════════════ */
+
+.top-bar {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.back-button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 150ms ease;
+}
+
+[data-theme="dark"] .back-button {
+  color: #fff;
+}
+
+.back-button:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+[data-theme="dark"] .back-button:hover {
+  background: var(--accent);
+  color: #111318;
+}
+
+/* Toggle Group */
+.toggle-group {
+  flex: 1;
+  display: flex;
+  gap: 0;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  padding: 3px;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 150ms ease;
+  font-family: inherit;
+}
+
+.toggle-btn.active {
+  background: var(--bg);
+  color: var(--accent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Copy Button */
+.copy-button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+}
+
+.copy-button:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+[data-theme="dark"] .copy-button:hover {
+  background: var(--accent);
+  color: #111318;
+}
+
+/* ═══════════════════════════════════════════════════
+   CONTENT AREA (80%)
+   ═══════════════════════════════════════════════════ */
+
+.content {
+  flex: 4;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Platform Header */
+.platform-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+
+.platform-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.platform-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+}
+
+/* Prompt Group Container */
+.prompt-group {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+/* Prompt Wrapper */
+.prompt-wrapper {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+}
+
+.prompt-number {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 14px;
+  min-width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.prompt-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prompt-text {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+}
+
+.prompt-meta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* Scrollbar */
+.content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 3px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: var(--border);
+}
+
+/* ═══════════════════════════════════════════════════
+   EMPTY STATE
+   ═══════════════════════════════════════════════════ */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px 16px;
+  text-align: center;
+  flex: 1;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  font-size: 32px;
+  opacity: 0.3;
+}
+
+.empty-message {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════
+   FOOTER (20%)
+   ═══════════════════════════════════════════════════ */
+
+.footer {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.primary-button {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: all 150ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+}
+
+.primary-button:hover {
+  background: #0052a3;
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
+}
+
+.primary-button:active {
+  transform: scale(0.98);
+}
+
+.primary-button:disabled {
+  background: var(--text-tertiary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.footer-meta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 0 8px;
+}
+
+/* ═══════════════════════════════════════════════════
+   LOADING STATE
+   ═══════════════════════════════════════════════════ */
+
+.skeleton-item {
+  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border-light) 50%, var(--bg-secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  height: 60px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════ */
+
+.prompt-group {
+  animation: slideIn 200ms ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+  .top-bar {
+    padding: 10px 12px;
+    gap: 12px;
+  }
+
+  .content {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .footer {
+    padding: 12px;
+  }
+
+  .prompt-wrapper {
+    padding: 12px;
+  }
+
+  .prompt-text {
+    font-size: 12px;
+    padding: 10px;
+  }
+}

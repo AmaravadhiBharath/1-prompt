@@ -1,0 +1,239 @@
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--kb-radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.tier-badge.guest {
+  background: var(--kb-card-subtle);
+  color: var(--kb-on-surface-variant);
+  border: 1px solid var(--kb-outline);
+}
+
+.tier-badge.free,
+.tier-badge.go {
+  background: rgba(0, 124, 255, 0.08);
+  color: #007cff;
+  border: 1px solid rgba(0, 124, 255, 0.2);
+}
+
+.tier-badge.pro {
+  background: linear-gradient(135deg, #007cff 0%, #00c6ff 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0, 124, 255, 0.3);
+}
+
+.tier-remaining {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 1px 4px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.upgrade-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: modalFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.upgrade-content {
+  background: var(--kb-card);
+  border-radius: var(--kb-radius-card);
+  padding: 32px;
+  max-width: 340px;
+  width: 85%;
+  position: relative;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--kb-outline);
+  animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-align: center;
+}
+
+.upgrade-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.upgrade-close:hover {
+  background: #f3f4f6;
+}
+
+.upgrade-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.upgrade-header h3 {
+  margin: 0 0 12px 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--kb-on-surface);
+  letter-spacing: -0.02em;
+}
+
+.upgrade-header p {
+  margin: 0;
+  color: var(--kb-on-surface-variant);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.pricing-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.price-old {
+  text-decoration: line-through;
+  color: var(--kb-on-surface-variant);
+  font-size: 15px;
+  opacity: 0.6;
+}
+
+.price-new {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--kb-on-surface);
+  letter-spacing: -0.03em;
+}
+
+.price-badge {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.upgrade-features {
+  margin: 20px 0;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  color: var(--kb-on-surface);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.feature-icon {
+  font-size: 18px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--kb-card-subtle);
+  border-radius: 8px;
+}
+
+.upgrade-btn {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.upgrade-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.upgrade-btn.primary {
+  background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+  color: white;
+}
+
+.upgrade-btn.pro {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.google-icon {
+  font-size: 18px;
+}
+
+.upgrade-note {
+  text-align: center;
+  margin: 12px 0 0 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Paste Notification */
+.paste-notification {
+  position: fixed;
+  bottom: 24px;
+  left: 16px;
+  right: 16px;
+  background: var(--kb-card);
+  border: 1px solid var(--kb-outline);
+  border-radius: var(--kb-radius-card);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  animation: slideInFromBottom 0.3s ease-out;
+}
+
+.paste-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.paste-btn {
+  background: var(--kb-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--kb-radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+/* Dark mode support is already handled by CSS variables */

@@ -1,0 +1,23 @@
+
+name = "1prompt-backend"
+main = "worker.ts"
+compatibility_date = "2023-12-01"
+
+[[kv_namespaces]]
+# ID will be generated when you run `wrangler kv:namespace create PromptExtractor_KV`
+# For local dev, a preview ID is used
+# Replace these with your actual IDs after creating the namespace
+binding = "PromptExtractor_KV"
+id = "48fbd312af8a4f8699c5d9d445af2e36"
+preview_id = "REPLACE_WITH_PREVIEW_ID"
+
+[vars]
+# API_KEY should be set via secrets for security
+# wrangler secret put API_KEY
+
+
+[placement]
+mode = "smart"
+
+[ai]
+binding = "AI"
