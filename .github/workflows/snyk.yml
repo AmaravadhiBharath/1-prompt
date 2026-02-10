@@ -1,0 +1,30 @@
+name: Snyk Security Scan
+
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch: {}
+
+jobs:
+  snyk:
+    # Only run if SNYK_TOKEN is configured in repo secrets
+    if: ${{ secrets.SNYK_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install Snyk
+        uses: snyk/actions/setup@v1
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Snyk test
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test --all-projects

@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    # Optionally add ignored dependencies here
+    # ignore:
+    #   - dependency-name: "left-pad"
+    #     versions:
+    #       - "< 1.0.0"

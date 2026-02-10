@@ -2,6 +2,34 @@ name: CI
 
 on:
   push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Audit (fail on moderate+)
+        run: npm audit --audit-level=moderate
+name: CI
+
+on:
+  push:
     branches: [main, upgrade/vite-7]
   pull_request:
     branches: [main]
