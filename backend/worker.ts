@@ -789,15 +789,25 @@ async function handleSummarize(
 
     // Estimate prompt count from content (rough heuristic)
     const estimatedPromptCount = Math.ceil(content.length / 150);
-    // Routing: fast for all platforms (Cloudflare Llama) except Lovable which
-    // should use the slower Gemini pipeline. Respect explicit `provider` override.
-    const platform = body.platform || null;
+    // Routing: allow per-platform Gemini-first behavior controlled by
+    // env.AI_GEMINI_FIRST_PLATFORMS (comma-separated). If the current
+    // platform is listed, prefer Gemini first (when key exists). Otherwise
+    // prefer Cloudflare Llama (fast). Explicit `provider` overrides still apply.
+    const platform = (body.platform || "").toString().toLowerCase();
+    const geminiFirstRaw = (env.AI_GEMINI_FIRST_PLATFORMS || "lovable").toString();
+    const geminiFirstPlatforms = geminiFirstRaw
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+
     const prefersGemini =
       provider === "gemini"
         ? true
         : provider === "cloudflare"
         ? false
-        : platform === "lovable";
+        : geminiFirstPlatforms.includes(platform);
+
+    console.log(`[AI] Routing decision: platform=${platform} prefersGemini=${prefersGemini} geminiKey=${!!geminiApiKey}`);
 
     let geminiAttempted = false;
 
