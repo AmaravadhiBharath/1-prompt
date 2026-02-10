@@ -1,12 +1,4 @@
-/**
- * Enhanced AI Summarizer with Dynamic Provider Support
- * Uses the new configuration system to support multiple AI providers
- * without requiring code changes for provider switching
- */
-
 import type { ScrapedPrompt, SummaryResult } from "../types/index";
-import type { AIRequest, ChatMessage, AIResponse } from "./ai-providers";
-import { AIProviderFactory } from "./ai-providers";
 import { dynamicConfigLoader } from "./dynamic-loader";
 import { resilientFetch } from "../services/resilient-api";
 import { localSummarizer } from "../services/local-summarizer";
@@ -84,14 +76,13 @@ export interface EnhancedSummaryOptions {
   userId?: string;
   userEmail?: string;
   authToken?: string;
-  useDirectProvider?: boolean; // If true, bypass backend and use provider directly
 }
 
 export class EnhancedAISummarizer {
   private static instance: EnhancedAISummarizer;
   private backendUrl = "https://1prompt-backend.amaravadhibharath.workers.dev";
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): EnhancedAISummarizer {
     if (!EnhancedAISummarizer.instance) {
@@ -101,7 +92,7 @@ export class EnhancedAISummarizer {
   }
 
   /**
-   * Summarize prompts using the configured AI provider
+   * Summarize prompts using the configured AI provider via secure backend
    */
   async summarize(
     prompts: ScrapedPrompt[],
@@ -119,32 +110,11 @@ export class EnhancedAISummarizer {
       // Get current AI configuration
       const config = await dynamicConfigLoader.getConfig();
       console.log(
-        `[EnhancedAISummarizer] 🎯 Using provider: ${config.primary.provider} (${config.primary.model})`,
+        `[EnhancedAISummarizer] 🎯 Using provider via backend: ${config.primary.provider} (${config.primary.model})`,
       );
 
-      // Decide whether to use backend or direct provider
-      // If 'auto' is selected, we prefer the high-reliability Backend
-      const useDirectProvider =
-        options.useDirectProvider ||
-        (config.primary.provider !== "auto" && config.settings.autoFallback);
-
-      if (useDirectProvider && config.primary.apiKey) {
-        try {
-          return await this.summarizeWithDirectProvider(
-            prompts,
-            options,
-            config,
-          );
-        } catch (e) {
-          console.warn(
-            "[EnhancedAISummarizer] Direct provider failed, trying backend...",
-            e,
-          );
-          return await this.summarizeWithBackend(prompts, options, config);
-        }
-      } else {
-        return await this.summarizeWithBackend(prompts, options, config);
-      }
+      // Always use backend mode for security - API keys should stay on server
+      return await this.summarizeWithBackend(prompts, options, config);
     } catch (error) {
       console.error("[EnhancedAISummarizer] ❌ Primary method failed:", error);
       return await this.fallbackSummarize(prompts, options);
@@ -152,76 +122,14 @@ export class EnhancedAISummarizer {
   }
 
   /**
-   * Summarize using direct provider connection (client-side)
-   */
-  private async summarizeWithDirectProvider(
-    prompts: ScrapedPrompt[],
-    _options: EnhancedSummaryOptions,
-    config: any,
-  ): Promise<SummaryResult> {
-    console.log("[EnhancedAISummarizer] 🔧 Using direct provider mode");
-
-    try {
-      // Get the appropriate provider
-      const provider = await AIProviderFactory.getProvider(
-        config.primary.provider,
-        config.primary,
-      );
-
-      // Prepare the content for summarization
-      const content = this.prepareContent(prompts);
-
-      // Create the AI request
-      const messages: ChatMessage[] = [
-        {
-          role: "system",
-          content: CONSOLIDATION_RULES,
-        },
-        {
-          role: "user",
-          content: `Please consolidate these user prompts into a single, cohesive paragraph:\n\n${content}`,
-        },
-      ];
-
-      const aiRequest: AIRequest = {
-        messages,
-        temperature: config.primary.temperature || 0.3,
-        maxTokens: config.primary.maxTokens || 4000,
-      };
-
-      // Make the request
-      const response: AIResponse = await provider.chat(aiRequest);
-
-      console.log(
-        `[EnhancedAISummarizer] ✅ Direct provider summary received (${response.content.length} chars)`,
-      );
-
-      return {
-        original: prompts,
-        summary: response.content.trim(),
-        promptCount: {
-          before: prompts.length,
-          after: prompts.length,
-        },
-        provider: response.provider,
-        model: response.model,
-        usage: response.usage,
-      };
-    } catch (error) {
-      console.error("[EnhancedAISummarizer] ❌ Direct provider failed:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Summarize using backend (existing method with enhanced config)
+   * Summarize using backend (secure method where API keys are server-side)
    */
   private async summarizeWithBackend(
     prompts: ScrapedPrompt[],
     options: EnhancedSummaryOptions,
     config: any,
   ): Promise<SummaryResult> {
-    console.log("[EnhancedAISummarizer] 🌐 Using backend mode");
+    console.log("[EnhancedAISummarizer] 🌐 Requesting summary from backend");
 
     try {
       const content = this.prepareContent(prompts);
@@ -239,7 +147,7 @@ export class EnhancedAISummarizer {
           additionalInfo: CONSOLIDATION_RULES,
           provider: config.primary.provider,
           model: config.primary.model,
-          apiKey: config.primary.apiKey,
+          apiKey: config.primary.apiKey, // Extension may pass a user key if needed
           userId: options.userId,
           userEmail: options.userEmail,
           options: {
@@ -275,44 +183,19 @@ export class EnhancedAISummarizer {
   }
 
   /**
-   * Fallback summarization using local processing
+   * Fallback summarization using local processing (last resort)
    */
   private async fallbackSummarize(
     prompts: ScrapedPrompt[],
-    options: EnhancedSummaryOptions,
+    _options: EnhancedSummaryOptions,
   ): Promise<SummaryResult> {
     console.log(
-      "[EnhancedAISummarizer] 🔄 Falling back to local summarization",
+      "[EnhancedAISummarizer] 🔄 Falling back to local client-side summarization",
     );
 
     try {
-      const config = await dynamicConfigLoader.getConfig();
-
-      // Try fallback providers first
-      for (const fallbackConfig of config.fallbacks) {
-        try {
-          const provider = await AIProviderFactory.getProvider(
-            fallbackConfig.provider,
-            fallbackConfig,
-          );
-
-          if (await provider.isAvailable()) {
-            console.log(
-              `[EnhancedAISummarizer] 🔄 Trying fallback provider: ${fallbackConfig.provider}`,
-            );
-            return await this.summarizeWithDirectProvider(prompts, options, {
-              primary: fallbackConfig,
-            });
-          }
-        } catch (error) {
-          console.warn(
-            `[EnhancedAISummarizer] Fallback provider ${fallbackConfig.provider} failed:`,
-            error,
-          );
-        }
-      }
-
-      // Final fallback to local summarization
+      // Direct provider fallback removed for security.
+      // Final fallback to local summarization (deterministic logic)
       return await localSummarizer.summarize(prompts);
     } catch (error) {
       console.error(
@@ -344,44 +227,6 @@ export class EnhancedAISummarizer {
   }
 
   /**
-   * Test connectivity to configured provider
-   */
-  async testProvider(): Promise<{
-    success: boolean;
-    provider: string;
-    error?: string;
-  }> {
-    try {
-      const config = await dynamicConfigLoader.getConfig();
-      const provider = await AIProviderFactory.getProvider(
-        config.primary.provider,
-        config.primary,
-      );
-
-      const isAvailable = await provider.isAvailable();
-
-      if (isAvailable) {
-        return {
-          success: true,
-          provider: `${config.primary.provider} (${config.primary.model})`,
-        };
-      } else {
-        return {
-          success: false,
-          provider: `${config.primary.provider} (${config.primary.model})`,
-          error: "Provider is not available",
-        };
-      }
-    } catch (error) {
-      return {
-        success: false,
-        provider: "unknown",
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
-  }
-
-  /**
    * Get current configuration info for debugging
    */
   async getConfigInfo(): Promise<any> {
@@ -394,7 +239,6 @@ export class EnhancedAISummarizer {
           model: f.model,
         })),
         settings: config.settings,
-        lastUpdate: dynamicConfigLoader["lastUpdate"],
       };
     } catch (error) {
       return { error: error instanceof Error ? error.message : String(error) };
@@ -406,7 +250,6 @@ export class EnhancedAISummarizer {
    */
   async refreshConfiguration(): Promise<void> {
     await dynamicConfigLoader.refreshConfig();
-    AIProviderFactory.clearCache(); // Clear cached providers to use new config
   }
 }
 

@@ -322,7 +322,6 @@ export class AISummarizer {
         userId: options.userId,
         userEmail: options.userEmail,
         authToken: options.authToken,
-        useDirectProvider: false, // Start with backend, fallback to direct
       });
 
       console.log(
