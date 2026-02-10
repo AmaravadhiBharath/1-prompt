@@ -1,8 +1,1 @@
-import "./auth.js";
-import { c as client, j as jsxRuntimeExports, R as React } from "./vendor.js";
-import { W as Welcome } from "./index2.js";
-/* empty css      */
-import "./firebase.js";
-client.createRoot(document.getElementById("root")).render(
-  /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Welcome, {}) })
-);
+import"./auth.js";import{c as e,j as t,R as o}from"./vendor.js";import{W as r}from"./index2.js";/* empty css     */import"./firebase.js";e.createRoot(document.getElementById("root")).render(t.jsx(o.StrictMode,{children:t.jsx(r,{})}));
