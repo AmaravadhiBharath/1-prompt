@@ -422,30 +422,46 @@ html,
 }
 
 .kb-footer-btn-primary {
+  /* default: balanced pill when paired with Delete */
   flex: 1;
-  min-width: 120px;
-  padding: 14px 32px;
-  font-size: 18px;
-  font-weight: 800;
-  border-radius: 40px;
-  background: linear-gradient(135deg, rgba(0,90,226,0.32) 0%, rgba(76,145,255,0.32) 100%);
+  min-width: 70px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 9999px;
+  background: rgba(0, 90, 226, 0.12);
   color: #fff;
-  border: 2px solid rgba(76,145,255,0.7);
-  box-shadow: 0 8px 32px rgba(0,90,226,0.18);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  transition: border 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
+  border: 1px solid transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition: border 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
 }
 
-.kb-footer-btn-primary:hover {
-  background: linear-gradient(135deg, #005ae2 0%, #4c91ff 100%);
-  color: #fff;
-  border: 2px solid #005ae2;
-  box-shadow: 0 12px 48px rgba(0,90,226,0.28);
+/* When the Copy button is the only child (single CTA) show the large pill variant from the design */
+.kb-card-footer .kb-footer-btn-primary:only-child {
+  flex: none;
+  min-width: 260px;
+  padding: 14px 56px;
+  font-size: 20px;
+  font-weight: 800;
+  border-radius: 40px;
+  background: linear-gradient(135deg, #4c91ff 0%, #005ae2 100%);
+  color: #ffffff;
+  border: 2px solid rgba(0, 90, 226, 0.9);
+  box-shadow: 0 18px 40px rgba(0, 90, 226, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.kb-card-footer .kb-footer-btn-primary:only-child:hover {
+  background: linear-gradient(135deg, #005ae2 0%, #0046c8 100%);
+  border-color: #0046c8;
+  box-shadow: 0 22px 56px rgba(0, 80, 200, 0.28);
 }
 
 .kb-footer-btn-secondary {
