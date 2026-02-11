@@ -143,19 +143,7 @@ export default {
         return handleGetQuotas(headers);
       }
 
-      // DEBUG: Check Gemini key status (temporary)
-      if (url.pathname === "/debug/gemini-status" && request.method === "GET") {
-        const geminiKey = (env.GEMINI_API_KEY || "").trim();
-        const apiKey = (env.API_KEY || "").trim();
-        return new Response(JSON.stringify({
-          geminiKeySet: !!geminiKey,
-          geminiKeyLength: geminiKey.length,
-          geminiKeyPrefix: geminiKey ? geminiKey.slice(0, 6) + "..." : "NOT SET",
-          apiKeySet: !!apiKey,
-          apiKeyLength: apiKey.length,
-          apiKeyPrefix: apiKey ? apiKey.slice(0, 6) + "..." : "NOT SET",
-        }), { headers: { ...headers, "Content-Type": "application/json" } });
-      }
+      // (debug endpoint removed) - diagnostics cleaned for production
 
       // 2. User Routes (Protected)
       if (url.pathname === "/user/profile" && request.method === "POST") {
@@ -805,8 +793,7 @@ async function handleSummarize(
       ""
     ).trim();
 
-    // DEBUG: Log key presence (non-sensitive)
-    console.log(`[AI] Key Context: API_KEY=${!!env.API_KEY} (${env.API_KEY?.slice(0, 4)}...), GEMINI_API_KEY=${!!env.GEMINI_API_KEY} (${env.GEMINI_API_KEY?.slice(0, 4)}...), RequestKey=${!!apiKey}`);
+    // NOTE: debug key-prefix logging removed for production safety
 
     // Estimate prompt count from content (rough heuristic)
     const estimatedPromptCount = Math.ceil(content.length / 150);
@@ -833,10 +820,8 @@ async function handleSummarize(
     let geminiAttempted = false;
 
     // Helper to attempt Gemini call (returns Response on success, null otherwise)
-    let geminiDebugError = "";
     async function tryGemini(): Promise<Response | null> {
       if (!geminiApiKey) {
-        geminiDebugError = "Gemini key missing";
         console.warn("[AI] Gemini key missing, skipping Gemini attempt.");
         return null;
       }
@@ -888,12 +873,11 @@ async function handleSummarize(
               },
             );
           }
-        } else {
+          } else {
           const errorBody = await geminiResponse.text();
-          geminiDebugError = `Gemini ${geminiResponse.status}: ${errorBody.slice(0, 200)}`;
           console.error(`[AI] Gemini API error (${geminiResponse.status}):`, errorBody);
 
-          // If the error is API key related, we want to know
+          // If the error is API key related, log a helpful message
           if (geminiResponse.status === 403 || geminiResponse.status === 401) {
             console.error("[AI] Gemini Authentication Failure. Check GEMINI_API_KEY in Cloudflare Dashboard.");
           }
@@ -956,12 +940,7 @@ async function handleSummarize(
 
         if (summary) {
           return new Response(
-            JSON.stringify({
-              summary: summary.trim(),
-              model: model,
-              provider: "cloudflare",
-              _debug_gemini: geminiDebugError || "not attempted",
-            }),
+            JSON.stringify({ summary: summary.trim(), model: model, provider: "cloudflare" }),
             { headers: finalHeaders },
           );
         }
