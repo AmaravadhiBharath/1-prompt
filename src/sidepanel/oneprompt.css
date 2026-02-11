@@ -403,16 +403,15 @@ html,
 }
 
 /* Action Buttons in Pill */
-.kb-footer-btn-primary {
+.kb-footer-btn-primary,
+.kb-footer-btn-secondary {
   flex: 1;
+  min-width: 70px; /* Ensure equal visual weight */
   background: transparent;
-  color: var(--kb-logo-midnight);
-  /* Deep logo blue for readability */
   border: none;
   height: 100%;
-  padding: 0 20px;
+  padding: 0 12px;
   font-size: 14px;
-  font-weight: 700;
   cursor: pointer;
   transition: none;
   display: flex;
@@ -422,34 +421,19 @@ html,
   white-space: nowrap;
 }
 
-.kb-footer-btn-primary,
+.kb-footer-btn-primary {
+  color: var(--kb-logo-midnight);
+  font-weight: 700;
+}
+
 .kb-footer-btn-secondary {
-  min-height: 40px;
-  padding: 0 16px;
+  color: #ef4444;
+  font-weight: 700;
 }
 
 .kb-footer-btn-primary:hover {
   background: var(--kb-primary-soft);
   color: var(--kb-logo-vibrant);
-}
-
-.kb-footer-btn-secondary {
-  flex: 1;
-  background: transparent;
-  color: #ef4444;
-  /* Standard elegant red for destructive actions */
-  border: none;
-  height: 100%;
-  padding: 0 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  border-radius: 9999px;
 }
 
 .kb-footer-btn-secondary:hover {
