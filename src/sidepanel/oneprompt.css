@@ -204,27 +204,26 @@ html,
 .kb-action-card {
   background: white;
   border-radius: 20px;
-  padding: 32px 24px;
+  padding: 24px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   border: 1px solid rgba(0, 0, 0, 0.04);
   background-clip: padding-box;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
   position: relative;
   overflow: hidden;
+  margin-bottom: 16px;
 }
 
-/* Capture Card: Removed glowing background effect */
 .kb-action-card:nth-of-type(1) {
-  /* ... */
+  border-left: 3px solid var(--kb-logo-vibrant);
 }
 
-/* Compile Card: Removed glowing background effect */
 .kb-action-card:nth-of-type(2) {
-  /* ... */
+  border-left: 3px solid var(--kb-logo-sky);
 }
 
 @keyframes wander-1 {
