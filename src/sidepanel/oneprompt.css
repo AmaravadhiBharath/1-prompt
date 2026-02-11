@@ -423,18 +423,18 @@ html,
 
 .kb-footer-btn-primary {
   flex: 1;
-  min-width: 70px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 700;
-  border-radius: 9999px;
-  background: rgba(0,90,226,0.18);
+  min-width: 120px;
+  padding: 14px 32px;
+  font-size: 18px;
+  font-weight: 800;
+  border-radius: 40px;
+  background: linear-gradient(135deg, rgba(0,90,226,0.32) 0%, rgba(76,145,255,0.32) 100%);
   color: #fff;
-  border: 1.5px solid transparent;
-  box-shadow: 0 2px 8px rgba(0,90,226,0.08);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: border 0.2s, background 0.2s, color 0.2s;
+  border: 2px solid rgba(76,145,255,0.7);
+  box-shadow: 0 8px 32px rgba(0,90,226,0.18);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: border 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -442,9 +442,10 @@ html,
 }
 
 .kb-footer-btn-primary:hover {
-  background: rgba(0,90,226,0.32);
+  background: linear-gradient(135deg, #005ae2 0%, #4c91ff 100%);
   color: #fff;
-  border: 1.5px solid #005ae2;
+  border: 2px solid #005ae2;
+  box-shadow: 0 12px 48px rgba(0,90,226,0.28);
 }
 
 .kb-footer-btn-secondary {
