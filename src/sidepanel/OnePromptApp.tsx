@@ -52,6 +52,7 @@ export default function OnePromptApp() {
     "all" | "capture" | "compile"
   >("all");
   const [copySuccess, setCopySuccess] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [isRefining, setIsRefining] = useState(false);
   const [aiEnhancing, setAiEnhancing] = useState(false);
@@ -386,6 +387,8 @@ export default function OnePromptApp() {
 
     if (promptsToCopy) {
       await navigator.clipboard.writeText(promptsToCopy);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 1500);
     }
   };
 
@@ -401,8 +404,14 @@ export default function OnePromptApp() {
     const newPrompts = extractionResult.prompts.filter(
       (_, i) => !selectedPrompts.includes(i),
     );
+    // Update prompts immediately but keep the selected state until feedback finishes
     setExtractionResult({ ...extractionResult, prompts: newPrompts });
-    setSelectedPrompts([]);
+    setDeleteSuccess(true);
+    // Delay clearing the selection so the Delete button remains visible to show "Deleted!"
+    setTimeout(() => {
+      setSelectedPrompts([]);
+      setDeleteSuccess(false);
+    }, 1500);
   };
 
   const toggleSelection = (index: number) => {
@@ -912,8 +921,26 @@ export default function OnePromptApp() {
           </div>
         )}
 
-        <div className="kb-card-footer">
-          {mode === "compile" && extractionResult?.summary ? (
+        <div className={`kb-card-footer ${copySuccess || deleteSuccess ? "kb-feedback-active" : ""}`}>
+          {/* When a feedback state is active, render only a compact feedback-only button */}
+          {deleteSuccess ? (
+            <button className="kb-footer-btn-secondary" onClick={() => {}}>
+              {`Deleted (${selectedPrompts.length})`}
+            </button>
+          ) : copySuccess ? (
+            <button className="kb-footer-btn-primary" onClick={() => {}} aria-live="polite">
+              {selectedPrompts.length > 0 ? (
+                `Copied (${selectedPrompts.length})`
+              ) : (
+                <>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path d="M20 6L9 17l-5-5" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span style={{ marginLeft: 8 }}>Copied</span>
+                </>
+              )}
+            </button>
+          ) : mode === "compile" && extractionResult?.summary ? (
             <button
               className="kb-footer-btn-primary"
               onClick={() => {
@@ -936,13 +963,13 @@ export default function OnePromptApp() {
                 className="kb-footer-btn-secondary"
                 onClick={handleDelete}
               >
-                Delete
+                {deleteSuccess ? `Deleted (${selectedPrompts.length})` : "Delete"}
               </button>
               <div className="kb-footer-divider" />
               <span className="kb-footer-count">({selectedPrompts.length})</span>
               <div className="kb-footer-divider" />
               <button className="kb-footer-btn-primary" onClick={handleCopy}>
-                {copySuccess ? "Copied!" : "Copy"}
+                {copySuccess ? `Copied (${selectedPrompts.length})` : "Copy"}
               </button>
             </>
           ) : (
@@ -951,6 +978,7 @@ export default function OnePromptApp() {
             </button>
           )}
         </div>
+        {/* Feedback is shown inline inside footer buttons; floating bubble removed */}
       </div>
 
       <div className="kb-disclaimer">Please verify content before use.</div>
@@ -1035,15 +1063,15 @@ export default function OnePromptApp() {
         <div className="kb-history-overlay">
           <div className="kb-results-header">
             <h2 className="kb-history-title">History</h2>
-            <div style={{ width: 40 }} />
+            <div style={{ width: 12 }} />
           </div>
 
           <div
             className="kb-history-filters"
             style={{
               display: "flex",
-              gap: 8,
-              padding: "0 16px 12px",
+              gap: 6,
+              padding: "0 12px 10px",
               overflowX: "auto",
               scrollbarWidth: "none",
             }}

@@ -151,7 +151,7 @@ export function UpgradePrompt({
               <span>Access to Advanced Models</span>
             </div>
             <div className="feature-item">
-              <span className="feature-icon">🛠️</span>
+              <span className="feature-icon">�️</span>
               <span>Custom DOM & API options</span>
             </div>
             <div className="feature-item">

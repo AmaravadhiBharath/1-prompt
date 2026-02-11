@@ -441,7 +441,6 @@ export default function HistoryPage() {
                       <button
                         className="card-delete-btn"
                         onClick={(e) => handleDelete(item.id, e)}
-                        title="Delete"
                       >
                         <IconTrash />
                       </button>

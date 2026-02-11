@@ -10,6 +10,9 @@
   --kb-logo-vibrant: #005ae2;
   /* Core identity */
   --kb-logo-sky: #4c91ff;
+  /* CTA tokens (use lightest logo color for highlights) */
+  --kb-cta-light: var(--kb-logo-sky);
+  --kb-cta-dark: var(--kb-logo-vibrant);
   /* Light top highlight */
 
   --kb-primary-blue: var(--kb-logo-vibrant);
@@ -219,18 +222,25 @@ html,
 }
 
 .kb-action-card:nth-of-type(1) {
-  border-left: 3px solid var(--kb-logo-vibrant);
+  border-left: none; /* accent removed per request */
 }
 
 .kb-action-card:nth-of-type(2) {
-  border-left: 3px solid var(--kb-logo-sky);
+  border-left: none; /* accent removed per request */
 }
 
 .kb-action-card:hover {
   transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.9);
-  border-color: var(--kb-logo-vibrant);
-  box-shadow: none;
+  /* stronger visible hover: subtle white lift + vivid blue border */
+  background: #ffffff;
+  border: 1px solid var(--kb-logo-vibrant);
+  box-shadow: 0 8px 20px rgba(76,145,255,0.08);
+}
+
+.kb-action-card:focus,
+.kb-action-card:focus-within {
+  outline: 3px solid rgba(0,90,226,0.12);
+  outline-offset: 2px;
 }
 
 /* Disabled state for action cards (e.g., Compile for Basic users) */
@@ -293,13 +303,13 @@ html,
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 12px; /* nudge down so it doesn't overlap content */
+  top: 8px; /* tightened: bring the pill up slightly */
   z-index: 6;
 }
 
 /* Ensure header reserves vertical space so centered pill doesn't overlap list */
 .kb-results-header {
-  min-height: 48px;
+  min-height: 40px; /* reduced to tighten vertical rhythm */
 }
 
 .kb-back-circle {
@@ -390,9 +400,9 @@ html,
   background: rgba(255, 255, 255, 1);
   /* Solid background */
   border-radius: 9999px;
-  padding: 6px;
+  padding: 6px 12px; /* increase horizontal padding so inner buttons aren't flush to edges */
   display: flex;
-  gap: 0;
+  gap: 8px;
   box-shadow: none;
   z-index: 100;
   width: fit-content;
@@ -403,6 +413,8 @@ html,
   /* Thin logo-vibrant stroke */
 }
 
+/* Floating feedback removed: feedback appears inline inside buttons now */
+
 /* Action Buttons in Pill */
 .kb-footer-btn-primary,
 .kb-footer-btn-secondary {
@@ -410,7 +422,7 @@ html,
   min-width: 70px; /* Ensure equal visual weight */
   background: transparent;
   border: none;
-  height: 100%;
+  height: 40px;
   padding: 0 12px;
   font-size: 14px;
   cursor: pointer;
@@ -443,15 +455,18 @@ html,
   white-space: nowrap;
 }
 
-/* When the Copy button is the only child (single CTA) show the large pill variant from the design */
+/* When the Copy button is the only child (single CTA) show the pill sized to content */
 .kb-card-footer .kb-footer-btn-primary:only-child {
+  /* Single Copy should size to its content (auto width) while keeping consistent height */
+  /* horizontal padding increased slightly (+~10%) so the pill appears wider by default */
   flex: none;
-  min-width: 120px;
-  padding: 10px 28px;
-  font-size: 18px;
-  font-weight: 800;
-  border-radius: 40px;
-  background: linear-gradient(135deg, #4c91ff 0%, #005ae2 100%);
+  min-width: 0;
+  height: 40px;
+  padding: 0 20px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--kb-cta-light) 0%, var(--kb-cta-dark) 100%);
   color: #ffffff;
   border: none;
   box-shadow: 0 14px 32px rgba(0, 90, 226, 0.16);
@@ -460,13 +475,54 @@ html,
 }
 
 .kb-card-footer .kb-footer-btn-primary:only-child:hover {
-  background: linear-gradient(135deg, #005ae2 0%, #0046c8 100%);
+  background: linear-gradient(135deg, var(--kb-cta-dark) 0%, #0046c8 100%);
   box-shadow: 0 18px 48px rgba(0, 80, 200, 0.22);
 }
 
+/* Compact styling for Delete when it's the only child (feedback-only) */
+.kb-card-footer .kb-footer-btn-secondary:only-child {
+  flex: none;
+  min-width: 0;
+  height: 40px;
+  padding: 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 9999px;
+  background: #ef4444; /* solid red for deleted state */
+  color: #ffffff;
+  border: none;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kb-card-footer .kb-footer-btn-secondary:only-child:hover {
+  background: #dc2626;
+}
+
+/* Disable hover / interactions for compact feedback-only pills only when feedback is active */
+.kb-card-footer.kb-feedback-active .kb-footer-btn-primary:only-child,
+.kb-card-footer.kb-feedback-active .kb-footer-btn-secondary:only-child {
+  pointer-events: none; /* no hover, clicks ignored during feedback */
+  cursor: default;
+  box-shadow: none;
+}
+
+.kb-card-footer.kb-feedback-active .kb-footer-btn-primary:only-child:hover,
+.kb-card-footer.kb-feedback-active .kb-footer-btn-secondary:only-child:hover {
+  /* Ensure hover doesn't change appearance */
+  box-shadow: none;
+  transform: none;
+}
+
 .kb-footer-btn-secondary {
+  /* Delete: visible red text by default, transparent background so it reads on the pill */
   color: #ef4444;
   font-weight: 700;
+  background: transparent;
+  border-radius: 9999px;
+  transition: background 0.12s ease, transform 0.12s ease, color 0.12s ease;
 }
 
 .kb-footer-btn-primary:hover {
@@ -475,13 +531,15 @@ html,
 }
 
 .kb-footer-btn-secondary:hover {
-  background: #fff1f1;
+  /* Hover becomes solid brand red with white text; keep vertical centering */
+  background: #ef4444;
+  color: #ffffff;
 }
 
 /* When there are selected prompts (both Delete + Copy present),
    color the footer pill with the extension blue and keep Delete text red */
 .kb-card-footer:has(.kb-footer-btn-secondary) {
-  background: linear-gradient(135deg, #4c91ff 0%, #005ae2 100%);
+  background: linear-gradient(135deg, var(--kb-cta-light) 0%, var(--kb-cta-dark) 100%);
   border: none;
   box-shadow: 0 14px 32px rgba(0, 90, 226, 0.16);
 }
@@ -495,7 +553,7 @@ html,
 }
 
 .kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-secondary {
-  /* Keep Delete text red, but make button transparent to let pill color show */
+  /* Show Delete as red text on the pill (transparent background) */
   color: #ef4444;
   background: transparent;
   box-shadow: none;
@@ -503,18 +561,32 @@ html,
 
 /* Hover states when both buttons are present */
 .kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-secondary:hover {
-  /* red hover for Delete */
-  background: rgba(239, 68, 68, 0.12); /* subtle red fill */
-  color: #b91c1c; /* slightly deeper red on hover */
-  transform: translateY(-1px);
+  /* Combined-state hover: use solid brand red with white text; keep vertical centering */
+  background: #ef4444;
+  color: #ffffff;
+  box-shadow: none;
 }
 
 .kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-primary:hover {
-  /* blue hover for Copy */
+  /* blue hover for Copy; keep vertical centering */
   background: linear-gradient(135deg, #005ae2 0%, #4c91ff 100%);
   color: #ffffff;
   box-shadow: 0 18px 40px rgba(0,90,226,0.22);
-  transform: translateY(-1px);
+}
+
+/* Paired buttons: keep Copy and Delete the same visual weight and size */
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-primary,
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-secondary {
+  /* Content-based width for both buttons: width grows with content but height and padding are consistent */
+  flex: none;
+  min-width: 0;
+  height: 40px;
+  padding: 0 18px;
+  font-size: 16px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 
@@ -523,6 +595,7 @@ html,
   height: 16px;
   background: rgba(0, 0, 0, 0.1);
   margin: 0 4px;
+  display: none; /* hide divider as requested */
 }
 
 .kb-footer-count {
@@ -709,7 +782,7 @@ html,
 /* Ensure the History title is centered relative to the panel horizontally
    and sits below the persistent header icons/back button */
 .kb-history-overlay {
-  padding-top: 36px; /* tightened further so header area is denser */
+  padding-top: 30px; /* tightened further so header area is denser */
 }
 
 .kb-history-overlay .kb-results-header {
@@ -722,12 +795,12 @@ html,
   transform: translateX(-50%);
   font-size: 18px;
   font-weight: 700;
-  margin: 0 0 4px 0; /* reduced bottom margin for denser layout */
+  margin: 0 0 2px 0; /* slightly reduced bottom margin */
 }
 
 /* Slightly tighter spacing between heading and filter pills */
 .kb-history-overlay .kb-history-filters {
-  margin-top: 4px; /* tighter to bring filters closer to title */
+  margin-top: 2px; /* tighter to bring filters closer to title */
 }
 
 @keyframes kbSlideUp {
