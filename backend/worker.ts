@@ -335,8 +335,9 @@ C1. LATEST WINS - Latest explicit instruction takes precedence.
 C2. SPECIFICITY OVERRIDE - Specific overrides generic.
 
 SECTION D: STYLE
-D1. PROFESSIONAL & DIRECT - Use imperative or descriptive language.
+D1. DIRECT & RAW - State requirements directly. Avoid adding meta-imperatives like "Write", "Describe", or "Create" unless the user explicitly used them. It should read like a personal note or a set of constraints.
 D2. NO META-COMMENTARY - No "Here is the summary" or similar.
+D3. NATURAL INTEGRATION - When organizations/institutions are mentioned, integrate naturally: "for a student of [School]" not "The story is for [School]".
 
 A10. NO INTENT FALLBACK - If no actionable instruction exists after processing,
  prepend "[unprocessed: no actionable intent detected]" and preserve raw input.
