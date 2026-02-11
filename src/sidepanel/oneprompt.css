@@ -477,6 +477,30 @@ html,
   background: #fff1f1;
 }
 
+/* When there are selected prompts (both Delete + Copy present),
+   color the footer pill with the extension blue and keep Delete text red */
+.kb-card-footer:has(.kb-footer-btn-secondary) {
+  background: linear-gradient(135deg, #4c91ff 0%, #005ae2 100%);
+  border: none;
+  box-shadow: 0 14px 32px rgba(0, 90, 226, 0.16);
+}
+
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-primary,
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-count {
+  /* Copy label and count should be white on the blue pill */
+  color: #ffffff;
+  background: transparent;
+  box-shadow: none;
+}
+
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-secondary {
+  /* Keep Delete text red, but make button transparent to let pill color show */
+  color: #ef4444;
+  background: transparent;
+  box-shadow: none;
+}
+
+
 .kb-footer-divider {
   width: 1px;
   height: 16px;
