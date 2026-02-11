@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { signInWithGoogle } from "../services/auth";
+import React, { useEffect, useState, useRef } from "react";
+import { signInWithGoogle, getStoredUser } from "../services/auth";
 import "./new-design.css";
 
 const features = [
@@ -159,7 +159,7 @@ const Welcome: React.FC = () => {
   // Carousel State
   const [currentFeature, setCurrentFeature] = useState(0);
   const [animClass, setAnimClass] = useState("fade-init");
-  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Waitlist State
   const [waitlistEmail, setWaitlistEmail] = useState("");
@@ -219,6 +219,14 @@ const Welcome: React.FC = () => {
 
     handleRouting();
     window.addEventListener("popstate", handleRouting);
+
+    // AUTH CHECK on mount
+    getStoredUser().then((user) => {
+      if (user) {
+        setLoginSuccess(true);
+      }
+    });
+
     const checkPinnedStatus = async () => {
       if (chrome.action && chrome.action.getUserSettings) {
         const settings = await chrome.action.getUserSettings();
@@ -363,6 +371,12 @@ const Welcome: React.FC = () => {
       );
       const installed = hasExtensionAPI || hasMarkerAttribute;
       setIsInstalled(!!installed);
+
+      // AUTO-REDIRECT: If installed and user is on marketing landing, skip to app flow
+      if (installed && activeSection === "landing") {
+        setActiveSection("setup");
+      }
+
       return installed;
     };
     detectExtension();
@@ -403,7 +417,6 @@ const Welcome: React.FC = () => {
 
   useEffect(() => {
     if (!isInstalled) return;
-    if (!window.location.pathname.includes("install")) return;
     if (loginSuccess && isPinned) {
       setActiveSection("dashboard");
     } else {
