@@ -69,7 +69,7 @@ const features = [
   },
   {
     title: "Model-to-Model",
-    text: "Seamlessly transport your prompts between GPT-4, Claude, and Gemini. Break down the silos between AI models.",
+    text: "Move your prompts from ChatGPT to Claude, Claude to Gemini, or any LLM to another. No retyping, no starting over.",
     icon: (
       <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
         <circle
@@ -87,7 +87,7 @@ const features = [
   },
   {
     title: "Seamless Continuity",
-    text: "Pick up exactly where you left off. 1-Prompt remembers your context so you don't have to re-explain yourself.",
+    text: "Context got too long? Start a fresh chat with your compiled prompt and pick up right where you left off — same app or a new LLM.",
     icon: (
       <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
         <rect
@@ -565,8 +565,8 @@ const Welcome: React.FC = () => {
                   1-prompt : Capture & Compile in One Click
                 </h1>
                 <p className="hero-subtitle-new">
-                  Eliminate repetitive manual inputs. Preserve intent across
-                  ChatGPT, Claude, and Gemini instantly.
+                  Capture your prompts, compile them into one, and continue in a
+                  new chat or a completely different LLM — no retyping.
                 </p>
 
                 <div className="cta-group-new">
