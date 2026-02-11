@@ -141,7 +141,11 @@ const features = [
   },
 ];
 
-const Welcome: React.FC = () => {
+interface WelcomeProps {
+  onComplete?: () => void;
+}
+
+const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
 
@@ -297,7 +301,11 @@ const Welcome: React.FC = () => {
       await signInWithGoogle();
       setIsLoggingIn(false);
       setLoginSuccess(true);
-      openSidePanel(false);
+      if (onComplete) {
+        onComplete();
+      } else {
+        openSidePanel(true);
+      }
     } catch (error) {
       console.error("Login failed:", error);
       setIsLoggingIn(false);
@@ -335,7 +343,9 @@ const Welcome: React.FC = () => {
   };
 
   const handleGuestContinue = () => {
-    if (window.location.pathname.includes("sidepanel")) {
+    if (onComplete) {
+      onComplete();
+    } else if (window.location.pathname.includes("sidepanel")) {
       window.location.href = "index.html";
     } else {
       openSidePanel(true);
@@ -417,12 +427,14 @@ const Welcome: React.FC = () => {
 
   useEffect(() => {
     if (!isInstalled) return;
-    if (loginSuccess && isPinned) {
+    // ONLY show dashboard automatically if we are in the side panel (onComplete provided)
+    // If in a tab, stay on setup/success screen so user can open sidepanel
+    if (loginSuccess && isPinned && onComplete) {
       setActiveSection("dashboard");
     } else {
       setActiveSection("setup");
     }
-  }, [loginSuccess, isPinned, isInstalled]);
+  }, [loginSuccess, isPinned, isInstalled, onComplete]);
 
   const showFinalStage = loginSuccess && isPinned;
   const isLandingPage = ["landing", "uninstall", "pricing", "contact"].includes(

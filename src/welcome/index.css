@@ -595,6 +595,7 @@ body {
 }
 
 @keyframes puzzleClick {
+
   0%,
   29% {
     fill: #6b7280;
@@ -619,6 +620,7 @@ body {
 }
 
 @keyframes pinActivate {
+
   0%,
   54% {
     fill: #6b7280;
@@ -663,6 +665,7 @@ body {
 }
 
 @keyframes clickRipple {
+
   0%,
   28% {
     opacity: 0;
@@ -958,12 +961,10 @@ body {
 /* Vertical & Horizontal Connector Lines (Subtle) */
 .connector-line {
   position: absolute;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(2, 101, 220, 0.1),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(2, 101, 220, 0.1),
+      transparent);
   height: 1px;
   width: 100%;
   top: 50%;
@@ -971,12 +972,10 @@ body {
 }
 
 .connector-line.vertical {
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgba(2, 101, 220, 0.1),
-    transparent
-  );
+  background: linear-gradient(180deg,
+      transparent,
+      rgba(2, 101, 220, 0.1),
+      transparent);
   width: 1px;
   height: 100%;
   left: 50%;

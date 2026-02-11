@@ -140,7 +140,7 @@ chrome.runtime.onConnect.addListener((port) => {
           action: "EXTRACTION_RESULT",
           result: lastExtractionResult,
         })
-        .catch(() => {});
+        .catch(() => { });
     }
 
     // Check for pending trigger (extraction started from page before panel opened)
@@ -148,7 +148,7 @@ chrome.runtime.onConnect.addListener((port) => {
       console.log("[1-prompt] Replaying pending trigger to new sidepanel");
       chrome.runtime
         .sendMessage({ action: "EXTRACT_TRIGERED_FROM_PAGE" })
-        .catch(() => {});
+        .catch(() => { });
     }
 
     // Handle messages from side panel via port
@@ -317,7 +317,7 @@ chrome.runtime.onMessage.addListener(
         // Try to open side panel again just in case
         const windowId = sender.tab?.windowId;
         if (windowId) {
-          chrome.sidePanel.open({ windowId }).catch(() => {});
+          chrome.sidePanel.open({ windowId }).catch(() => { });
         }
 
         // If mode is 'compile', run reliable compilation (local first, AI enhancement)
@@ -325,23 +325,23 @@ chrome.runtime.onMessage.addListener(
           console.log(
             "[1-prompt SW] Mode is COMPILE - using reliable summarization...",
           );
-          
+
           // Send extraction started message to side panel
           chrome.runtime
             .sendMessage({
               action: "EXTRACTION_STARTED",
               mode,
             })
-            .catch(() => {});
-          
+            .catch(() => { });
+
           (async () => {
             let localResult: any = null;
-            
+
             try {
               // Step 1: Immediate local summarization (fast and reliable)
               console.log("[1-prompt SW] Running local summarization...");
               localResult = await localSummarizer.summarize(result.prompts);
-              
+
               // Broadcast local result immediately
               chrome.runtime
                 .sendMessage({
@@ -355,25 +355,25 @@ chrome.runtime.onMessage.addListener(
                   },
                   mode,
                 })
-                .catch(() => {});
-              
+                .catch(() => { });
+
               console.log("[1-prompt SW] Local compilation complete and broadcasted");
-              
+
               // Step 2: Attempt AI enhancement in background (10s timeout)
               console.log("[1-prompt SW] Attempting AI enhancement...");
               const userId = await getCurrentUserId();
-              
+
               const aiTimeoutPromise = new Promise<never>((_, reject) => {
                 setTimeout(() => reject(new Error("AI enhancement timed out after 10 seconds")), 10000);
               });
-              
+
               const aiSummaryResult = await Promise.race([
                 aiSummarizer.summarize(result.prompts, { userId: userId || undefined }),
                 aiTimeoutPromise
               ]);
-              
+
               console.log("[1-prompt SW] AI enhancement successful, broadcasting upgrade");
-              
+
               // Broadcast AI-enhanced result
               chrome.runtime
                 .sendMessage({
@@ -387,7 +387,7 @@ chrome.runtime.onMessage.addListener(
                   },
                   mode,
                 })
-                .catch(() => {});
+                .catch(() => { });
             } catch (error: any) {
               console.log("[1-prompt SW] AI enhancement failed, sending local result as final:", error.message);
               // Send local result as the final result since AI failed
@@ -403,7 +403,7 @@ chrome.runtime.onMessage.addListener(
                   },
                   mode,
                 })
-                .catch(() => {});
+                .catch(() => { });
             }
           })();
         } else {
@@ -447,7 +447,7 @@ chrome.runtime.onMessage.addListener(
               // Step 1: Immediate local summarization
               console.log("[1-prompt SW] Running local summarization...");
               const localResult = await localSummarizer.summarize(result.prompts);
-              
+
               const updatedResult = {
                 ...result,
                 summary: localResult.summary,
@@ -456,30 +456,30 @@ chrome.runtime.onMessage.addListener(
                 provider: "client-side",
               };
               lastExtractionResult = updatedResult;
-              
+
               broadcastToSidePanels({
                 action: "EXTRACTION_RESULT",
                 result: updatedResult,
                 mode,
               });
-              
+
               console.log("[1-prompt SW] Local compilation complete and broadcasted");
-              
+
               // Step 2: Attempt AI enhancement
               console.log("[1-prompt SW] Attempting AI enhancement...");
               const userId = await getCurrentUserId();
-              
+
               const aiTimeoutPromise = new Promise<never>((_, reject) => {
                 setTimeout(() => reject(new Error("AI enhancement timed out after 10 seconds")), 10000);
               });
-              
+
               const aiSummaryResult = await Promise.race([
                 aiSummarizer.summarize(result.prompts, { userId: userId || undefined }),
                 aiTimeoutPromise,
               ]);
-              
+
               console.log("[1-prompt SW] AI enhancement successful, broadcasting upgrade");
-              
+
               const aiUpdatedResult = {
                 ...result,
                 summary: aiSummaryResult.summary,
@@ -488,7 +488,7 @@ chrome.runtime.onMessage.addListener(
                 provider: aiSummaryResult.provider,
               };
               lastExtractionResult = aiUpdatedResult;
-              
+
               broadcastToSidePanels({
                 action: "EXTRACTION_RESULT",
                 result: aiUpdatedResult,
@@ -526,7 +526,7 @@ chrome.runtime.onMessage.addListener(
             // Step 1: Immediate local summarization
             console.log("[1-prompt SW] Running local re-summarization...");
             const localResult = await localSummarizer.summarize(lastExtractionResult!.prompts);
-            
+
             const updatedResult = {
               ...lastExtractionResult!,
               summary: localResult.summary,
@@ -535,30 +535,30 @@ chrome.runtime.onMessage.addListener(
               provider: "client-side",
             };
             lastExtractionResult = updatedResult;
-            
+
             broadcastToSidePanels({
               action: "EXTRACTION_RESULT",
               result: updatedResult,
               mode: "compile",
             });
-            
+
             console.log("[1-prompt SW] Local re-summarization complete and broadcasted");
-            
+
             // Step 2: Attempt AI enhancement
             console.log("[1-prompt SW] Attempting AI re-enhancement...");
             const userId = await getCurrentUserId();
-            
+
             const aiTimeoutPromise = new Promise<never>((_, reject) => {
               setTimeout(() => reject(new Error("AI re-enhancement timed out after 10 seconds")), 10000);
             });
-            
+
             const aiSummaryResult = await Promise.race([
               aiSummarizer.summarize(lastExtractionResult!.prompts, { userId: userId || undefined }),
               aiTimeoutPromise,
             ]);
-            
+
             console.log("[1-prompt SW] AI re-enhancement successful, broadcasting upgrade");
-            
+
             const aiUpdatedResult = {
               ...lastExtractionResult!,
               summary: aiSummaryResult.summary,
@@ -567,7 +567,7 @@ chrome.runtime.onMessage.addListener(
               provider: aiSummaryResult.provider,
             };
             lastExtractionResult = aiUpdatedResult;
-            
+
             broadcastToSidePanels({
               action: "EXTRACTION_RESULT",
               result: aiUpdatedResult,
@@ -1020,9 +1020,14 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   }
 });
 
-// Set uninstall URL
+// Set uninstall URL - disable during development reloads to prevent annoying tab pops
 if (chrome.runtime.setUninstallURL) {
-  chrome.runtime.setUninstallURL("https://1-prompt.in/uninstall");
+  const isDevelopment = !("update_url" in chrome.runtime.getManifest());
+  if (!isDevelopment) {
+    chrome.runtime.setUninstallURL("https://1-prompt.in/uninstall");
+  } else {
+    console.log("[1-prompt] Development mode detected: skipping setUninstallURL");
+  }
 }
 
 // Monitor tab changes to update side panel status

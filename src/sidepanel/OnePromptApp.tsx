@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import type { ExtractionResult, HistoryItem, Mode } from "../types";
+import Welcome from "../welcome/Welcome";
 import {
   initializeAuth,
   signInWithGoogle,
@@ -29,6 +30,9 @@ import "../services/tab-refresh"; // Import for side effects if needed (service 
 export default function OnePromptApp() {
   const [user, setUser] = useState<ChromeUser | null>(null);
   const [tier, setTier] = useState<UserTier>("guest");
+  const [hasSkippedWelcome, setHasSkippedWelcome] = useState<boolean | null>(
+    null,
+  );
   const [extractionResult, setExtractionResult] =
     useState<ExtractionResult | null>(null);
   const [mode, setMode] = useState<Mode>("capture");
@@ -71,6 +75,10 @@ export default function OnePromptApp() {
   // Initial Auth & Status Check
   useEffect(() => {
     initializeAuth().then((state) => setUser(state.user));
+
+    chrome.storage.local.get(["hasSkippedWelcome"], (result) => {
+      setHasSkippedWelcome(!!result.hasSkippedWelcome);
+    });
 
     const unsubscribe = subscribeToAuthChanges((u) => setUser(u));
 
@@ -1098,6 +1106,32 @@ export default function OnePromptApp() {
     </div>
   );
 
+  if (hasSkippedWelcome === null) {
+    return (
+      <div
+        style={{
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div className="kb-spinner" />
+      </div>
+    );
+  }
+
+  if (!user && !hasSkippedWelcome) {
+    return (
+      <Welcome
+        onComplete={() => {
+          chrome.storage.local.set({ hasSkippedWelcome: true });
+          setHasSkippedWelcome(true);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="kb-app-container">
       {/* Persistent Back (left) — render only when there's something to go back from */}
@@ -1164,7 +1198,9 @@ export default function OnePromptApp() {
             }}
           >
             {mode === "compile"
-              ? (aiEnhancing ? "Enhancing with AI..." : "Compiling...")
+              ? aiEnhancing
+                ? "Enhancing with AI..."
+                : "Compiling..."
               : "Capturing..."}{" "}
             {liveTime.toFixed(1)}s
           </p>
@@ -1235,9 +1271,13 @@ export default function OnePromptApp() {
                 onChange={(e) => setPlatformHistoryFilter(e.target.value)}
               >
                 <option value="all">🌐 Platform</option>
-                {Array.from(new Set(historyItems.map(h => h.platform))).filter(Boolean).map(p => (
-                  <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
-                ))}
+                {Array.from(new Set(historyItems.map((h) => h.platform)))
+                  .filter(Boolean)
+                  .map((p) => (
+                    <option key={p} value={p}>
+                      {p.charAt(0).toUpperCase() + p.slice(1)}
+                    </option>
+                  ))}
               </select>
             </div>
           </div>
@@ -1260,10 +1300,10 @@ export default function OnePromptApp() {
                         className="kb-history-separator clickable"
                         onClick={() => setShowPinned(!showPinned)}
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          cursor: 'pointer'
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          cursor: "pointer",
                         }}
                       >
                         <span>{group.label}</span>
@@ -1277,8 +1317,8 @@ export default function OnePromptApp() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           style={{
-                            transform: showPinned ? 'rotate(180deg)' : 'rotate(0deg)',
-                            transition: 'transform 0.2s'
+                            transform: showPinned ? "rotate(180deg)" : "rotate(0deg)",
+                            transition: "transform 0.2s",
                           }}
                         >
                           <polyline points="6 9 12 15 18 9" />
@@ -1334,7 +1374,7 @@ export default function OnePromptApp() {
                   >
                     {tier === "guest"
                       ? "Basic"
-                      : (tier === "free" || tier === "go")
+                      : tier === "free" || tier === "go"
                         ? "Go"
                         : "Admin"}{" "}
                     Plan
@@ -1346,11 +1386,13 @@ export default function OnePromptApp() {
                     style={{ color: "var(--kb-primary-blue)" }}
                     onClick={() => {
                       setShowPopup(false);
-                      chrome.tabs.create({ url: 'admin.html' });
+                      chrome.tabs.create({ url: "admin.html" });
                     }}
                   >
                     <div style={{ fontWeight: 600 }}>📊 Admin Dashboard</div>
-                    <div style={{ fontSize: 11, color: "var(--kb-text-secondary)" }}>
+                    <div
+                      style={{ fontSize: 11, color: "var(--kb-text-secondary)" }}
+                    >
                       View Usage Stats
                     </div>
                   </div>
@@ -1358,7 +1400,11 @@ export default function OnePromptApp() {
                 <div
                   className="kb-menu-item"
                   style={{ color: "#EF4444", marginTop: 4 }}
-                  onClick={() => signOut()}
+                  onClick={() => {
+                    signOut();
+                    chrome.storage.local.remove(["hasSkippedWelcome"]);
+                    setHasSkippedWelcome(false);
+                  }}
                 >
                   Sign Out
                 </div>
@@ -1380,8 +1426,6 @@ export default function OnePromptApp() {
           </div>
         </>
       )}
-
-
     </div>
   );
 }

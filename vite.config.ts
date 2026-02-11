@@ -76,15 +76,22 @@ const postBuildPlugin = () => ({
 
     // Fix welcome page paths if needed
     if (existsSync("dist/src/welcome/index.html")) {
-      // Move to root
+      // Move to root as welcome.html AND index.html for Cloudflare/Hosting
       copyFileSync("dist/src/welcome/index.html", "dist/welcome.html");
+      copyFileSync("dist/src/welcome/index.html", "dist/index.html");
 
-      let html = readFileSync("dist/welcome.html", "utf-8");
-      // Fix all paths that go too far up. Since we moved to root, ../../ becomes ./
-      html = html.replace(/\.\.\/\.\.\//g, "./");
-
-      writeFileSync("dist/welcome.html", html);
+      ["dist/welcome.html", "dist/index.html"].forEach((f) => {
+        let html = readFileSync(f, "utf-8");
+        // Fix all paths that go too far up. Since we moved to root, ../../ becomes ./
+        html = html.replace(/\.\.\/\.\.\//g, "./");
+        writeFileSync(f, html);
+      });
     }
+
+    // Create Cloudflare Pages _redirects file for SPA routing
+    // This ensures that /install, /pricing, etc. redirect to index.html
+    const redirectsContent = "/*    /index.html   200";
+    writeFileSync("dist/_redirects", redirectsContent);
 
     if (existsSync(srcHistoryPath)) {
       let html = readFileSync(srcHistoryPath, "utf-8");
