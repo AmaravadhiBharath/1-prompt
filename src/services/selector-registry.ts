@@ -83,7 +83,7 @@ class SelectorRegistryService {
     // Determine backend URL
     const backendUrl =
       config.backend.url ||
-      "https://1-prompt-backend.amaravadhibharath.workers.dev";
+      "https://1prompt-backend.amaravadhibharath.workers.dev";
 
     const response = await fetch(`${backendUrl}/config/selectors`);
     if (!response.ok) {

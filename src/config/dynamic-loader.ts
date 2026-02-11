@@ -117,6 +117,20 @@ export class DynamicConfigLoader {
         }
       }
 
+      // CACHE INVALIDATION: If the incoming config still uses "auto", we override it with Gemini
+      if ((finalConfig.primary.provider as any) === "auto") {
+        console.log("[DynamicConfigLoader] 🔄 Discarding 'auto' config, force-resetting to Gemini");
+        finalConfig.primary.provider = "gemini";
+        finalConfig.primary.model = "gemini-2.0-flash";
+      }
+
+      // Additional safety check: ensure provider is never undefined or null
+      if (!finalConfig.primary.provider || (finalConfig.primary.provider as any) === "auto") {
+        console.warn("[DynamicConfigLoader] ⚠️ Invalid provider detected, forcing Gemini");
+        finalConfig.primary.provider = "gemini";
+        finalConfig.primary.model = "gemini-2.0-flash";
+      }
+
       // Validate the final configuration
       const validation = validateAIConfig(finalConfig);
       if (!validation.valid) {
@@ -127,7 +141,7 @@ export class DynamicConfigLoader {
         console.log(
           "[DynamicConfigLoader] 🔧 Using default configuration as fallback",
         );
-        finalConfig = DEFAULT_AI_CONFIG;
+        finalConfig = { ...DEFAULT_AI_CONFIG };
       }
 
       this.config = finalConfig;
@@ -316,7 +330,7 @@ export class DynamicConfigLoader {
     }
 
     // Fallback to hardcoded admin endpoint (you can change this)
-    return "https://1-prompt-backend.amaravadhibharath.workers.dev/admin/ai-config";
+    return "https://1prompt-backend.amaravadhibharath.workers.dev/admin/ai-config";
   }
 
   /**

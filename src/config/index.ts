@@ -28,7 +28,7 @@ const BUNDLED_CONFIG: Config = {
   backend: {
     url:
       (import.meta as any).env.VITE_BACKEND_URL ||
-      "https://1-prompt-backend.amaravadhibharath.workers.dev",
+      "https://1prompt-backend.amaravadhibharath.workers.dev",
   },
   features: {
     telemetryEnabled: true,
@@ -44,8 +44,8 @@ const BUNDLED_CONFIG: Config = {
   },
   ai: {
     defaultProvider:
-      (import.meta as any).env.VITE_DEFAULT_AI_PROVIDER || "auto",
-    model: (import.meta as any).env.VITE_DEFAULT_AI_MODEL || "",
+      (import.meta as any).env.VITE_DEFAULT_AI_PROVIDER || "gemini",
+    model: (import.meta as any).env.VITE_DEFAULT_AI_MODEL || "gemini-2.0-flash",
   },
 };
 

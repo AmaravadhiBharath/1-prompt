@@ -2,6 +2,7 @@ import type { ScrapedPrompt, SummaryResult } from "../types/index";
 import { dynamicConfigLoader } from "./dynamic-loader";
 import { resilientFetch } from "../services/resilient-api";
 import { localSummarizer } from "../services/local-summarizer";
+import { config } from "./index";
 
 // Consolidation rules v5.1 - Enterprise Grade
 const CONSOLIDATION_RULES = `[INTENT COMPILATION PROTOCOL v5.1 - ENTERPRISE]
@@ -39,7 +40,9 @@ export interface EnhancedSummaryOptions {
 
 export class EnhancedAISummarizer {
   private static instance: EnhancedAISummarizer;
-  private backendUrl = "https://1prompt-backend.amaravadhibharath.workers.dev";
+  private get backendUrl() {
+    return `${config.backend.url}/summarize/v5`;
+  }
 
   private constructor() { }
 
@@ -76,6 +79,10 @@ export class EnhancedAISummarizer {
       return await this.summarizeWithBackend(prompts, options, config);
     } catch (error) {
       console.error("[EnhancedAISummarizer] ❌ Primary method failed:", error);
+      console.error("[EnhancedAISummarizer] ❌ Error details:", {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       return await this.fallbackSummarize(prompts, options);
     }
   }
@@ -88,10 +95,19 @@ export class EnhancedAISummarizer {
     options: EnhancedSummaryOptions,
     config: any,
   ): Promise<SummaryResult> {
-    console.log("[EnhancedAISummarizer] 🌐 Requesting summary from backend");
+    console.log(`[EnhancedAISummarizer] 🌐 Requesting summary from backend: ${this.backendUrl}`);
+    console.log(`[EnhancedAISummarizer] 📋 Provider: ${config.primary.provider}, Model: ${config.primary.model}`);
 
     try {
       const content = this.prepareContent(prompts);
+
+      console.log(`[EnhancedAISummarizer] 📦 Request payload:`, {
+        url: this.backendUrl,
+        contentLength: content.length,
+        platform: prompts[0]?.platform || "unknown",
+        provider: config.primary.provider === "auto" ? "gemini" : config.primary.provider,
+        model: config.primary.model || "gemini-1.5-flash",
+      });
 
       const response = await resilientFetch(this.backendUrl, {
         method: "POST",
@@ -105,8 +121,8 @@ export class EnhancedAISummarizer {
           content,
           platform: prompts[0]?.platform || "unknown",
           additionalInfo: CONSOLIDATION_RULES,
-          provider: config.primary.provider,
-          model: config.primary.model,
+          provider: config.primary.provider === "auto" ? "gemini" : config.primary.provider,
+          model: config.primary.model || "gemini-1.5-flash",
           apiKey: config.primary.apiKey, // Extension may pass a user key if needed
           userId: options.userId,
           userEmail: options.userEmail,
@@ -121,10 +137,15 @@ export class EnhancedAISummarizer {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error(`[EnhancedAISummarizer] ❌ Backend error ${response.status}:`, errorData);
         throw new Error(errorData.error || `Backend error: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log(`[EnhancedAISummarizer] ✅ Backend response received, provider: ${data.provider}, model: ${data.model}, summary length: ${data.summary?.length}`);
+      if (data._debug_gemini) {
+        console.warn(`[EnhancedAISummarizer] 🐛 Backend _debug_gemini: ${data._debug_gemini}`);
+      }
 
       return {
         original: prompts,

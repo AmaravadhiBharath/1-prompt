@@ -1,4 +1,4 @@
-export type AIProvider = "openai" | "anthropic" | "gemini" | "cohere" | "auto";
+export type AIProvider = "openai" | "anthropic" | "gemini" | "cohere" | "cloudflare" | "auto";
 
 export interface AIProviderConfig {
   /** The AI provider to use */
@@ -59,8 +59,8 @@ export interface AIConfiguration {
 // Default configuration that can be overridden
 export const DEFAULT_AI_CONFIG: AIConfiguration = {
   primary: {
-    provider: "auto",
-    model: "gemini-1.5-flash",
+    provider: "gemini",
+    model: "gemini-2.0-flash",
     timeout: 30000,
     maxTokens: 4000,
     temperature: 0.3,
@@ -69,7 +69,7 @@ export const DEFAULT_AI_CONFIG: AIConfiguration = {
   fallbacks: [
     {
       provider: "gemini",
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       timeout: 30000,
       maxTokens: 4000,
       temperature: 0.3,
@@ -90,7 +90,7 @@ export const DEFAULT_AI_CONFIG: AIConfiguration = {
     development: {
       primary: {
         provider: "gemini",
-        model: "gemini-1.5-flash",
+        model: "gemini-2.0-flash",
         temperature: 0.5,
       },
     },
@@ -112,8 +112,9 @@ export const PROVIDER_MODELS: Record<AIProvider, string[]> = {
     "claude-3-sonnet-20240229",
     "claude-3-haiku-20240307",
   ],
-  gemini: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"],
-  cohere: ["command-r-plus", "command-r", "command", "command-nightly"],
+  gemini: ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-pro", "gemini-1.5-flash"],
+  cohere: ["command-r-plus", "command-r", "command-r", "command", "command-nightly"],
+  cloudflare: ["@cf/meta/llama-3.2-3b-instruct", "@cf/meta/llama-3.1-8b-instruct"],
   auto: [],
 };
 

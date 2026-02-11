@@ -1,6 +1,6 @@
 {
   "name": "1-prompt",
-  "version": "1.2.25",
+  "version": "1.2.28",
   "description": "Extract user prompts from AI chat platforms in One Click",
   "author": "Bharath Amaravadhi <Cursor Layout LLP>",
   "homepage": "https://1-prompt.in",
@@ -24,15 +24,17 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "@vitest/ui": "^4.0.18",
     "autoprefixer": "^10.4.19",
+    "eslint": "^9.9.0",
     "postcss": "^8.4.38",
+    "prettier": "^3.3.3",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.5.2",
     "vite": "^7.3.1",
-    "wrangler": "^4.62.0",
-    "prettier": "^3.3.3",
-    "eslint": "^9.9.0"
+    "vitest": "^4.0.18",
+    "wrangler": "^4.62.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-arm64": "*",

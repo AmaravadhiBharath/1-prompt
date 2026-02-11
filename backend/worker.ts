@@ -21,7 +21,10 @@ export interface Env {
   ADMIN_EMAILS?: string;
   AI_PROVIDER?: string;
   AI_MODEL?: string;
+  AI_GEMINI_FIRST_PLATFORMS?: string;
 }
+
+const CUTOFF_PROMPT_COUNT = 50;
 
 // CORS Headers - Restricted to extension only
 // CORS Headers - Restricted to extension only
@@ -121,8 +124,9 @@ export default {
     }
 
     try {
-      // 0. AI Summarization (Root Path)
-      if (url.pathname === "/" && request.method === "POST") {
+      // 0. AI Summarization (Root or v5 Path)
+      if ((url.pathname === "/" || url.pathname === "/summarize/v5") && request.method === "POST") {
+        console.log(`[AI] Incoming request for ${url.pathname} from platform: ${request.headers.get("X-Platform") || "unknown"}`);
         return handleSummarize(request, env, headers);
       }
 
@@ -137,6 +141,20 @@ export default {
 
       if (url.pathname === "/config/quotas" && request.method === "GET") {
         return handleGetQuotas(headers);
+      }
+
+      // DEBUG: Check Gemini key status (temporary)
+      if (url.pathname === "/debug/gemini-status" && request.method === "GET") {
+        const geminiKey = (env.GEMINI_API_KEY || "").trim();
+        const apiKey = (env.API_KEY || "").trim();
+        return new Response(JSON.stringify({
+          geminiKeySet: !!geminiKey,
+          geminiKeyLength: geminiKey.length,
+          geminiKeyPrefix: geminiKey ? geminiKey.slice(0, 6) + "..." : "NOT SET",
+          apiKeySet: !!apiKey,
+          apiKeyLength: apiKey.length,
+          apiKeyPrefix: apiKey ? apiKey.slice(0, 6) + "..." : "NOT SET",
+        }), { headers: { ...headers, "Content-Type": "application/json" } });
       }
 
       // 2. User Routes (Protected)
@@ -381,8 +399,8 @@ async function handleGetRuntimeConfig(
       remoteSelectorEnabled: true,
     },
     ai: {
-      defaultProvider: env.AI_PROVIDER || "auto",
-      model: env.AI_MODEL || undefined,
+      defaultProvider: env.AI_PROVIDER || "gemini",
+      model: env.AI_MODEL || "gemini-1.5-flash",
     },
   };
   return new Response(JSON.stringify({ config }), { headers });
@@ -787,6 +805,9 @@ async function handleSummarize(
       ""
     ).trim();
 
+    // DEBUG: Log key presence (non-sensitive)
+    console.log(`[AI] Key Context: API_KEY=${!!env.API_KEY} (${env.API_KEY?.slice(0, 4)}...), GEMINI_API_KEY=${!!env.GEMINI_API_KEY} (${env.GEMINI_API_KEY?.slice(0, 4)}...), RequestKey=${!!apiKey}`);
+
     // Estimate prompt count from content (rough heuristic)
     const estimatedPromptCount = Math.ceil(content.length / 150);
     // Routing: allow per-platform Gemini-first behavior controlled by
@@ -794,46 +815,57 @@ async function handleSummarize(
     // platform is listed, prefer Gemini first (when key exists). Otherwise
     // prefer Cloudflare Llama (fast). Explicit `provider` overrides still apply.
     const platform = (body.platform || "").toString().toLowerCase();
-    const geminiFirstRaw = (env.AI_GEMINI_FIRST_PLATFORMS || "lovable").toString();
+    const geminiFirstRaw = (env.AI_GEMINI_FIRST_PLATFORMS || "lovable,chatgpt,claude,gemini,perplexity,deepseek").toString();
     const geminiFirstPlatforms = geminiFirstRaw
       .split(",")
-      .map((s) => s.trim().toLowerCase())
+      .map((s: string) => s.trim().toLowerCase())
       .filter(Boolean);
 
     const prefersGemini =
       provider === "gemini"
         ? true
         : provider === "cloudflare"
-        ? false
-        : geminiFirstPlatforms.includes(platform);
+          ? false
+          : geminiFirstPlatforms.includes(platform);
 
     console.log(`[AI] Routing decision: platform=${platform} prefersGemini=${prefersGemini} geminiKey=${!!geminiApiKey}`);
 
     let geminiAttempted = false;
 
     // Helper to attempt Gemini call (returns Response on success, null otherwise)
+    let geminiDebugError = "";
     async function tryGemini(): Promise<Response | null> {
-      if (!geminiApiKey) return null;
+      if (!geminiApiKey) {
+        geminiDebugError = "Gemini key missing";
+        console.warn("[AI] Gemini key missing, skipping Gemini attempt.");
+        return null;
+      }
       geminiAttempted = true;
       try {
         console.log(`[AI] Attempting Gemini for ${estimatedPromptCount} prompts`);
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
+        // Use 1.5-flash with key in URL for maximum reliability
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
 
         const geminiResponse = await fetch(geminiUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-goog-api-key": geminiApiKey,
           },
           body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: CONSOLIDATION_RULES }]
+            },
             contents: [
               {
                 parts: [
-                  { text: `System Instruction:\n${CONSOLIDATION_RULES}` },
-                  { text: `User Preferences for this summary: ${safeAdditionalInfo}\n\nChat Log to process:\n${content}` },
+                  { text: `User Instructions: ${safeAdditionalInfo}\n\nContent to summarize:\n${content}` },
                 ],
               },
             ],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 2048,
+            }
           }),
         });
 
@@ -841,6 +873,7 @@ async function handleSummarize(
           const geminiData: any = await geminiResponse.json();
           const summaryText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
           if (summaryText) {
+            console.log("[AI] Gemini success!");
             return new Response(
               JSON.stringify({
                 summary: summaryText.trim(),
@@ -857,9 +890,15 @@ async function handleSummarize(
           }
         } else {
           const errorBody = await geminiResponse.text();
+          geminiDebugError = `Gemini ${geminiResponse.status}: ${errorBody.slice(0, 200)}`;
           console.error(`[AI] Gemini API error (${geminiResponse.status}):`, errorBody);
+
+          // If the error is API key related, we want to know
+          if (geminiResponse.status === 403 || geminiResponse.status === 401) {
+            console.error("[AI] Gemini Authentication Failure. Check GEMINI_API_KEY in Cloudflare Dashboard.");
+          }
         }
-        console.warn("[AI] Gemini attempt failed");
+        console.warn("[AI] Gemini attempt failed - falling back to Llama");
       } catch (err: any) {
         console.warn("[AI] Gemini exception:", err?.message || err);
       }
@@ -921,6 +960,7 @@ async function handleSummarize(
               summary: summary.trim(),
               model: model,
               provider: "cloudflare",
+              _debug_gemini: geminiDebugError || "not attempted",
             }),
             { headers: finalHeaders },
           );

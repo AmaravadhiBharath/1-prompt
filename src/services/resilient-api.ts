@@ -98,6 +98,18 @@ const DEFAULT_CIRCUIT_CONFIG: CircuitBreakerConfig = {
 const backendCircuit = new CircuitBreaker(DEFAULT_CIRCUIT_CONFIG);
 
 /**
+ * Checks if an error is worth retrying.
+ * Retryable: 5xx, timeouts, network connectivity issues.
+ * Fatal: 400 (Bad Request), 401 (Auth), 403 (Forbidden), 404 (Not Found), 429 (Quota).
+ */
+function isRetryable(error: any): boolean {
+  if (error.name === 'AbortError') return true; // Timeout
+  if (!error.status) return true; // Network/CORS issues usually don't have a status
+  if (error.status >= 500) return true; // Server errors
+  return false; // Everything else (4xx) is considered fatal/client-error
+}
+
+/**
  * Retry with exponential backoff
  */
 async function retryWithBackoff<T>(
@@ -108,13 +120,13 @@ async function retryWithBackoff<T>(
   try {
     return await fn();
   } catch (error: any) {
-    // Don't retry on quota/auth errors
-    if (error.status === 429 || error.status === 401 || error.status === 403) {
+    if (!isRetryable(error)) {
+      console.error(`[Retry] Fatal error encountered (status: ${error.status}). No retry.`);
       throw error;
     }
 
     if (attempt >= config.maxRetries) {
-      console.error(`[Retry] All ${config.maxRetries} attempts failed`);
+      console.error(`[Retry] All ${config.maxRetries} attempts failed. Giving up.`);
       throw error;
     }
 
@@ -124,7 +136,7 @@ async function retryWithBackoff<T>(
     );
 
     console.warn(
-      `[Retry] Attempt ${attempt}/${config.maxRetries} - waiting ${delay}ms`,
+      `[Retry] Attempt ${attempt}/${config.maxRetries} failed with ${error.message || 'Error'}. Retrying in ${delay}ms...`,
     );
     await new Promise((resolve) => setTimeout(resolve, delay));
     return retryWithBackoff(fn, config, attempt + 1);

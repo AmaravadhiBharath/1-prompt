@@ -1,11 +1,11 @@
 import type { ScrapedPrompt, SummaryResult } from "../types/index";
+import { config } from "../config/index";
+import { fastHash } from "../utils/hash";
+import { StorageCache } from "../utils/storage-cache";
 import { resilientFetch } from "./resilient-api";
 import { localSummarizer } from "./local-summarizer";
 import { enhancedAISummarizer } from "../config/enhanced-ai-summarizer";
 import { dynamicConfigLoader } from "../config/dynamic-loader";
-
-// Cloudflare Worker URL - API keys stored server-side
-const BACKEND_URL = "https://1prompt-backend.amaravadhibharath.workers.dev";
 
 export interface SummaryOptions {
   format?: "paragraph" | "points" | "JSON" | "XML";
@@ -292,10 +292,8 @@ function filterPrompts(prompts: ScrapedPrompt[]): FilteredPrompt[] {
 */
 
 export class AISummarizer {
-  // Cache for AI results to avoid redundant calls
-  private cache = new Map<string, SummaryResult>();
-  private cacheExpiry = new Map<string, number>();
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private storage = new StorageCache("ai_summary");
+  private readonly CACHE_TTL = 30 * 60 * 1000; // 30 minutes (more aggressive caching since it's persistent)
 
   /**
    * Summarize extracted prompts using the configured AI provider
@@ -317,10 +315,10 @@ export class AISummarizer {
     // Generate cache key from prompts content
     const cacheKey = this.generateCacheKey(prompts, options);
 
-    // Check cache
-    const cached = this.getCachedResult(cacheKey);
+    // Check cache (Persistent & Async)
+    const cached = await this.storage.get<SummaryResult>(cacheKey);
     if (cached) {
-      console.log("[AISummarizer] 📝 Using cached AI result");
+      console.log("[AISummarizer] 🎯 Cache hit for compilation");
       return cached;
     }
 
@@ -345,8 +343,13 @@ export class AISummarizer {
         `[AISummarizer] ✅ Enhanced AI summary completed via ${result.provider || "backend"}`,
       );
 
-      // Cache the result
-      this.setCachedResult(cacheKey, result);
+      // Cache the result ONLY if it's not a local fallback
+      if (result.provider !== "local" && result.model !== "fallback" && result.model !== "Local (Reliable)") {
+        await this.storage.set(cacheKey, result, this.CACHE_TTL);
+        console.log("[AISummarizer] 💾 Cached AI result");
+      } else {
+        console.log("[AISummarizer] ⚠️ Skipping cache for local fallback result");
+      }
 
       return result;
     } catch (enhancedError) {
@@ -355,13 +358,17 @@ export class AISummarizer {
         enhancedError,
       );
 
-      // Fallback to legacy backend method with retry
       const result = await this.retryWithBackoff(async () =>
         this.legacySummarize(prompts, options)
       );
 
-      // Cache the result
-      this.setCachedResult(cacheKey, result);
+      // Cache the result ONLY if it's not a local fallback
+      if (result.provider !== "local" && result.model !== "fallback" && result.model !== "Local (Reliable)") {
+        await this.storage.set(cacheKey, result, this.CACHE_TTL);
+        console.log("[AISummarizer] 💾 Cached AI result from legacy backend");
+      } else {
+        console.log("[AISummarizer] ⚠️ Skipping cache for local fallback result");
+      }
 
       return result;
     }
@@ -381,17 +388,20 @@ export class AISummarizer {
         .map((p, i) => `${i + 1}. ${p.content}`)
         .join("\n\n");
 
+      const c = await config.load();
+      const url = `${c.backend.url}/summarize/v5`;
+
+      // Use dynamic config instead of hardcoded 'auto'
+      const aiConfig = await dynamicConfigLoader.getConfig();
+      const provider = aiConfig.primary.provider;
+      const model = aiConfig.primary.model || "standard";
+
       console.log(
-        `[AISummarizer] ⏱️ Attempting legacy backend at ${BACKEND_URL}`,
+        `[AISummarizer] ⏱️ Attempting legacy backend at ${url} using ${provider} (${model})`,
       );
       console.log(
         `[AISummarizer] 📝 Sending ${prompts.length} raw prompts (${content.length} chars)`,
       );
-
-      // Use dynamic config instead of hardcoded remote config
-      const config = await dynamicConfigLoader.getConfig();
-      const provider = config.primary.provider;
-      const model = config.primary.model;
 
       // Use the defined Enterprise Consolidation Protocol
       const promptTemplate = CONSOLIDATION_RULES.replace("[END PROTOCOL v5.1]", "")
@@ -399,7 +409,7 @@ export class AISummarizer {
 
       const finalPrompt = promptTemplate.replace("{prompts}", content);
 
-      const response = await resilientFetch(BACKEND_URL, {
+      const response = await resilientFetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -409,8 +419,9 @@ export class AISummarizer {
         },
         body: JSON.stringify({
           content: finalPrompt,
-          additionalInfo: "", // Not needed since content includes the full prompt
-          provider: provider,
+          platform: prompts[0]?.platform || "unknown",
+          additionalInfo: "",
+          provider: provider === "auto" ? "gemini" : provider,
           model: model,
           userId: options.userId,
           userEmail: options.userEmail,
@@ -490,52 +501,19 @@ export class AISummarizer {
    * Generate a cache key from prompts and options
    */
   private generateCacheKey(prompts: ScrapedPrompt[], options: SummaryOptions): string {
-    const contentHash = prompts
-      .map(p => p.content)
-      .sort()
-      .join('')
-      .slice(0, 1000); // Limit to avoid too long keys
-    const optionsStr = JSON.stringify({
-      format: options.format,
-      tone: options.tone,
-      includeAI: options.includeAI,
-    });
-    return btoa(contentHash + optionsStr).slice(0, 100); // Base64 and limit length
-  }
-
-  /**
-   * Get cached result if valid
-   */
-  private getCachedResult(key: string): SummaryResult | null {
-    const expiry = this.cacheExpiry.get(key);
-    if (expiry && Date.now() < expiry) {
-      return this.cache.get(key) || null;
-    }
-    // Clean up expired entries
-    this.cache.delete(key);
-    this.cacheExpiry.delete(key);
-    return null;
-  }
-
-  /**
-   * Set cached result with TTL
-   */
-  private setCachedResult(key: string, result: SummaryResult): void {
-    this.cache.set(key, result);
-    this.cacheExpiry.set(key, Date.now() + this.CACHE_TTL);
-
-    // Limit cache size to prevent memory leaks
-    if (this.cache.size > 50) {
-      const oldestKey = this.cache.keys().next().value;
-      if (oldestKey) {
-        this.cache.delete(oldestKey);
-        this.cacheExpiry.delete(oldestKey);
+    const input = JSON.stringify({
+      prompts: prompts.map(p => p.content).sort(),
+      options: {
+        format: options.format,
+        tone: options.tone,
+        includeAI: options.includeAI,
       }
-    }
+    });
+    return fastHash(input);
   }
 
   /**
-   * Retry operation with exponential backoff
+   * Retry Helper (Internal version for backoff complexity)
    */
   private async retryWithBackoff<T>(
     operation: () => Promise<T>,
