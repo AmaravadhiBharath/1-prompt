@@ -86,7 +86,7 @@
   padding: 6px 6px 6px 22px;
   border-radius: 100px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: none;
   width: auto;
   min-width: 560px;
   max-width: fit-content;
@@ -193,7 +193,7 @@
 
 .btn-demo:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 .nav-new.scrolled .nav-link {
@@ -249,7 +249,7 @@
   width: 100%;
   max-width: 380px;
   background: white;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  box-shadow: none;
   min-height: 360px;
   display: flex;
   flex-direction: column;
@@ -570,7 +570,7 @@
   align-items: center;
   text-align: center;
   position: relative;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+  box-shadow: none;
   transition:
     transform 0.2s,
     box-shadow 0.2s;
@@ -578,12 +578,12 @@
 
 .pricing-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
 }
 
 .pricing-card.popular {
   border-color: #0055ff;
-  box-shadow: 0 10px 20px rgba(0, 85, 255, 0.05);
+  box-shadow: none;
   background: #f8fbff;
   transform: scale(1.05);
   z-index: 2;

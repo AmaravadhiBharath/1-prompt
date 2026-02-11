@@ -950,56 +950,25 @@ const BUTTON_STYLES = `
     text-transform: none !important;
     letter-spacing: -0.01em !important;
     cursor: pointer !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: none !important;
     white-space: nowrap !important;
     pointer-events: auto !important;
     outline: none !important;
     overflow: hidden !important;
     
-    /* Glass & Line-Art Style */
-    background: rgba(255, 255, 255, 0.75) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+    /* Flat & Solid Style */
+    background: #ffffff !important;
     border: 0.8px solid rgba(0, 90, 226, 0.2) !important;
     color: #002D8B !important; /* Midnight Blue */
-    box-shadow: 0 2px 8px rgba(0, 45, 139, 0.05) !important;
+    box-shadow: none !important;
   }
 
-  .pe-zone1-btn::before {
-    content: "" !important;
-    position: absolute !important;
-    width: 60px !important;
-    height: 60px !important;
-    background: radial-gradient(circle, rgba(0, 90, 226, 0.15) 0%, transparent 70%) !important;
-    border-radius: 50% !important;
-    filter: blur(10px) !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    z-index: -1 !important;
-    top: -50% !important;
-    left: -50% !important;
-    animation: pe-wander 12s infinite ease-in-out !important;
-  }
-  
-  .pe-zone1-btn:hover::before {
-    opacity: 1 !important;
-  }
-
-  @keyframes pe-wander {
-    0% { transform: translate(-20%, -20%) scale(1); opacity: 0; }
-    20% { transform: translate(40%, 10%) scale(1.2); opacity: 0.6; }
-    40% { transform: translate(10%, 60%) scale(0.8); opacity: 0.3; }
-    60% { transform: translate(70%, 30%) scale(1.1); opacity: 0.5; }
-    80% { transform: translate(30%, 80%) scale(0.9); opacity: 0.4; }
-    100% { transform: translate(-20%, -20%) scale(1); opacity: 0; }
-  }
-  
   .pe-zone1-btn:hover {
-    background: rgba(255, 255, 255, 0.95) !important;
+    background: #ffffff !important;
     border-color: #005AE2 !important; /* Vibrant Blue */
     color: #005AE2 !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 16px rgba(0, 45, 139, 0.12) !important;
+    transform: none !important;
+    box-shadow: none !important;
   }
 
   .pe-zone1-btn:active {

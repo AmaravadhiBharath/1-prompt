@@ -8,7 +8,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
 }
 
 .tier-badge.guest {
@@ -28,7 +28,7 @@
   background: linear-gradient(135deg, #007cff 0%, #00c6ff 100%);
   color: white;
   border: none;
-  box-shadow: 0 4px 15px rgba(0, 124, 255, 0.3);
+  box-shadow: none;
 }
 
 .tier-remaining {
@@ -57,7 +57,7 @@
   max-width: 340px;
   width: 85%;
   position: relative;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: none;
   border: 1px solid var(--kb-outline);
   animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   text-align: center;

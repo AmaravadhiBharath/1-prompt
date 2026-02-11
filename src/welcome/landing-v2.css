@@ -145,7 +145,7 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  box-shadow: 0 20px 40px rgba(0, 85, 255, 0.3);
+  box-shadow: none;
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease;
@@ -155,7 +155,7 @@
 
 .circular-cta:hover {
   transform: scale(1.05);
-  box-shadow: 0 25px 50px rgba(0, 85, 255, 0.4);
+  box-shadow: none;
 }
 
 .cta-icon {
@@ -180,7 +180,7 @@
   font-size: 12px;
   font-family: monospace;
   color: #444;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
   z-index: 5;
   white-space: nowrap;
 }
@@ -270,7 +270,7 @@
   justify-content: center;
   align-items: center;
   font-size: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.03);
+  box-shadow: none;
 }
 
 .feature-card h3 {

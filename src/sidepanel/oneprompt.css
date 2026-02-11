@@ -99,9 +99,9 @@ html,
   justify-content: center;
   cursor: pointer;
   color: var(--kb-logo-midnight);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: none;
   padding: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
 }
 
 .kb-icon-button:hover {
@@ -109,7 +109,7 @@ html,
   border-color: var(--kb-logo-vibrant);
   color: var(--kb-logo-vibrant);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(0, 45, 139, 0.15);
+  box-shadow: none;
 }
 
 .kb-icon-button:active {
@@ -169,15 +169,15 @@ html,
   font-weight: 700;
   cursor: pointer;
   align-self: flex-start;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0, 45, 139, 0.05);
+  transition: none;
+  box-shadow: none;
 }
 
 .kb-btn-refresh:hover {
   background: rgba(255, 255, 255, 0.9);
   border-color: var(--kb-logo-vibrant);
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(0, 45, 139, 0.1);
+  box-shadow: none;
 }
 
 .kb-shortcut-hint {
@@ -206,13 +206,13 @@ html,
   border-radius: 20px;
   padding: 24px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border: 1px solid rgba(0, 0, 0, 0.04);
   background-clip: padding-box;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  box-shadow: none;
   position: relative;
   overflow: hidden;
   margin-bottom: 16px;
@@ -226,92 +226,11 @@ html,
   border-left: 3px solid var(--kb-logo-sky);
 }
 
-@keyframes wander-1 {
-  0% {
-    top: -20%;
-    left: -20%;
-    opacity: 0;
-    transform: scale(0.5);
-  }
-
-  20% {
-    top: 10%;
-    left: 40%;
-    opacity: 0.6;
-    transform: scale(1.2);
-  }
-
-  40% {
-    top: 60%;
-    left: 10%;
-    opacity: 0.3;
-    transform: scale(0.8);
-  }
-
-  60% {
-    top: 30%;
-    left: 70%;
-    opacity: 0.5;
-    transform: scale(1.1);
-  }
-
-  80% {
-    top: 80%;
-    left: 30%;
-    opacity: 0.4;
-    transform: scale(0.9);
-  }
-
-  100% {
-    top: -20%;
-    left: -20%;
-    opacity: 0;
-    transform: scale(0.5);
-  }
-}
-
-@keyframes wander-2 {
-  0% {
-    bottom: -20%;
-    right: -20%;
-    opacity: 0;
-    transform: scale(0.6);
-  }
-
-  25% {
-    bottom: 40%;
-    right: 10%;
-    opacity: 0.5;
-    transform: scale(1.1);
-  }
-
-  50% {
-    bottom: 70%;
-    right: 60%;
-    opacity: 0.2;
-    transform: scale(0.7);
-  }
-
-  75% {
-    bottom: 20%;
-    right: 80%;
-    opacity: 0.6;
-    transform: scale(1.4);
-  }
-
-  100% {
-    bottom: -20%;
-    right: -20%;
-    opacity: 0;
-    transform: scale(0.6);
-  }
-}
-
 .kb-action-card:hover {
   transform: translateY(-2px);
   background: rgba(255, 255, 255, 0.9);
   border-color: var(--kb-logo-vibrant);
-  box-shadow: 0 8px 32px rgba(0, 90, 226, 0.08);
+  box-shadow: none;
 }
 
 /* Disabled state for action cards (e.g., Compile for Basic users) */
@@ -474,7 +393,7 @@ html,
   padding: 4px;
   display: flex;
   gap: 0;
-  box-shadow: 0 12px 48px rgba(0, 45, 139, 0.2);
+  box-shadow: none;
   z-index: 100;
   min-width: 160px;
   height: 48px;
@@ -495,7 +414,7 @@ html,
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -638,7 +557,7 @@ html,
   height: 6px;
   background: var(--kb-primary-blue);
   border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+  box-shadow: none;
 }
 
 .kb-card-body {
