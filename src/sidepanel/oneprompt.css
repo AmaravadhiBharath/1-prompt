@@ -384,21 +384,22 @@ html,
 /* Footer as Floating Pill */
 .kb-card-footer {
   position: absolute;
-  bottom: 16px;
+  bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(255, 255, 255, 1);
   /* Solid background */
   border-radius: 9999px;
-  padding: 4px;
+  padding: 6px;
   display: flex;
   gap: 0;
   box-shadow: none;
   z-index: 100;
-  min-width: 160px;
+  width: fit-content;
   height: 48px;
   align-items: center;
-  border: 1px solid rgba(0, 90, 226, 0.25);
+  box-sizing: border-box;
+  border: none;
   /* Thin logo-vibrant stroke */
 }
 
@@ -498,6 +499,22 @@ html,
   color: #ef4444;
   background: transparent;
   box-shadow: none;
+}
+
+/* Hover states when both buttons are present */
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-secondary:hover {
+  /* red hover for Delete */
+  background: rgba(239, 68, 68, 0.12); /* subtle red fill */
+  color: #b91c1c; /* slightly deeper red on hover */
+  transform: translateY(-1px);
+}
+
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-primary:hover {
+  /* blue hover for Copy */
+  background: linear-gradient(135deg, #005ae2 0%, #4c91ff 100%);
+  color: #ffffff;
+  box-shadow: 0 18px 40px rgba(0,90,226,0.22);
+  transform: translateY(-1px);
 }
 
 
