@@ -428,10 +428,12 @@ html,
   font-size: 14px;
   font-weight: 700;
   border-radius: 9999px;
-  background: rgba(0, 90, 226, 0.12);
+  background: rgba(0,90,226,0.18);
   color: #fff;
   border: 1.5px solid transparent;
-  box-shadow: none;
+  box-shadow: 0 2px 8px rgba(0,90,226,0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   transition: border 0.2s, background 0.2s, color 0.2s;
   display: flex;
   align-items: center;
@@ -440,7 +442,7 @@ html,
 }
 
 .kb-footer-btn-primary:hover {
-  background: #005ae2;
+  background: rgba(0,90,226,0.32);
   color: #fff;
   border: 1.5px solid #005ae2;
 }
