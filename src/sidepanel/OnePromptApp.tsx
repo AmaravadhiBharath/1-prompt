@@ -939,8 +939,10 @@ export default function OnePromptApp() {
                 Delete
               </button>
               <div className="kb-footer-divider" />
+              <span className="kb-footer-count">({selectedPrompts.length})</span>
+              <div className="kb-footer-divider" />
               <button className="kb-footer-btn-primary" onClick={handleCopy}>
-                {copySuccess ? "Copied!" : `Copy (${selectedPrompts.length})`}
+                {copySuccess ? "Copied!" : "Copy"}
               </button>
             </>
           ) : (
