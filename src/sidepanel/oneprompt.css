@@ -445,23 +445,22 @@ html,
 /* When the Copy button is the only child (single CTA) show the large pill variant from the design */
 .kb-card-footer .kb-footer-btn-primary:only-child {
   flex: none;
-  min-width: 260px;
-  padding: 14px 56px;
-  font-size: 20px;
+  min-width: 120px;
+  padding: 10px 28px;
+  font-size: 18px;
   font-weight: 800;
   border-radius: 40px;
   background: linear-gradient(135deg, #4c91ff 0%, #005ae2 100%);
   color: #ffffff;
-  border: 2px solid rgba(0, 90, 226, 0.9);
-  box-shadow: 0 18px 40px rgba(0, 90, 226, 0.18);
+  border: none;
+  box-shadow: 0 14px 32px rgba(0, 90, 226, 0.16);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
 .kb-card-footer .kb-footer-btn-primary:only-child:hover {
   background: linear-gradient(135deg, #005ae2 0%, #0046c8 100%);
-  border-color: #0046c8;
-  box-shadow: 0 22px 56px rgba(0, 80, 200, 0.28);
+  box-shadow: 0 18px 48px rgba(0, 80, 200, 0.22);
 }
 
 .kb-footer-btn-secondary {
