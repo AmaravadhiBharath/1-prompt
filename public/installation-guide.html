@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation Guide - 1-prompt</title>
+  <style>
+    :root {
+      --bg: #0f0f14;
+      --surface: #1a1a24;
+      --border: #2a2a3a;
+      --text: #e0e0e8;
+      --text-muted: #9090a8;
+      --accent: #7c5cfc;
+      --accent-light: #9b80ff;
+      --success: #22c55e;
+      --warn: #f59e0b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 0;
+    }
+
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-inner {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-inner h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .header-inner span {
+      color: var(--accent-light);
+      font-weight: 700;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .intro {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 36px;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-top: 48px;
+      margin-bottom: 16px;
+      color: var(--accent-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin-bottom: 14px;
+      color: var(--text);
+    }
+
+    ul, ol {
+      margin-bottom: 14px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    strong {
+      color: #fff;
+    }
+
+    a {
+      color: var(--accent-light);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    /* Step Cards */
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 20px 0;
+      position: relative;
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 15px;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .step-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .step-body {
+      padding-left: 44px;
+      color: var(--text);
+    }
+
+    .step-body p {
+      margin-bottom: 10px;
+    }
+
+    /* Highlight / Tip boxes */
+    .tip-box {
+      background: #1a1a2e;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    .tip-box.success {
+      border-left-color: var(--success);
+    }
+
+    .tip-box.warn {
+      border-left-color: var(--warn);
+    }
+
+    .tip-label {
+      font-weight: 700;
+      margin-right: 6px;
+    }
+
+    /* Keyboard shortcut styling */
+    kbd {
+      display: inline-block;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom: 2px solid #3a3a4a;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-family: inherit;
+      font-size: 13px;
+      color: #fff;
+    }
+
+    /* Requirements table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--surface);
+      font-weight: 600;
+      color: #fff;
+    }
+
+    td {
+      background: var(--bg);
+    }
+
+    /* Platform grid */
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .platform-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .platform-card strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 15px;
+    }
+
+    .platform-card .url {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    /* Sections divider */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 40px 0;
+    }
+
+    /* TOC */
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 32px;
+    }
+
+    .toc h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+
+    .toc ol {
+      margin-bottom: 0;
+    }
+
+    .toc li {
+      margin-bottom: 4px;
+    }
+
+    .toc a {
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .toc a:hover {
+      color: var(--accent-light);
+    }
+
+    /* Print styles */
+    @media print {
+      :root {
+        --bg: #ffffff;
+        --surface: #f5f5f5;
+        --border: #ddd;
+        --text: #222;
+        --text-muted: #666;
+        --accent: #4a33b5;
+        --accent-light: #4a33b5;
+        --success: #16a34a;
+        --warn: #d97706;
+      }
+
+      body { background: #fff; color: #222; }
+      .header { position: static; background: #fff; border-bottom: 2px solid #4a33b5; }
+      .header-inner span { color: #4a33b5; }
+      .header-inner h1 { color: #222; }
+      h2 { color: #4a33b5; }
+      h3 { color: #333; }
+      p, li { color: #222; }
+      strong { color: #000; }
+      a { color: #4a33b5; }
+      .step { background: #fafafa; border-color: #ddd; }
+      .step-number { background: #4a33b5; }
+      .step-title { color: #000; }
+      .step-body { color: #222; }
+      .tip-box { background: #f8f7ff; border-color: #ddd; }
+      .toc { background: #f8f7ff; border-color: #ddd; }
+      .toc a { color: #222; }
+      th { background: #f0f0f0; color: #000; }
+      td { background: #fff; color: #222; }
+      th, td { border-color: #ccc; }
+      .platform-card { background: #fafafa; border-color: #ddd; }
+      kbd { background: #f0f0f0; border-color: #ccc; color: #000; }
+      code { background: #f0f0f0; border-color: #ddd; color: #222; }
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 24px 16px 60px; }
+      h2 { font-size: 19px; }
+      .platform-grid { grid-template-columns: 1fr; }
+      .step-body { padding-left: 0; padding-top: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-inner">
+      <span>1-prompt</span>
+      <h1>Installation Guide</h1>
+    </div>
+  </div>
+
+  <div class="container">
+    <p class="intro">Get 1-prompt up and running in under 2 minutes. This guide covers installation, setup, and your first prompt extraction.</p>
+
+    <div class="toc">
+      <h3>Contents</h3>
+      <ol>
+        <li><a href="#requirements">Requirements</a></li>
+        <li><a href="#install">Install from Chrome Web Store</a></li>
+        <li><a href="#pin">Pin to Toolbar</a></li>
+        <li><a href="#signin">Sign In (Optional)</a></li>
+        <li><a href="#first-capture">Your First Capture</a></li>
+        <li><a href="#compile">Compile Your Prompts</a></li>
+        <li><a href="#platforms">Supported Platforms</a></li>
+        <li><a href="#keyboard">Keyboard Shortcuts</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+        <li><a href="#uninstall">Uninstalling</a></li>
+      </ol>
+    </div>
+
+    <!-- 1. Requirements -->
+    <h2 id="requirements">1. Requirements</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Requirement</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Browser</strong></td>
+          <td>Google Chrome (version 116 or later) or any Chromium-based browser (Edge, Brave, Arc, Opera)</td>
+        </tr>
+        <tr>
+          <td><strong>Operating System</strong></td>
+          <td>Windows, macOS, Linux, or ChromeOS</td>
+        </tr>
+        <tr>
+          <td><strong>Account</strong></td>
+          <td>Google account (optional - required only for cloud sync and history features)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 2. Install -->
+    <h2 id="install">2. Install from Chrome Web Store</h2>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Open the Chrome Web Store</div>
+      </div>
+      <div class="step-body">
+        <p>Visit the 1-prompt listing on the Chrome Web Store:</p>
+        <p><a href="https://chromewebstore.google.com/detail/1-prompt/gapafgdcpbmleogkpcogjccjekgkpidb" target="_blank" rel="noopener">chrome web store / 1-prompt</a></p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">Click "Add to Chrome"</div>
+      </div>
+      <div class="step-body">
+        <p>Click the blue <strong>"Add to Chrome"</strong> button on the listing page.</p>
+        <p>A confirmation dialog will appear showing the permissions the extension needs. Click <strong>"Add extension"</strong> to confirm.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">Installation complete</div>
+      </div>
+      <div class="step-body">
+        <p>You'll see a notification confirming 1-prompt has been added. The welcome page will open automatically to guide you through setup.</p>
+      </div>
+    </div>
+
+    <!-- 3. Pin -->
+    <h2 id="pin">3. Pin to Toolbar</h2>
+    <p>Pinning 1-prompt to your toolbar gives you one-click access to the side panel.</p>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Click the Extensions (puzzle) icon</div>
+      </div>
+      <div class="step-body">
+        <p>In the top-right corner of Chrome, click the <strong>puzzle piece icon</strong> to open the extensions menu.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">Pin 1-prompt</div>
+      </div>
+      <div class="step-body">
+        <p>Find <strong>1-prompt</strong> in the list and click the <strong>pin icon</strong> next to it. The 1-prompt icon will now appear permanently in your toolbar.</p>
+      </div>
+    </div>
+
+    <div class="tip-box success">
+      <span class="tip-label">Tip:</span> Once pinned, simply click the 1-prompt icon in your toolbar to open the side panel on any supported AI platform.
+    </div>
+
+    <!-- 4. Sign In -->
+    <h2 id="signin">4. Sign In (Optional)</h2>
+    <p>Signing in with Google unlocks additional features but is not required for basic use.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Without Sign-In</th>
+          <th>With Sign-In</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Prompt capture</td>
+          <td>Unlimited</td>
+          <td>Unlimited</td>
+        </tr>
+        <tr>
+          <td>Prompt compilation</td>
+          <td>Unlimited</td>
+          <td>Unlimited</td>
+        </tr>
+        <tr>
+          <td>Extraction history</td>
+          <td>Not available</td>
+          <td>Available</td>
+        </tr>
+        <tr>
+          <td>Cloud sync</td>
+          <td>Not available</td>
+          <td>Available</td>
+        </tr>
+        <tr>
+          <td>Pin history items</td>
+          <td>Not available</td>
+          <td>Available</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>To sign in, click the <strong>"Continue with Google"</strong> button on the welcome page or in the side panel. You can also choose <strong>"Continue without signing in"</strong> to use 1-prompt as a guest.</p>
+
+    <!-- 5. First Capture -->
+    <h2 id="first-capture">5. Your First Capture</h2>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Navigate to a supported AI platform</div>
+      </div>
+      <div class="step-body">
+        <p>Open any supported AI chat platform (e.g., <a href="https://chatgpt.com" target="_blank" rel="noopener">chatgpt.com</a>, <a href="https://claude.ai" target="_blank" rel="noopener">claude.ai</a>, or <a href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com</a>).</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">Have a conversation</div>
+      </div>
+      <div class="step-body">
+        <p>Chat with the AI as you normally would. Send one or more prompts.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">Open the 1-prompt side panel</div>
+      </div>
+      <div class="step-body">
+        <p>Click the <strong>1-prompt icon</strong> in your toolbar, or use the keyboard shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd> (Windows/Linux) or <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd> (Mac).</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <div class="step-title">Extract your prompts</div>
+      </div>
+      <div class="step-body">
+        <p>Click the <strong>"Capture"</strong> button in the side panel. 1-prompt will extract all your prompts (user messages only) from the current conversation.</p>
+        <p>Your prompts will appear in the side panel, ready to copy, edit, or compile.</p>
+      </div>
+    </div>
+
+    <div class="tip-box">
+      <span class="tip-label">Note:</span> 1-prompt captures prompts in real time as you send them. You can also extract all prompts from an existing conversation at any time.
+    </div>
+
+    <!-- 6. Compile -->
+    <h2 id="compile">6. Compile Your Prompts</h2>
+    <p>The Compile feature uses AI to merge all your prompts from a conversation into a single, cohesive instruction.</p>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Capture your prompts</div>
+      </div>
+      <div class="step-body">
+        <p>Follow the steps above to capture prompts from a conversation.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">Click "Compile"</div>
+      </div>
+      <div class="step-body">
+        <p>Click the <strong>"Compile"</strong> button. 1-prompt's Intent Engine will analyze all your prompts, resolve conflicts (latest instruction wins), remove duplicates, and produce a single unified paragraph.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">Copy and reuse</div>
+      </div>
+      <div class="step-body">
+        <p>Copy the compiled prompt and paste it into any AI platform to recreate your entire conversation context in a single message.</p>
+      </div>
+    </div>
+
+    <!-- 7. Supported Platforms -->
+    <h2 id="platforms">7. Supported Platforms</h2>
+    <p>1-prompt works on the following AI chat platforms:</p>
+
+    <div class="platform-grid">
+      <div class="platform-card">
+        <strong>ChatGPT</strong>
+        <div class="url">chatgpt.com, chat.openai.com</div>
+      </div>
+      <div class="platform-card">
+        <strong>Claude</strong>
+        <div class="url">claude.ai</div>
+      </div>
+      <div class="platform-card">
+        <strong>Gemini</strong>
+        <div class="url">gemini.google.com</div>
+      </div>
+      <div class="platform-card">
+        <strong>Perplexity</strong>
+        <div class="url">perplexity.ai</div>
+      </div>
+      <div class="platform-card">
+        <strong>DeepSeek</strong>
+        <div class="url">chat.deepseek.com</div>
+      </div>
+      <div class="platform-card">
+        <strong>Lovable</strong>
+        <div class="url">lovable.dev</div>
+      </div>
+      <div class="platform-card">
+        <strong>Bolt</strong>
+        <div class="url">bolt.new</div>
+      </div>
+      <div class="platform-card">
+        <strong>Cursor</strong>
+        <div class="url">cursor.sh, cursor.com</div>
+      </div>
+      <div class="platform-card">
+        <strong>Meta AI</strong>
+        <div class="url">meta.ai</div>
+      </div>
+    </div>
+
+    <div class="tip-box">
+      <span class="tip-label">Note:</span> The extension only activates on the websites listed above. It does not run on any other websites.
+    </div>
+
+    <!-- 8. Keyboard Shortcuts -->
+    <h2 id="keyboard">8. Keyboard Shortcuts</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Action</th>
+          <th>Windows / Linux</th>
+          <th>macOS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Extract prompts from current page</td>
+          <td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd></td>
+          <td><kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>You can customize keyboard shortcuts in Chrome by visiting <code>chrome://extensions/shortcuts</code>.</p>
+
+    <!-- 9. Troubleshooting -->
+    <h2 id="troubleshooting">9. Troubleshooting</h2>
+
+    <h3>Extension not capturing prompts</h3>
+    <ul>
+      <li>Make sure you are on a <a href="#platforms">supported platform</a>.</li>
+      <li>Refresh the page after installing the extension for the first time.</li>
+      <li>Check that the extension is enabled in <code>chrome://extensions</code>.</li>
+    </ul>
+
+    <h3>Side panel not opening</h3>
+    <ul>
+      <li>Ensure you have Chrome version 116 or later (side panel API requires it).</li>
+      <li>Try clicking the 1-prompt icon in the toolbar, or use the keyboard shortcut.</li>
+      <li>If using a Chromium-based browser (Edge, Brave), ensure side panel support is enabled.</li>
+    </ul>
+
+    <h3>Sign-in not working</h3>
+    <ul>
+      <li>Make sure you are signed into Chrome with a Google account.</li>
+      <li>Disable other extensions that may block Google OAuth popups.</li>
+      <li>Try clearing the extension's data: right-click the icon > Manage extension > Clear data.</li>
+    </ul>
+
+    <h3>Compilation fails or returns an error</h3>
+    <ul>
+      <li>Check your internet connection - compilation requires a network request.</li>
+      <li>If you see "Over-Capacity", wait 30 seconds and try again.</li>
+      <li>The extension will automatically fall back to local compilation if the cloud service is unavailable.</li>
+    </ul>
+
+    <div class="tip-box warn">
+      <span class="tip-label">Still stuck?</span> Contact us at <a href="mailto:amaravadhibharath@gmail.com">amaravadhibharath@gmail.com</a> or visit <a href="https://1-prompt.in" target="_blank" rel="noopener">1-prompt.in</a>.
+    </div>
+
+    <!-- 10. Uninstalling -->
+    <h2 id="uninstall">10. Uninstalling</h2>
+    <ol>
+      <li>Right-click the 1-prompt icon in your toolbar.</li>
+      <li>Select <strong>"Remove from Chrome"</strong>.</li>
+      <li>Confirm by clicking <strong>"Remove"</strong>.</li>
+    </ol>
+    <p>This removes the extension and all locally stored data. If you have cloud-synced data and want it deleted, sign in first and use the "Delete All Data" option in the extension settings before uninstalling, or contact us.</p>
+
+  </div>
+
+</body>
+</html>
