@@ -3,7 +3,7 @@
  * Shows upgrade prompts, tier badges, and pricing modals
  */
 
-import { UserTier, PRO_PRICING } from "../services/pricing";
+import { UserTier } from "../services/pricing";
 
 interface TierBadgeProps {
   tier: UserTier;
@@ -29,7 +29,7 @@ export function TierBadge({ tier, remaining }: TierBadgeProps) {
         <span className="tier-icon">🚀</span>
         <span className="tier-text">Go</span>
         {remaining !== undefined && (
-          <span className="tier-remaining">{remaining} Left</span>
+          <span className="tier-remaining">{remaining}/10</span>
         )}
       </div>
     );
@@ -37,8 +37,8 @@ export function TierBadge({ tier, remaining }: TierBadgeProps) {
 
   return (
     <div className="tier-badge pro">
-      <span className="tier-icon">⭐</span>
-      <span className="tier-text">Pro</span>
+      <span className="tier-icon">🛡️</span>
+      <span className="tier-text">Admin</span>
     </div>
   );
 }
@@ -46,14 +46,12 @@ export function TierBadge({ tier, remaining }: TierBadgeProps) {
 interface UpgradePromptProps {
   currentTier: UserTier;
   onSignIn: () => void;
-  onUpgradeToPro: () => void;
   onClose: () => void;
 }
 
 export function UpgradePrompt({
   currentTier,
   onSignIn,
-  onUpgradeToPro,
   onClose,
 }: UpgradePromptProps) {
   // Basic (Guest) -> Encourage login for Go (Free)
@@ -65,36 +63,36 @@ export function UpgradePrompt({
             ×
           </button>
           <div className="upgrade-header">
-            <h3>🚀 Unlock Go Tier (Free!)</h3>
-            <p>
-              You're on Basic. Sign in to get <b>Unlimited Captures</b> and more
-              for FREE!
+            <h3 style={{ fontSize: 24, marginBottom: 8 }}>✨ Great work so far!</h3>
+            <p style={{ color: "var(--kb-text-secondary)", fontSize: 14 }}>
+              You've reached your daily guest limit. <br />
+              <b>Sign in</b> to unlock History, Pinning, and more!
             </p>
           </div>
 
           <div className="upgrade-features" style={{ margin: "24px 0" }}>
             <div className="feature-item">
-              <span className="feature-icon">✨</span>
-              <span>Unlimited content captures</span>
+              <span className="feature-icon">🚀</span>
+              <span><b>Unlimited</b> captures (always FREE!)</span>
             </div>
             <div className="feature-item">
               <span className="feature-icon">☁️</span>
-              <span>History & Sync across devices</span>
+              <span>History & Cloud Sync</span>
             </div>
             <div className="feature-item">
               <span className="feature-icon">📍</span>
-              <span>Pin your favorite prompts</span>
+              <span>Pin your favorites permanently</span>
             </div>
             <div className="feature-item">
               <span className="feature-icon">⚡</span>
-              <span>10 Compiles per day</span>
+              <span>10 AI Compiles per day</span>
             </div>
           </div>
 
           <button
             className="kb-google-btn"
             onClick={onSignIn}
-            style={{ width: "100%", marginTop: 8 }}
+            style={{ width: "100%", marginTop: 8, height: 48 }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path
@@ -114,61 +112,23 @@ export function UpgradePrompt({
                 fill="#EA4335"
               />
             </svg>
-            Sign in & Upgrade to Go
+            Sign in with Google
           </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Go (Free) -> Encourage upgrade to Pro
-  if (currentTier === "free" || currentTier === "go") {
-    return (
-      <div className="upgrade-modal">
-        <div className="upgrade-content">
-          <button className="upgrade-close" onClick={onClose}>
-            ×
-          </button>
-          <div className="upgrade-header">
-            <h3>⭐ Upgrade to Pro</h3>
-            <div className="pricing-display">
-              <span className="price-new">
-                ${PRO_PRICING.regularPrice}/month
-              </span>
-            </div>
-            <p>Get unlimited power and advanced control.</p>
-          </div>
-
-          <div className="upgrade-features" style={{ margin: "24px 0" }}>
-            <div className="feature-item">
-              <span className="feature-icon">⚡</span>
-              <span>
-                <b>Unlimited</b> session compiles
-              </span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-icon">🧠</span>
-              <span>Access to Advanced Models</span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-icon">�️</span>
-              <span>Custom DOM & API options</span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-icon">💬</span>
-              <span>Priority Support</span>
-            </div>
-          </div>
 
           <button
-            className="kb-btn-primary"
-            onClick={onUpgradeToPro}
-            style={{ width: "100%", padding: "12px", height: "48px" }}
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--kb-text-secondary)',
+              marginTop: 16,
+              fontSize: 13,
+              cursor: 'pointer',
+              fontWeight: 500
+            }}
           >
-            Upgrade to Pro
+            I'll sign in later
           </button>
-
-          <p className="upgrade-note">Cancel anytime</p>
         </div>
       </div>
     );

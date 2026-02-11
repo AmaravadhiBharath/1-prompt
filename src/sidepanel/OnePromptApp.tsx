@@ -19,6 +19,7 @@ import {
   incrementCapture,
   incrementCompile,
   type UserTier,
+  PRICING_TIERS,
 } from "../services/pricing";
 import { UpgradePrompt } from "./PricingComponents";
 import "./oneprompt.css";
@@ -27,7 +28,7 @@ import "../services/tab-refresh"; // Import for side effects if needed (service 
 
 export default function OnePromptApp() {
   const [user, setUser] = useState<ChromeUser | null>(null);
-  const [tier, setTier] = useState<UserTier>("free");
+  const [tier, setTier] = useState<UserTier>("guest");
   const [extractionResult, setExtractionResult] =
     useState<ExtractionResult | null>(null);
   const [mode, setMode] = useState<Mode>("capture");
@@ -48,14 +49,16 @@ export default function OnePromptApp() {
     "auto" | "dom" | "keylog"
   >("auto");
   const [showProSettings, setShowProSettings] = useState(false);
-  const [historyFilter, setHistoryFilter] = useState<
-    "all" | "capture" | "compile"
-  >("all");
+  const [historyFilter, setHistoryFilter] = useState<"all" | "capture" | "compile">("all");
+  const [platformHistoryFilter, setPlatformHistoryFilter] = useState<string>("all");
+  const [dateHistoryFilter, setDateHistoryFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [copySuccess, setCopySuccess] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [isRefining, setIsRefining] = useState(false);
   const [aiEnhancing, setAiEnhancing] = useState(false);
+  const [showPromptList, setShowPromptList] = useState(false);
+  const [showPinned, setShowPinned] = useState(false);
 
   // Timer States
   const [extractionTime, setExtractionTime] = useState<number | null>(null);
@@ -245,16 +248,18 @@ export default function OnePromptApp() {
           return;
         }
 
-        // If we are in 'compile' mode and this is a local result (not AI-enhanced),
-        // we should NOT update the UI but STAY in the loading state.
-        // This prevents showing local results - only show final AI-enhanced results.
-        // Exception: Allow local results when AI completely failed
-        if (msg.mode === "compile" && msg.result.model === "Local (Reliable)") {
-          console.log(
-            "[Sidepanel] Received local compile result, waiting for AI enhancement...",
-          );
-          // Don't set extractionResult - keep waiting for AI
-          return;
+        // COMPILE MODE FILTERING:
+        // 1. Ignore raw prompts (results with no summary) when in compile mode
+        // 2. Ignore intermediate "Local (Reliable)" results while waiting for AI
+        if (msg.mode === "compile") {
+          if (!msg.result.summary) {
+            console.log("[Sidepanel] Ignoring raw prompts in compile mode");
+            return;
+          }
+          if (msg.result.model === "Local (Reliable)") {
+            console.log("[Sidepanel] Ignoring intermediate local summary, waiting for AI enhancement...");
+            return;
+          }
         }
 
         setIsRefining(false);
@@ -276,35 +281,41 @@ export default function OnePromptApp() {
           : 0;
         setExtractionTime(duration);
 
-        // Save History
-        const newItem: HistoryItem = {
-          id: Date.now().toString(),
-          timestamp: Date.now(),
-          platform:
-            msg.result.metadata?.platform || msg.result.platform || "Unknown",
-          promptCount: msg.result.prompts.length,
-          preview: msg.result.summary
-            ? msg.result.summary.substring(0, 100) + "..."
-            : (msg.result.prompts[0]?.content || "").substring(0, 100) + "...",
-          prompts: msg.result.prompts,
-          summary: msg.result.summary,
-          model: msg.result.model,
-          provider: msg.result.provider,
-          mode: msg.mode || "capture",
-          duration: duration,
-          isPinned: false,
-        };
+        // Save History only if tier supports it
+        if (PRICING_TIERS[tier].hasHistory) {
+          const newItem: HistoryItem = {
+            id: Date.now().toString(),
+            timestamp: Date.now(),
+            platform:
+              msg.result.metadata?.platform || msg.result.platform || "Unknown",
+            promptCount: msg.result.prompts.length,
+            preview: msg.result.summary
+              ? msg.result.summary.substring(0, 100) + "..."
+              : (msg.result.prompts[0]?.content || "").substring(0, 100) + "...",
+            prompts: msg.result.prompts,
+            summary: msg.result.summary,
+            model: msg.result.model,
+            provider: msg.result.provider,
+            mode: msg.mode || "capture",
+            duration: duration,
+            isPinned: false,
+          };
 
-        setCurrentHistoryId(newItem.id);
-        setIsPinned(false);
+          setCurrentHistoryId(newItem.id);
+          setIsPinned(false);
 
-        const { history = [] } = await chrome.storage.local.get("history");
-        const updatedHistory = [newItem, ...history].slice(0, 50);
-        await chrome.storage.local.set({ history: updatedHistory });
-        setHistoryItems(updatedHistory);
+          const { history = [] } = await chrome.storage.local.get("history");
+          const updatedHistory = [newItem, ...history].slice(0, 50);
+          await chrome.storage.local.set({ history: updatedHistory });
+          setHistoryItems(updatedHistory);
 
-        if (user) {
-          await saveHistoryToCloud(user.id, newItem);
+          if (user) {
+            await saveHistoryToCloud(user.id, newItem);
+          }
+        } else {
+          // Guest: Temporary ID for UI tracking but don't save to storage
+          setCurrentHistoryId("temp-" + Date.now());
+          setIsPinned(false);
         }
 
         // Increment usage
@@ -346,6 +357,7 @@ export default function OnePromptApp() {
   };
 
   const handleExtract = async (m: Mode) => {
+    // Check limits
     let check;
     if (m === "compile") {
       check = await canUserCompile();
@@ -397,6 +409,19 @@ export default function OnePromptApp() {
     return content.replace(/\n\n⚡ Compiled by .*$/s, "");
   };
 
+  const handleCopyRaw = async () => {
+    if (!extractionResult) return;
+    const promptsToCopy = extractionResult.prompts
+      .map((p) => stripSignature(p.content))
+      .join("\n\n");
+
+    if (promptsToCopy) {
+      await navigator.clipboard.writeText(promptsToCopy);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 1500);
+    }
+  };
+
   const handleDelete = () => {
     if (!extractionResult) return;
     if (selectedPrompts.length === 0) return;
@@ -446,20 +471,40 @@ export default function OnePromptApp() {
     }
   };
 
-  // --- RENDER HELPERS ---
 
   const groupHistoryByDate = (items: HistoryItem[]) => {
     const groups: { label: string; items: HistoryItem[] }[] = [];
+
+    // Always include pinned items if they exist
     const pinnedItems = items.filter((item) => item.isPinned);
     if (pinnedItems.length > 0)
-      groups.push({ label: "Pinned", items: pinnedItems });
+      groups.push({ label: "PINNED", items: pinnedItems });
 
     const unpinnedItems = items.filter((item) => !item.isPinned);
 
     // Apply filter
     const filteredItems = unpinnedItems.filter((item) => {
-      if (historyFilter === "all") return true;
-      return item.mode === historyFilter;
+      const modeMatch = historyFilter === "all" || item.mode === historyFilter;
+      const platformMatch = platformHistoryFilter === "all" || (item.platform?.toLowerCase().includes(platformHistoryFilter.toLowerCase()));
+
+      let dateMatch = true;
+      if (dateHistoryFilter !== "all") {
+        const itemDate = new Date(item.timestamp);
+        const now = new Date();
+        if (dateHistoryFilter === "today") {
+          dateMatch = itemDate.toDateString() === now.toDateString();
+        } else if (dateHistoryFilter === "week") {
+          const weekAgo = new Date();
+          weekAgo.setDate(now.getDate() - 7);
+          dateMatch = itemDate >= weekAgo;
+        } else if (dateHistoryFilter === "month") {
+          const monthAgo = new Date();
+          monthAgo.setMonth(now.getMonth() - 1);
+          dateMatch = itemDate >= monthAgo;
+        }
+      }
+
+      return modeMatch && platformMatch && dateMatch;
     });
 
     const today = new Date();
@@ -494,27 +539,81 @@ export default function OnePromptApp() {
     return groups;
   };
 
+  const renderHistoryCard = (item: HistoryItem) => (
+    <div
+      key={item.id}
+      className="kb-history-card-premium"
+      onClick={() => {
+        setExtractionResult({
+          prompts: item.prompts,
+          platform: item.platform,
+          url: "",
+          title: "History Item",
+          extractedAt: item.timestamp,
+          summary: item.summary,
+          model: item.model,
+          provider: item.provider,
+        });
+        setExtractionTime(item.duration || 0);
+        setMode(item.mode || "capture");
+        setViewingHistory(false);
+        setShowResults(true);
+      }}
+    >
+      <div className="kb-history-card-top">
+        <div className="kb-history-platform-pill">
+          {!item.platform || item.platform === "unknown"
+            ? "LEGACY"
+            : item.platform.toUpperCase()}
+        </div>
+        <div className="kb-history-meta">
+          {item.isPinned && (
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="var(--kb-logo-vibrant)"
+              style={{ transform: "rotate(45deg)" }}
+            >
+              <path d="M16 12V4H8v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" />
+            </svg>
+          )}
+          <span className="kb-history-date">
+            {new Date(item.timestamp).toLocaleDateString()}
+          </span>
+        </div>
+      </div>
+      <div className="kb-history-card-preview">{item.preview}</div>
+      <div className="kb-history-card-bottom">
+        <span className="kb-history-count">{item.promptCount} prompts</span>
+      </div>
+    </div>
+  );
+
+
   const renderHeader = () => (
     <div className="kb-header-icons">
-      <button
-        className="kb-icon-button"
-        onClick={loadHistory}
-        title="History"
-      >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      {tier !== "guest" && (
+        <button
+          className="kb-icon-button"
+          onClick={loadHistory}
+          title="History"
         >
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
-      </button>
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+        </button>
+      )}
       <button
         className="kb-icon-button"
         onClick={() => setShowPopup(!showPopup)}
@@ -662,7 +761,7 @@ export default function OnePromptApp() {
         </svg>
       </div>
 
-      {(tier === "pro" || tier === "infi" || tier === "admin") && (
+      {tier === "admin" && (
         <div style={{ width: "100%", marginTop: 24 }}>
           <button
             onClick={() => setShowProSettings(!showProSettings)}
@@ -775,21 +874,6 @@ export default function OnePromptApp() {
       <div className="kb-results-header">
         <div className="kb-mode-pill">
           {mode === "compile" ? "Compile" : "Capture"}
-          {mode === "compile" && (
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.0"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          )}
         </div>
         <div style={{ width: 40 }} /> {/* Spacer to center title */}
       </div>
@@ -821,88 +905,117 @@ export default function OnePromptApp() {
 
       <div className="kb-results-card">
         {mode === "compile" && extractionResult?.summary ? (
-          <div className="kb-compile-section">
-            {
-              (() => {
-                const raw = extractionResult.summary || "";
-                const summaryText = raw.replace(/\n\n⚡ Compiled by .*$/s, "");
-                let signatureText = "";
-                if (extractionResult.provider) {
-                  signatureText = `⚡ Compiled by ${extractionResult.provider}${extractionResult.model ? ` (${extractionResult.model})` : ""}`;
-                } else {
-                  const m = raw.match(/\n\n(⚡ Compiled by .*?)$/s);
-                  if (m) signatureText = m[1];
-                }
+          <div className={`kb-compile-section ${showPromptList ? "kb-split-view" : ""}`}>
+            <div className="kb-summary-scroll-area">
+              {
+                (() => {
+                  const raw = extractionResult.summary || "";
+                  const summaryText = raw.replace(/\n\n⚡ Compiled by .*$/s, "");
+                  let signatureText = "⚡ Compiled by 1-prompt";
 
-                return (
-                  <>
-                    <div className="kb-compile-content">{summaryText}</div>
-                    {signatureText && (
-                      <div style={{ fontSize: 11, marginTop: 8, opacity: 0.7, textAlign: "center" }}>{signatureText}</div>
-                    )}
-                  </>
-                );
-              })()
-            }
-            {extractionResult.summary.includes("1-prompt Local Logic") && (
-              <div
-                style={{
-                  fontSize: 10,
-                  marginTop: 8,
-                  opacity: 0.6,
-                  textAlign: "center",
-                }}
-              >
-                {aiError && (
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "#EF4444",
-                      background: "#FFF1F1",
-                      padding: "8px 12px",
-                      borderRadius: 8,
-                      marginBottom: 12,
-                      border: "1px solid rgba(239, 68, 68, 0.2)",
-                    }}
-                  >
-                    <strong>Cloud AI Error:</strong> {aiError}
-                  </div>
-                )}
-                Local fallback used.{" "}
-                <span
+                  // Show specific model/provider ONLY for admins
+                  if (tier === "admin") {
+                    if (extractionResult.provider) {
+                      signatureText = `⚡ Compiled by ${extractionResult.provider}${extractionResult.model ? ` (${extractionResult.model})` : ""}`;
+                    } else {
+                      const m = raw.match(/\n\n(⚡ Compiled by .*?)$/s);
+                      if (m) signatureText = m[1];
+                    }
+                  }
+
+                  return (
+                    <>
+                      <div className="kb-compile-content">{summaryText}</div>
+                      {signatureText && (
+                        <div style={{ fontSize: 11, marginTop: 8, opacity: 0.7, textAlign: "center" }}>{signatureText}</div>
+                      )}
+                    </>
+                  );
+                })()
+              }
+              {extractionResult.summary.includes("1-prompt Local Logic") && (
+                <div
                   style={{
-                    textDecoration: "underline",
-                    cursor: "pointer",
-                    color: "var(--kb-logo-vibrant)",
-                  }}
-                  onClick={() => {
-                    // Trigger a manual re-compilation of EXISTING prompts
-                    chrome.runtime.sendMessage({
-                      action: "RE_SUMMARIZE",
-                    });
+                    fontSize: 10,
+                    marginTop: 8,
+                    opacity: 0.6,
+                    textAlign: "center",
                   }}
                 >
-                  {isRefining ? "✨ Refining..." : "✨ Refine with Cloud AI"}
-                </span>
+                  {aiError && (
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "#EF4444",
+                        background: "#FFF1F1",
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        marginBottom: 12,
+                        border: "1px solid rgba(239, 68, 68, 0.2)",
+                      }}
+                    >
+                      <strong>Cloud AI Error:</strong> {aiError}
+                    </div>
+                  )}
+                  Local fallback used.{" "}
+                  <span
+                    style={{
+                      textDecoration: "underline",
+                      cursor: "pointer",
+                      color: "var(--kb-logo-vibrant)",
+                    }}
+                    onClick={() => {
+                      // Trigger a manual re-compilation of EXISTING prompts
+                      chrome.runtime.sendMessage({
+                        action: "RE_SUMMARIZE",
+                      });
+                    }}
+                  >
+                    {isRefining ? "✨ Refining..." : "✨ Refine with Cloud AI"}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="kb-prompts-toggle-sticky">
+              <div className="kb-toggle-row">
+                <button
+                  className="kb-link-btn-split"
+                  onClick={() => setShowPromptList(!showPromptList)}
+                >
+                  <span className="kb-link-main">
+                    Captured prompts ({extractionResult.prompts.length})
+                  </span>
+                  <span className="kb-toggle-chevron">{showPromptList ? "▲" : "▼"}</span>
+                </button>
+
+                <button
+                  className="kb-copy-pill-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCopyRaw();
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+
+            {showPromptList && (
+              <div className="kb-inline-prompts-list-container">
+                <div className="kb-inline-prompts-list kb-fade-in">
+                  {extractionResult.prompts.map((p, i) => (
+                    <div key={i} className="kb-inline-prompt-item">
+                      <div className="kb-inline-prompt-content">{p.content}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-            <div
-              style={{
-                borderTop: "1px solid var(--kb-border)",
-                marginTop: 16,
-                paddingTop: 12,
-              }}
-            >
-              <button
-                className="kb-link-btn"
-                onClick={() => {
-                  // Hacky way to scroll to list or toggle view
-                  setMode("capture");
-                }}
-              >
-                View full list of prompts ({extractionResult.prompts.length})
-              </button>
-            </div>
           </div>
         ) : (
           <div className="kb-results-scroll">
@@ -924,11 +1037,11 @@ export default function OnePromptApp() {
         <div className={`kb-card-footer ${copySuccess || deleteSuccess ? "kb-feedback-active" : ""}`}>
           {/* When a feedback state is active, render only a compact feedback-only button */}
           {deleteSuccess ? (
-            <button className="kb-footer-btn-secondary" onClick={() => {}}>
+            <button className="kb-footer-btn-secondary" onClick={() => { }}>
               {`Deleted (${selectedPrompts.length})`}
             </button>
           ) : copySuccess ? (
-            <button className="kb-footer-btn-primary" onClick={() => {}} aria-live="polite">
+            <button className="kb-footer-btn-primary" onClick={() => { }} aria-live="polite">
               {selectedPrompts.length > 0 ? (
                 `Copied (${selectedPrompts.length})`
               ) : (
@@ -1059,7 +1172,13 @@ export default function OnePromptApp() {
       )}
 
       {/* View Switcher */}
-      {viewingHistory ? (
+      {showUpgradeModal ? (
+        <UpgradePrompt
+          currentTier={tier}
+          onSignIn={handleLogin}
+          onClose={() => setShowUpgradeModal(false)}
+        />
+      ) : viewingHistory ? (
         <div className="kb-history-overlay">
           <div className="kb-results-header">
             <h2 className="kb-history-title">History</h2>
@@ -1067,33 +1186,60 @@ export default function OnePromptApp() {
           </div>
 
           <div
-            className="kb-history-filters"
+            className="kb-history-filters-refined"
             style={{
+              padding: "0 16px 12px",
               display: "flex",
-              gap: 6,
-              padding: "0 12px 10px",
-              overflowX: "auto",
-              scrollbarWidth: "none",
+              flexDirection: "column",
+              gap: 8,
             }}
           >
-            <button
-              className={`kb-filter-pill ${historyFilter === "all" ? "active" : ""}`}
-              onClick={() => setHistoryFilter("all")}
-            >
-              All
-            </button>
-            <button
-              className={`kb-filter-pill ${historyFilter === "capture" ? "active" : ""}`}
-              onClick={() => setHistoryFilter("capture")}
-            >
-              Capture
-            </button>
-            <button
-              className={`kb-filter-pill ${historyFilter === "compile" ? "active" : ""}`}
-              onClick={() => setHistoryFilter("compile")}
-            >
-              Compile
-            </button>
+            {/* Primary Mode Toggle */}
+            <div className="kb-pill-row-compact">
+              <button
+                className={`kb-filter-pill-mini ${historyFilter === "all" ? "active" : ""}`}
+                onClick={() => setHistoryFilter("all")}
+              >
+                All
+              </button>
+              <button
+                className={`kb-filter-pill-mini ${historyFilter === "capture" ? "active" : ""}`}
+                onClick={() => setHistoryFilter("capture")}
+              >
+                Capture
+              </button>
+              <button
+                className={`kb-filter-pill-mini ${historyFilter === "compile" ? "active" : ""}`}
+                onClick={() => setHistoryFilter("compile")}
+              >
+                Compile
+              </button>
+            </div>
+
+            {/* Sub-Filters (Date & Platform) */}
+            <div className="kb-pill-row-compact">
+              <select
+                className="kb-mini-select"
+                value={dateHistoryFilter}
+                onChange={(e) => setDateHistoryFilter(e.target.value as any)}
+              >
+                <option value="all">🗓️ All Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+              </select>
+
+              <select
+                className="kb-mini-select"
+                value={platformHistoryFilter}
+                onChange={(e) => setPlatformHistoryFilter(e.target.value)}
+              >
+                <option value="all">🌐 Platform</option>
+                {Array.from(new Set(historyItems.map(h => h.platform))).filter(Boolean).map(p => (
+                  <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {tier === "guest" ? (
@@ -1108,62 +1254,44 @@ export default function OnePromptApp() {
             <div className="kb-history-list">
               {groupHistoryByDate(historyItems).map((group) => (
                 <div key={group.label}>
-                  <div className="kb-history-separator">{group.label}</div>
-                  {group.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="kb-history-card-premium"
-                      onClick={() => {
-                        setExtractionResult({
-                          prompts: item.prompts,
-                          platform: item.platform,
-                          url: "",
-                          title: "History Item",
-                          extractedAt: item.timestamp,
-                          summary: item.summary,
-                          model: item.model,
-                          provider: item.provider,
-                        });
-                        setExtractionTime(item.duration || 0);
-                        setMode(item.mode || "capture");
-                        setViewingHistory(false);
-                        setShowResults(true);
-                      }}
-                    >
-                      <div className="kb-history-card-top">
-                        <div className="kb-history-platform-pill">
-                          {!item.platform || item.platform === "unknown"
-                            ? "LEGACY"
-                            : item.platform.toUpperCase()}
-                        </div>
-                        <div className="kb-history-meta">
-                          {item.isPinned && (
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="var(--kb-logo-vibrant)"
-                              style={{ transform: "rotate(45deg)" }}
-                            >
-                              <path d="M16 12V4H8v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" />
-                            </svg>
-                          )}
-                          <span className="kb-history-date">
-                            {new Date(item.timestamp).toLocaleDateString()}
-                          </span>
-                        </div>
+                  {group.label === "PINNED" ? (
+                    <>
+                      <div
+                        className="kb-history-separator clickable"
+                        onClick={() => setShowPinned(!showPinned)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <span>{group.label}</span>
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{
+                            transform: showPinned ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s'
+                          }}
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
                       </div>
-                      <div className="kb-history-card-preview">
-                        {item.preview}
-                      </div>
-                      <div className="kb-history-card-bottom">
-                        <span className="kb-history-count">
-                          {item.promptCount} prompts
-                        </span>
-                        {/* Delete button handled by overlay logic if needed, but per-card is standard */}
-                      </div>
-                    </div>
-                  ))}
+                      {showPinned && group.items.map(renderHistoryCard)}
+                    </>
+                  ) : (
+                    <>
+                      <div className="kb-history-separator">{group.label}</div>
+                      {group.items.map(renderHistoryCard)}
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -1206,21 +1334,24 @@ export default function OnePromptApp() {
                   >
                     {tier === "guest"
                       ? "Basic"
-                      : tier === "free" || tier === "go"
+                      : (tier === "free" || tier === "go")
                         ? "Go"
-                        : "Pro"}{" "}
+                        : "Admin"}{" "}
                     Plan
                   </div>
                 </div>
-                {(tier === "free" || tier === "go") && (
+                {tier === "admin" && (
                   <div
                     className="kb-menu-item"
-                    style={{ color: "var(--kb-logo-vibrant)" }}
-                    onClick={() => setShowUpgradeModal(true)}
+                    style={{ color: "var(--kb-primary-blue)" }}
+                    onClick={() => {
+                      setShowPopup(false);
+                      chrome.tabs.create({ url: 'admin.html' });
+                    }}
                   >
-                    <div style={{ fontWeight: 600 }}>Upgrade to PRO 🚀</div>
-                    <div style={{ fontSize: 11, color: "#60A5FA" }}>
-                      Unlimited Compiles & More
+                    <div style={{ fontWeight: 600 }}>📊 Admin Dashboard</div>
+                    <div style={{ fontSize: 11, color: "var(--kb-text-secondary)" }}>
+                      View Usage Stats
                     </div>
                   </div>
                 )}
@@ -1250,45 +1381,7 @@ export default function OnePromptApp() {
         </>
       )}
 
-      {showUpgradeModal && (
-        <UpgradePrompt
-          currentTier={tier}
-          onSignIn={handleLogin}
-          onUpgradeToPro={async () => {
-            // SIMULATION MODE: Upgrade to Pro immediately
-            setLoading(true);
 
-            try {
-              // In production, this would call Stripe/payment API
-              // For now, we simulate by updating the backend profile
-
-              // Invalidate tier cache to force refetch
-              const { invalidateTierCache } =
-                await import("../services/pricing");
-              await invalidateTierCache();
-
-              // Simulate upgrade delay
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-
-              // Update local storage (legacy support)
-              await chrome.storage.local.set({ userTier: "pro" });
-
-              // Refetch tier from server
-              const newTier = await fetchUserTier();
-              setTier(newTier);
-
-              setLoading(false);
-              setShowUpgradeModal(false);
-              alert("✅ Upgrade Successful! (Simulation Mode)");
-            } catch (error) {
-              console.error("Upgrade error:", error);
-              setLoading(false);
-              alert("❌ Upgrade failed. Please try again.");
-            }
-          }}
-          onClose={() => setShowUpgradeModal(false)}
-        />
-      )}
     </div>
   );
 }

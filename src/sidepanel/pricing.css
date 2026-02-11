@@ -1,3 +1,11 @@
+:root {
+  --kb-card: #ffffff;
+  --kb-card-subtle: #f9fafb;
+  --kb-outline: #e5e7eb;
+  --kb-on-surface: #111827;
+  --kb-on-surface-variant: #6b7280;
+}
+
 .tier-badge {
   display: inline-flex;
   align-items: center;
@@ -39,28 +47,49 @@
 }
 
 .upgrade-modal {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: white;
+  /* Solid background to prevent overlap */
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  padding: 16px;
-  animation: modalFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 24px;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .upgrade-content {
-  background: var(--kb-card);
-  border-radius: var(--kb-radius-card);
-  padding: 32px;
-  max-width: 340px;
-  width: 85%;
+  background: white;
+  padding: 0;
+  width: 100%;
+  max-width: 320px;
   position: relative;
-  box-shadow: none;
-  border: 1px solid var(--kb-outline);
-  animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   text-align: center;
+  animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .upgrade-close {

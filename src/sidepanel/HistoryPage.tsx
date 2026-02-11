@@ -190,11 +190,12 @@ export default function HistoryPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
-  const [activeFilter, setActiveFilter] = useState<
-    "all" | "capture" | "compile"
-  >("all");
+  const [activeFilter, setActiveFilter] = useState<"all" | "capture" | "compile">("all");
+  const [platformFilter, setPlatformFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [tier, setTier] = useState<UserTier>("guest");
   const [loadingTier, setLoadingTier] = useState(true);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
     getUserTier().then((t) => {
@@ -264,9 +265,30 @@ export default function HistoryPage() {
       const matchesSearch =
         item.preview.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.platform.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesFilter =
-        activeFilter === "all" || item.mode === activeFilter;
-      return matchesSearch && matchesFilter;
+
+      const matchesFilter = activeFilter === "all" || item.mode === activeFilter;
+
+      const matchesPlatform = platformFilter === "all" ||
+        item.platform.toLowerCase().includes(platformFilter.toLowerCase());
+
+      let matchesDate = true;
+      if (dateFilter !== "all") {
+        const itemDate = new Date(item.timestamp);
+        const now = new Date();
+        if (dateFilter === "today") {
+          matchesDate = itemDate.toDateString() === now.toDateString();
+        } else if (dateFilter === "week") {
+          const weekAgo = new Date();
+          weekAgo.setDate(now.getDate() - 7);
+          matchesDate = itemDate >= weekAgo;
+        } else if (dateFilter === "month") {
+          const monthAgo = new Date();
+          monthAgo.setMonth(now.getMonth() - 1);
+          matchesDate = itemDate >= monthAgo;
+        }
+      }
+
+      return matchesSearch && matchesFilter && matchesPlatform && matchesDate;
     })
     .sort((a, b) => {
       if (a.isPinned && !b.isPinned) return -1;
@@ -278,13 +300,33 @@ export default function HistoryPage() {
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const newHistory = history.filter((item) => item.id !== id);
-    setHistory(newHistory);
-    chrome.storage.local.set({ extractionHistory: newHistory });
-    if (selectedItem?.id === id) {
+    if (window.confirm("Are you sure you want to delete this conversation?")) {
+      const newHistory = history.filter((item) => item.id !== id);
+      setHistory(newHistory);
+      chrome.storage.local.set({ extractionHistory: newHistory });
+      if (selectedItem?.id === id) {
+        setSelectedItem(null);
+      }
+    }
+  };
+
+  const handleCopyAll = async () => {
+    if (!selectedItem) return;
+    const allText = selectedItem.prompts.map(p => p.content).join("\n\n---\n\n");
+    await navigator.clipboard.writeText(allText);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
+  };
+
+  const clearAllHistory = () => {
+    if (window.confirm("Are you sure you want to clear ALL history? This cannot be undone.")) {
+      setHistory([]);
+      chrome.storage.local.set({ extractionHistory: [] });
       setSelectedItem(null);
     }
   };
+
+  const uniquePlatforms = Array.from(new Set(history.map(h => h.platform))).filter(Boolean);
 
   if (loadingTier) return null;
 
@@ -367,23 +409,46 @@ export default function HistoryPage() {
             />
           </div>
           <div className="history-filters">
-            <button
-              className={`filter-tab ${activeFilter === "all" ? "active" : ""}`}
-              onClick={() => setActiveFilter("all")}
+            <select
+              value={activeFilter}
+              onChange={(e) => setActiveFilter(e.target.value as any)}
+              className="filter-dropdown"
+              title="Filter by Mode"
             >
-              All
-            </button>
-            <button
-              className={`filter-tab ${activeFilter === "capture" ? "active" : ""}`}
-              onClick={() => setActiveFilter("capture")}
+              <option value="all">⚡ All Modes</option>
+              <option value="capture">📸 Capture</option>
+              <option value="compile">✨ Compile</option>
+            </select>
+
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value as any)}
+              className="filter-dropdown"
+              title="Filter by Date"
             >
-              Capture
-            </button>
-            <button
-              className={`filter-tab ${activeFilter === "compile" ? "active" : ""}`}
-              onClick={() => setActiveFilter("compile")}
+              <option value="all">🗓️ All Time</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+            </select>
+
+            <select
+              value={platformFilter}
+              onChange={(e) => setPlatformFilter(e.target.value)}
+              className="filter-dropdown"
+              title="Filter by Platform"
             >
-              Compile
+              <option value="all">🌐 Platform</option>
+              {uniquePlatforms.map(p => (
+                <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="history-stats">
+            <span>{filteredHistory.length} conversations found</span>
+            <button onClick={clearAllHistory} className="clear-all-link">
+              Clear All
             </button>
           </div>
         </div>
@@ -406,10 +471,8 @@ export default function HistoryPage() {
                     onClick={() => setSelectedItem(item)}
                   >
                     <div className="card-top">
-                      <div className="platform-badge-pill">
-                        {!item.platform || item.platform === "unknown"
-                          ? "LEGACY"
-                          : item.platform.toUpperCase()}
+                      <div className={`platform-badge-pill ${item.platform?.toLowerCase()}`}>
+                        {item.platform?.toUpperCase() || "LEGACY"}
                       </div>
                       <div className="card-top-right">
                         {item.isPinned && (
@@ -477,6 +540,12 @@ export default function HistoryPage() {
                   {selectedItem.promptCount} prompts{" "}
                   {selectedItem.duration ? `in ${selectedItem.duration}s` : ""}
                 </div>
+                <button
+                  className={`copy-all-btn ${copySuccess ? 'success' : ''}`}
+                  onClick={handleCopyAll}
+                >
+                  {copySuccess ? 'Copied!' : 'Copy All Prompts'}
+                </button>
               </div>
             </div>
 
@@ -534,30 +603,57 @@ export default function HistoryPage() {
 
         .history-filters {
           display: flex;
-          gap: 8px;
+          gap: 6px;
           margin-top: 12px;
           padding: 0 4px;
+          margin-bottom: 8px;
         }
 
-        .filter-tab {
-          background: transparent;
-          border: 1px solid var(--border-default);
-          color: var(--text-secondary);
-          padding: 4px 10px;
+        .filter-dropdown {
+          background: #F3F4F6;
+          border: 1px solid #E5E7EB;
+          color: #4B5563;
+          padding: 6px 4px;
           border-radius: 6px;
-          font-size: 12px;
+          font-size: 10px;
           cursor: pointer;
-          transition: all 0.2s;
+          flex: 1;
+          min-width: 0;
+          outline: none;
+          font-weight: 600;
+          height: 32px;
         }
 
-        .filter-tab:hover {
-          background: var(--surface-hover);
+        .history-stats {
+          padding: 8px 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 11px;
+          color: #9CA3AF;
+          border-bottom: 1px solid var(--border-light);
         }
 
-        .filter-tab.active {
-          background: var(--text-primary);
-          color: var(--bg-primary);
-          border-color: var(--text-primary);
+        .clear-all-link {
+          background: transparent;
+          border: none;
+          color: #EF4444;
+          font-size: 11px;
+          cursor: pointer;
+          font-weight: 500;
+        }
+
+        .clear-all-link:hover {
+          text-decoration: underline;
+        }
+
+        .filter-dropdown:hover {
+          background: #E5E7EB;
+        }
+
+        .filter-dropdown:focus {
+          border-color: var(--kb-logo-vibrant);
+          background: white;
         }
 
         .history-title {
@@ -675,13 +771,22 @@ export default function HistoryPage() {
 
         .platform-badge-pill {
           background: #EBF5FF;
-          color: var(--kb-logo-vibrant);
-          padding: 4px 10px;
-          border-radius: 6px;
-          font-size: 11px;
+          color: #3b82f6;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 10px;
           font-weight: 800;
           letter-spacing: 0.5px;
         }
+
+        .platform-badge-pill.openai, .platform-badge-pill.chatgpt { background: #10a37f22; color: #10a37f; }
+        .platform-badge-pill.claude { background: #d9770622; color: #d97706; }
+        .platform-badge-pill.gemini { background: #4f46e522; color: #4f46e5; }
+        .platform-badge-pill.perplexity { background: #06b6d422; color: #06b6d4; }
+        .platform-badge-pill.deepseek { background: #2563eb22; color: #2563eb; }
+        .platform-badge-pill.lovable { background: #ec489922; color: #ec4899; }
+        .platform-badge-pill.bolt { background: #f59e0b22; color: #f59e0b; }
+        .platform-badge-pill.cursor { background: #1f293722; color: #1f2937; }
 
         .card-top-right {
           display: flex;
@@ -741,37 +846,6 @@ export default function HistoryPage() {
           color: #EF4444;
         }
 
-        .history-filters {
-          display: flex;
-          gap: 8px;
-          margin-top: 12px;
-          padding: 0 4px;
-          margin-bottom: 8px;
-        }
-
-        .filter-tab {
-          background: transparent;
-          border: 1px solid var(--border-default);
-          color: var(--text-secondary);
-          padding: 4px 12px;
-          border-radius: 6px;
-          font-size: 12px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .filter-tab:hover {
-          background: var(--surface-hover);
-        }
-
-        .filter-tab.active {
-          background: var(--text-primary);
-          color: var(--bg-primary);
-          border-color: var(--text-primary);
-        }
-
-
-        /* Main Content */
         .history-main {
           flex: 1;
           background: var(--bg-secondary);
@@ -822,6 +896,33 @@ export default function HistoryPage() {
           font-size: 13px;
           font-weight: 500;
           color: var(--text-secondary);
+        }
+
+        .copy-all-btn {
+          background: var(--kb-logo-vibrant);
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .copy-all-btn:hover {
+          opacity: 0.9;
+          transform: translateY(-1px);
+        }
+
+        .copy-all-btn.success {
+          background: #10B981;
+        }
+
+        .header-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
 
         .conversation-content {

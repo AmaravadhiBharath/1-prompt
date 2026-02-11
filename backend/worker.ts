@@ -177,9 +177,17 @@ export default {
         return handleDeleteAllUserData(env, request, headers);
       }
 
-      // 5. Telemetry
+      // 5. Telemetry & Usage
       if (url.pathname === "/telemetry" && request.method === "POST") {
         return new Response(JSON.stringify({ success: true }), { headers });
+      }
+
+      if (url.pathname === "/user/usage" && request.method === "POST") {
+        return handleReportUsage(request, env, headers);
+      }
+
+      if (url.pathname === "/admin/usage" && request.method === "GET") {
+        return handleGetUsageReport(request, env, headers);
       }
 
       return new Response("Not Found", { status: 404, headers });
@@ -684,6 +692,86 @@ async function handleClearHistory(
   return new Response(JSON.stringify({ success: true }), { headers });
 }
 
+async function handleGetUsageReport(
+  req: Request,
+  env: Env,
+  headers: Record<string, string>,
+) {
+  // Verify auth and admin
+  let verifiedEmail: string | undefined;
+  try {
+    const auth = await verifyAuth(req);
+    verifiedEmail = auth.email;
+  } catch (e: any) {
+    return new Response(e.message, { status: 401, headers });
+  }
+
+  const adminEmails = (
+    env.ADMIN_EMAILS || "bharathamaravadi@gmail.com,bharath.amaravadi@gmail.com"
+  )
+    .split(",")
+    .map((e) => e.trim().toLowerCase());
+
+  if (!verifiedEmail || !adminEmails.includes(verifiedEmail.toLowerCase())) {
+    return new Response("Forbidden", { status: 403, headers });
+  }
+
+  // Scan for usage keys. Prefix is "user:"
+  // Key format: user:${userId}:usage:${date}
+  const usageReports: any[] = [];
+  let cursor: string | undefined = undefined;
+
+  do {
+    const list: any = await env.PromptExtractor_KV.list({
+      prefix: "user:",
+      cursor
+    });
+
+    for (const key of list.keys) {
+      if (key.name.includes(":usage:")) {
+        const val = await env.PromptExtractor_KV.get(key.name);
+        if (val) usageReports.push(JSON.parse(val));
+      }
+    }
+
+    cursor = list.list_complete ? undefined : list.cursor;
+  } while (cursor);
+
+  return new Response(JSON.stringify({ reports: usageReports }), { headers });
+}
+
+async function handleReportUsage(
+  req: Request,
+  env: Env,
+  headers: Record<string, string>,
+) {
+  // Verify auth
+  let userId: string;
+  let email: string | undefined;
+  try {
+    const auth = await verifyAuth(req);
+    userId = auth.userId;
+    email = auth.email;
+  } catch (e: any) {
+    return new Response(e.message, { status: 401, headers });
+  }
+
+  const { mode, date } = (await req.json()) as { mode: "capture" | "compile"; date: string };
+  if (!mode || !date) {
+    return new Response("Missing mode or date", { status: 400, headers });
+  }
+
+  const usageKey = `user:${userId}:usage:${date}`;
+  const existing = await env.PromptExtractor_KV.get(usageKey);
+  let usage = existing ? JSON.parse(existing) : { email, captures: 0, compiles: 0, date };
+
+  if (mode === "capture") usage.captures++;
+  else if (mode === "compile") usage.compiles++;
+
+  await env.PromptExtractor_KV.put(usageKey, JSON.stringify(usage));
+  return new Response(JSON.stringify({ success: true, usage }), { headers });
+}
+
 async function handleDeleteAllUserData(
   env: Env,
   req: Request,
@@ -874,7 +962,7 @@ async function handleSummarize(
               },
             );
           }
-          } else {
+        } else {
           const errorBody = await geminiResponse.text();
           console.error(`[AI] Gemini API error (${geminiResponse.status}):`, errorBody);
 

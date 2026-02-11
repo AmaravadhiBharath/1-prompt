@@ -114,6 +114,18 @@ const postBuildPlugin = () => ({
       writeFileSync(destHistoryPath, html);
     }
 
+    // Fix admin page paths if needed
+    if (existsSync("dist/src/admin/index.html")) {
+      // Move to root
+      copyFileSync("dist/src/admin/index.html", "dist/admin.html");
+
+      let html = readFileSync("dist/admin.html", "utf-8");
+      // Fix all paths that go too far up. Since we moved to root, ../../ becomes ./
+      html = html.replace(/\.\.\/\.\.\//g, "./");
+
+      writeFileSync("dist/admin.html", html);
+    }
+
     // Copy welcome-sidepanel to sidepanel/welcome.html
     const srcWelcomeSidepanelPath = "dist/src/sidepanel/welcome-v2.html";
     if (existsSync(srcWelcomeSidepanelPath)) {
@@ -147,6 +159,7 @@ export default defineConfig({
           "src/sidepanel/welcome-v2.html",
         ),
         welcome: resolve(__dirname, "src/welcome/index.html"),
+        admin: resolve(__dirname, "src/admin/index.html"),
       },
       output: {
         entryFileNames: "[name].js",

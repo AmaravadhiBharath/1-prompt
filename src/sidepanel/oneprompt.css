@@ -65,13 +65,16 @@ html,
 }
 
 .kb-app-container {
-  padding: 16px 16px 8px 16px;
-  /* Reduced bottom padding */
+  padding: 16px;
   height: 100%;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   position: relative;
+  max-width: 420px;
+  /* Limit width to maintain popup-like density */
+  margin: 0 auto;
+  width: 100%;
 }
 
 .kb-view-container {
@@ -222,11 +225,13 @@ html,
 }
 
 .kb-action-card:nth-of-type(1) {
-  border-left: none; /* accent removed per request */
+  border-left: none;
+  /* accent removed per request */
 }
 
 .kb-action-card:nth-of-type(2) {
-  border-left: none; /* accent removed per request */
+  border-left: none;
+  /* accent removed per request */
 }
 
 .kb-action-card:hover {
@@ -234,12 +239,12 @@ html,
   /* stronger visible hover: subtle white lift + vivid blue border */
   background: #ffffff;
   border: 1px solid var(--kb-logo-vibrant);
-  box-shadow: 0 8px 20px rgba(76,145,255,0.08);
+  box-shadow: 0 8px 20px rgba(76, 145, 255, 0.08);
 }
 
 .kb-action-card:focus,
 .kb-action-card:focus-within {
-  outline: 3px solid rgba(0,90,226,0.12);
+  outline: 3px solid rgba(0, 90, 226, 0.12);
   outline-offset: 2px;
 }
 
@@ -303,13 +308,15 @@ html,
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 8px; /* tightened: bring the pill up slightly */
+  top: 8px;
+  /* tightened: bring the pill up slightly */
   z-index: 6;
 }
 
 /* Ensure header reserves vertical space so centered pill doesn't overlap list */
 .kb-results-header {
-  min-height: 40px; /* reduced to tighten vertical rhythm */
+  min-height: 40px;
+  /* reduced to tighten vertical rhythm */
 }
 
 .kb-back-circle {
@@ -357,17 +364,16 @@ html,
 .kb-results-card {
   display: flex;
   flex-direction: column;
-  flex: 1;
   background: #ffffff;
   border-radius: 20px;
-  box-shadow: none;
-  /* No shadow to avoid disclaimer issues */
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  /* Slightly stronger border for definition */
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   overflow: hidden;
-  min-height: 0;
   position: relative;
-  /* For absolute footer */
+  /* Allow the card to be as tall as it needs to be, but flex-grow to fill space if needed */
+  /* For short content, it won't stretch weirdly */
+  flex: 1;
+  min-height: 0;
 }
 
 .kb-results-scroll {
@@ -379,7 +385,8 @@ html,
   /* Hide scrollbar */
   scrollbar-width: none;
   -ms-overflow-style: none;
-  padding-bottom: 80px; /* extra bottom padding so footer doesn't overlap content */
+  padding-bottom: 80px;
+  /* extra bottom padding so footer doesn't overlap content */
 }
 
 .kb-results-scroll::-webkit-scrollbar {
@@ -400,7 +407,8 @@ html,
   background: rgba(255, 255, 255, 1);
   /* Solid background */
   border-radius: 9999px;
-  padding: 6px 12px; /* increase horizontal padding so inner buttons aren't flush to edges */
+  padding: 6px 12px;
+  /* increase horizontal padding so inner buttons aren't flush to edges */
   display: flex;
   gap: 8px;
   box-shadow: none;
@@ -419,7 +427,8 @@ html,
 .kb-footer-btn-primary,
 .kb-footer-btn-secondary {
   flex: 1;
-  min-width: 70px; /* Ensure equal visual weight */
+  min-width: 70px;
+  /* Ensure equal visual weight */
   background: transparent;
   border: none;
   height: 40px;
@@ -488,7 +497,8 @@ html,
   font-size: 15px;
   font-weight: 700;
   border-radius: 9999px;
-  background: #ef4444; /* solid red for deleted state */
+  background: #ef4444;
+  /* solid red for deleted state */
   color: #ffffff;
   border: none;
   box-shadow: none;
@@ -504,7 +514,8 @@ html,
 /* Disable hover / interactions for compact feedback-only pills only when feedback is active */
 .kb-card-footer.kb-feedback-active .kb-footer-btn-primary:only-child,
 .kb-card-footer.kb-feedback-active .kb-footer-btn-secondary:only-child {
-  pointer-events: none; /* no hover, clicks ignored during feedback */
+  pointer-events: none;
+  /* no hover, clicks ignored during feedback */
   cursor: default;
   box-shadow: none;
 }
@@ -571,7 +582,7 @@ html,
   /* blue hover for Copy; keep vertical centering */
   background: linear-gradient(135deg, #005ae2 0%, #4c91ff 100%);
   color: #ffffff;
-  box-shadow: 0 18px 40px rgba(0,90,226,0.22);
+  box-shadow: 0 18px 40px rgba(0, 90, 226, 0.22);
 }
 
 /* Paired buttons: keep Copy and Delete the same visual weight and size */
@@ -595,7 +606,8 @@ html,
   height: 16px;
   background: rgba(0, 0, 0, 0.1);
   margin: 0 4px;
-  display: none; /* hide divider as requested */
+  display: none;
+  /* hide divider as requested */
 }
 
 .kb-footer-count {
@@ -673,7 +685,8 @@ html,
   /* left padding increased to account for selection dot */
   display: flex;
   gap: 16px;
-  border-bottom: 1px solid #e5e7eb; /* made darker for better visibility */
+  border-bottom: 1px solid #e5e7eb;
+  /* made darker for better visibility */
   cursor: pointer;
   transition: background 0.1s;
   position: relative;
@@ -762,7 +775,7 @@ html,
 }
 
 .kb-menu-item:focus {
-  outline: 3px solid rgba(0,90,226,0.12);
+  outline: 3px solid rgba(0, 90, 226, 0.12);
   border-radius: 8px;
 }
 
@@ -782,7 +795,8 @@ html,
 /* Ensure the History title is centered relative to the panel horizontally
    and sits below the persistent header icons/back button */
 .kb-history-overlay {
-  padding-top: 30px; /* tightened further so header area is denser */
+  padding-top: 30px;
+  /* tightened further so header area is denser */
 }
 
 .kb-history-overlay .kb-results-header {
@@ -795,12 +809,58 @@ html,
   transform: translateX(-50%);
   font-size: 18px;
   font-weight: 700;
-  margin: 0 0 2px 0; /* slightly reduced bottom margin */
+  margin: 0 0 2px 0;
+  /* slightly reduced bottom margin */
 }
 
 /* Slightly tighter spacing between heading and filter pills */
 .kb-history-overlay .kb-history-filters {
-  margin-top: 2px; /* tighter to bring filters closer to title */
+  margin-top: 2px;
+}
+
+.kb-pill-row-compact {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.kb-filter-pill-mini {
+  background: white;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.kb-filter-pill-mini.active {
+  background: var(--kb-primary-blue);
+  color: white;
+  border-color: var(--kb-primary-blue);
+  box-shadow: 0 2px 4px rgba(0, 90, 226, 0.2);
+}
+
+.kb-mini-select {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  outline: none;
+  cursor: pointer;
+  height: 28px;
+}
+
+.kb-mini-select:hover {
+  border-color: #cbd5e1;
+  background: white;
 }
 
 @keyframes kbSlideUp {
@@ -820,13 +880,15 @@ html,
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 4px; /* maximum density: tighter gap between cards */
+  gap: 4px;
+  /* maximum density: tighter gap between cards */
   padding-top: 4px;
 }
 
 /* --- REFINED HISTORY UI (MATCH SPEC) --- */
 .kb-history-separator {
-  padding: 12px 8px 6px; /* tightened separator spacing */
+  padding: 12px 8px 6px;
+  /* tightened separator spacing */
   font-size: 13px;
   font-weight: 700;
   color: #6b7280;
@@ -834,11 +896,13 @@ html,
   letter-spacing: 0.5px;
 }
 
+
 .kb-history-card-premium {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 10px; /* maximum density: reduced padding */
+  padding: 10px;
+  /* maximum density: reduced padding */
   margin-bottom: 12px;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
@@ -886,7 +950,8 @@ html,
   font-size: 15px;
   font-weight: 600;
   color: #111827;
-  line-height: 1.45; /* slightly tighter line-height */
+  line-height: 1.45;
+  /* slightly tighter line-height */
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -908,28 +973,9 @@ html,
   font-weight: 500;
 }
 
-.kb-filter-pill {
-  background: transparent;
-  border: 1px solid #e5e7eb;
-  color: #6b7280;
-  padding: 4px 10px; /* slightly reduced padding for a tighter row */
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.kb-filter-pill:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-}
-
-.kb-filter-pill.active {
-  background: #111827;
-  color: #ffffff;
-  border-color: #111827;
+/* Utilities */
+.kb-hidden {
+  display: none;
 }
 
 /* Utilities */
@@ -954,20 +1000,23 @@ html,
 
 /* --- SUMMARY SECTION --- */
 .kb-compile-section {
-  padding: 24px;
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow-y: auto;
-  padding-bottom: 80px; /* ensure compile summary has extra bottom scroll space */
+  overflow: hidden;
+  /* root container fixed, children scroll */
+  padding: 0;
+  padding-bottom: 0px;
+  /* Clear space handled by children padding/margin */
 }
 
 .kb-compile-content {
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.55;
   color: var(--kb-text-primary);
   white-space: pre-wrap;
   font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 .kb-link-btn {
@@ -985,6 +1034,167 @@ html,
 
 .kb-link-btn:hover {
   opacity: 1;
+}
+
+.kb-compile-section.kb-split-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  /* container doesn't scroll, children do */
+  padding: 0;
+}
+
+.kb-summary-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 24px 0 24px;
+}
+
+/* No longer need ::after spacer here as sticky banner handles it */
+
+.kb-compile-section.kb-split-view .kb-summary-scroll-area {
+  flex: 0 0 30%;
+  /* Minimize compile output to 30% when prompts are shown */
+  border-bottom: 2px dashed var(--kb-border-light);
+  min-height: 100px;
+}
+
+.kb-prompts-toggle-sticky {
+  flex-shrink: 0;
+  /* don't compress the banner */
+  background: white;
+  padding: 16px 24px;
+  border-top: 1px solid var(--kb-border-light);
+  z-index: 10;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  /* Fixed spacing to stay 16px above CTA */
+  /* Align banner bottom edge to top of CTA (66px from bottom) */
+  /* Visible gap is now purely the 16px padding inside the banner */
+  margin-bottom: 66px;
+}
+
+.kb-split-view .kb-prompts-toggle-sticky {
+  margin-bottom: 0;
+  background: #f8fafc;
+  /* small distinction when open */
+  padding-bottom: 16px;
+  position: relative;
+  box-shadow: none;
+}
+
+.kb-inline-prompts-list-container {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.kb-inline-prompts-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 90px 24px;
+  /* Space for footer CTA */
+  margin: 0;
+}
+
+.kb-toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+  /* Spacing between toggle and copy */
+}
+
+.kb-link-btn-split {
+  background: transparent;
+  border: none;
+  color: var(--kb-logo-vibrant);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kb-link-main {
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.kb-toggle-chevron {
+  font-size: 10px;
+  color: var(--kb-logo-vibrant);
+  opacity: 0.8;
+}
+
+.kb-copy-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0f7ff;
+  color: #2563eb;
+  border: 1px solid #dbeafe;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kb-copy-pill-btn:hover {
+  background: #e0efff;
+  transform: translateY(-1px);
+}
+
+.kb-inline-prompts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 16px 24px 100px 24px;
+  /* Symmetrical left/right padding */
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: stretch;
+  /* Cards will fill the padding-defined width */
+}
+
+.kb-inline-prompt-item {
+  display: block;
+  /* Content will wrap naturally and center in parent via padding */
+  padding: 16px 20px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #f3f4f6;
+  text-align: left;
+  /* Keep text left aligned but card is centered */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.kb-inline-prompt-num {
+  font-size: 12px;
+  font-weight: 800;
+  color: #9ca3af;
+  min-width: 20px;
+  padding-top: 2px;
+}
+
+.kb-inline-prompt-content {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4b5563;
+  word-break: break-word;
 }
 
 .kb-fade-in {

@@ -26,8 +26,8 @@ export const PRICING_TIERS: Record<UserTier, PricingConfig> = {
   guest: {
     // Basic
     tier: "guest",
-    maxCaptures: -1, // Unlimited
-    maxCompiles: -1, // Unlimited
+    maxCaptures: -1,
+    maxCompiles: 10,
     hasHistory: false,
     canEdit: true,
     hasGenerateMode2: false,
@@ -38,7 +38,7 @@ export const PRICING_TIERS: Record<UserTier, PricingConfig> = {
   free: {
     tier: "free",
     maxCaptures: -1,
-    maxCompiles: -1, // Unlimited
+    maxCompiles: 10,
     hasHistory: true,
     canEdit: true,
     hasGenerateMode2: false,
@@ -49,7 +49,7 @@ export const PRICING_TIERS: Record<UserTier, PricingConfig> = {
   go: {
     tier: "go",
     maxCaptures: -1,
-    maxCompiles: -1, // Unlimited
+    maxCompiles: 10,
     hasHistory: true,
     canEdit: true,
     hasGenerateMode2: false,
@@ -226,7 +226,10 @@ export async function canUserCapture(): Promise<{
   if (remaining <= 0) {
     return {
       allowed: false,
-      reason: "Daily capture limit reached. Sign in for unlimited captures!",
+      reason:
+        tier === "guest"
+          ? "Daily capture limit reached. Sign in to unlock Go tier with more captures!"
+          : "Daily capture limit reached. Join the Pro waitlist for unlimited access!",
     };
   }
 
@@ -242,11 +245,6 @@ export async function canUserCompile(): Promise<{
   const limit = PRICING_TIERS[tier].maxCompiles;
 
   if (limit === -1) return { allowed: true };
-  if (limit === 0)
-    return {
-      allowed: false,
-      reason: "Compiling is available on Go and Pro plans. Sign in to try!",
-    };
 
   const usage = await getDailyUsage();
   const remaining = limit - usage.compiles;
@@ -255,7 +253,9 @@ export async function canUserCompile(): Promise<{
     return {
       allowed: false,
       reason:
-        "Daily compile limit reached. Upgrade to Pro for unlimited compiles!",
+        tier === "guest"
+          ? "Daily compile limit reached. Sign in to unlock Go tier with more compiles!"
+          : "Daily compile limit reached. Join the Pro waitlist for unlimited access!",
     };
   }
 
@@ -266,17 +266,46 @@ export async function incrementCapture(): Promise<void> {
   const usage = await getDailyUsage();
   usage.captures += 1;
   await chrome.storage.local.set({ [USAGE_KEY]: usage });
+
+  // Also report to backend if logged in
+  await reportUsageToBackend("capture", usage.date);
 }
 
 export async function incrementCompile(): Promise<void> {
   const usage = await getDailyUsage();
   usage.compiles += 1;
   await chrome.storage.local.set({ [USAGE_KEY]: usage });
+
+  // Also report to backend if logged in
+  await reportUsageToBackend("compile", usage.date);
+}
+
+async function reportUsageToBackend(mode: "capture" | "compile", date: string) {
+  try {
+    const userData = await chrome.storage.local.get(["oneprompt_user"]);
+    const user = userData.oneprompt_user;
+
+    if (!user) return;
+
+    const token = await getAuthToken();
+    if (!token) return;
+
+    await fetch(`${config.backend.url}/user/usage`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ mode, date })
+    });
+  } catch (err) {
+    console.error("[Pricing] Failed to report usage:", err);
+  }
 }
 
 export function getTierFeatures(tier: UserTier) {
   const config = PRICING_TIERS[tier];
-  let displayName = "Pro";
+  let displayName = "Admin";
   if (tier === "guest") displayName = "Basic";
   else if (tier === "free" || tier === "go") displayName = "Go";
 
