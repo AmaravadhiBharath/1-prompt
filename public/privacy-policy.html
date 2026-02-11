@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy - 1-prompt</title>
+  <style>
+    :root {
+      --bg: #0f0f14;
+      --surface: #1a1a24;
+      --border: #2a2a3a;
+      --text: #e0e0e8;
+      --text-muted: #9090a8;
+      --accent: #7c5cfc;
+      --accent-light: #9b80ff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 0;
+    }
+
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-inner {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-inner h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .header-inner span {
+      color: var(--accent-light);
+      font-weight: 700;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .last-updated {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-top: 40px;
+      margin-bottom: 16px;
+      color: var(--accent-light);
+    }
+
+    h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin-bottom: 14px;
+      color: var(--text);
+    }
+
+    ul, ol {
+      margin-bottom: 14px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    strong {
+      color: #fff;
+    }
+
+    a {
+      color: var(--accent-light);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .highlight-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+
+    .highlight-box p {
+      margin-bottom: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--surface);
+      font-weight: 600;
+      color: #fff;
+    }
+
+    td {
+      background: var(--bg);
+    }
+
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 32px;
+    }
+
+    .toc h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+
+    .toc ol {
+      margin-bottom: 0;
+    }
+
+    .toc li {
+      margin-bottom: 4px;
+    }
+
+    .toc a {
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .toc a:hover {
+      color: var(--accent-light);
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 24px 16px 60px;
+      }
+
+      h2 {
+        font-size: 19px;
+      }
+
+      table {
+        font-size: 13px;
+      }
+
+      th, td {
+        padding: 8px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-inner">
+      <span>1-prompt</span>
+      <h1>Privacy Policy</h1>
+    </div>
+  </div>
+
+  <div class="container">
+    <p class="last-updated">Last updated: February 11, 2026</p>
+
+    <div class="highlight-box">
+      <p><strong>Summary:</strong> 1-prompt extracts your prompts from AI chat platforms locally in your browser. We only sync data to the cloud when you sign in and choose to use cloud features. Telemetry is opt-in. You can delete all your data at any time.</p>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#introduction">Introduction</a></li>
+        <li><a href="#data-we-collect">Data We Collect</a></li>
+        <li><a href="#how-we-use-data">How We Use Your Data</a></li>
+        <li><a href="#data-storage">Data Storage and Security</a></li>
+        <li><a href="#third-party-services">Third-Party Services</a></li>
+        <li><a href="#permissions">Browser Permissions</a></li>
+        <li><a href="#data-retention">Data Retention</a></li>
+        <li><a href="#your-rights">Your Rights</a></li>
+        <li><a href="#children">Children's Privacy</a></li>
+        <li><a href="#changes">Changes to This Policy</a></li>
+        <li><a href="#contact">Contact Us</a></li>
+      </ol>
+    </div>
+
+    <!-- 1. Introduction -->
+    <h2 id="introduction">1. Introduction</h2>
+    <p>1-prompt ("we", "our", "us") is a Chrome browser extension that extracts and compiles user prompts from AI chat platforms. This Privacy Policy explains what data we collect, how we use it, and your choices regarding your information.</p>
+    <p>By installing and using the 1-prompt extension, you agree to the practices described in this policy. If you do not agree, please uninstall the extension.</p>
+
+    <!-- 2. Data We Collect -->
+    <h2 id="data-we-collect">2. Data We Collect</h2>
+
+    <h3>2.1 Data You Provide</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Data Type</th>
+          <th>Details</th>
+          <th>When Collected</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Google Account Info</strong></td>
+          <td>Name, email address, profile picture</td>
+          <td>When you sign in with Google</td>
+        </tr>
+        <tr>
+          <td><strong>Subscription Info</strong></td>
+          <td>Selected plan tier (Free, Go, Pro)</td>
+          <td>When you create an account</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>2.2 Data Collected Automatically</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Data Type</th>
+          <th>Details</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Extracted Prompts</strong></td>
+          <td>Your prompts (user messages only) from supported AI platforms</td>
+          <td>Core functionality - prompt extraction and compilation</td>
+        </tr>
+        <tr>
+          <td><strong>Extraction History</strong></td>
+          <td>Timestamps, platform name, prompt count, preview text</td>
+          <td>History feature for signed-in users</td>
+        </tr>
+        <tr>
+          <td><strong>Usage Counts</strong></td>
+          <td>Number of daily captures and compilations</td>
+          <td>Enforcing plan usage limits</td>
+        </tr>
+        <tr>
+          <td><strong>Device Identifier</strong></td>
+          <td>Randomly generated UUID (not linked to your identity)</td>
+          <td>Guest session tracking on the local device only</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>2.3 Telemetry Data (Opt-In Only)</h3>
+    <p>We collect anonymous telemetry data <strong>only if you explicitly grant consent</strong>. Telemetry is disabled by default. If enabled, we collect:</p>
+    <ul>
+      <li>Extension version</li>
+      <li>Feature usage events (e.g., "extraction started", "compilation completed")</li>
+      <li>Error and crash reports</li>
+    </ul>
+    <p>You can enable or disable telemetry at any time from the extension settings. Revoking consent immediately clears any queued telemetry data.</p>
+
+    <h3>2.4 Data We Do NOT Collect</h3>
+    <ul>
+      <li>AI assistant responses (we only extract <strong>your</strong> prompts, not the AI's replies)</li>
+      <li>Browsing history or activity outside of supported AI platforms</li>
+      <li>Passwords, financial information, or form data</li>
+      <li>Content from websites other than the supported AI platforms listed below</li>
+    </ul>
+
+    <!-- 3. How We Use Data -->
+    <h2 id="how-we-use-data">3. How We Use Your Data</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Purpose</th>
+          <th>Data Used</th>
+          <th>Legal Basis</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Extract and display your prompts</td>
+          <td>Extracted prompts</td>
+          <td>Contract (core service)</td>
+        </tr>
+        <tr>
+          <td>AI-powered prompt compilation</td>
+          <td>Extracted prompts (sent to AI provider)</td>
+          <td>Contract (core service)</td>
+        </tr>
+        <tr>
+          <td>User authentication</td>
+          <td>Google account info</td>
+          <td>Contract (account access)</td>
+        </tr>
+        <tr>
+          <td>Cloud history sync</td>
+          <td>Extraction history, prompts</td>
+          <td>Contract (feature delivery)</td>
+        </tr>
+        <tr>
+          <td>Enforce usage limits</td>
+          <td>Usage counts, subscription tier</td>
+          <td>Contract (plan enforcement)</td>
+        </tr>
+        <tr>
+          <td>Improve the extension</td>
+          <td>Telemetry (opt-in)</td>
+          <td>Consent</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>We do <strong>not</strong> sell, rent, or share your personal data with third parties for advertising or marketing purposes.</p>
+
+    <!-- 4. Data Storage -->
+    <h2 id="data-storage">4. Data Storage and Security</h2>
+
+    <h3>4.1 Local Storage</h3>
+    <p>By default, all extracted prompts and usage data are stored <strong>locally on your device</strong> using Chrome's built-in storage APIs (<code>chrome.storage.local</code>). This data never leaves your browser unless you sign in and use cloud features.</p>
+
+    <h3>4.2 Cloud Storage</h3>
+    <p>When you sign in with Google and use cloud-enabled features (history sync, cross-device access), your data is stored on:</p>
+    <ul>
+      <li><strong>Cloudflare Workers KV</strong> - Encrypted at rest, hosted on Cloudflare's global edge network</li>
+    </ul>
+    <p>Cloud-stored data includes your user profile, extraction history, and prompts associated with history entries.</p>
+
+    <h3>4.3 Security Measures</h3>
+    <ul>
+      <li>All network communication uses HTTPS/TLS encryption</li>
+      <li>Google OAuth 2.0 for authentication (we never see or store your Google password)</li>
+      <li>Server-side token verification via Google's API</li>
+      <li>API rate limiting (100 requests per minute per IP)</li>
+      <li>Request size limits (1 MB maximum)</li>
+      <li>Input validation and sanitization on all server endpoints</li>
+      <li>CORS restricted to authorized extension origins only</li>
+    </ul>
+
+    <!-- 5. Third-Party Services -->
+    <h2 id="third-party-services">5. Third-Party Services</h2>
+    <p>We use the following third-party services to operate 1-prompt:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Provider</th>
+          <th>Purpose</th>
+          <th>Data Shared</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Google OAuth</strong></td>
+          <td>Google</td>
+          <td>User authentication</td>
+          <td>Email, name, profile picture</td>
+        </tr>
+        <tr>
+          <td><strong>Gemini API</strong></td>
+          <td>Google</td>
+          <td>AI prompt compilation</td>
+          <td>Extracted prompt text (for processing only)</td>
+        </tr>
+        <tr>
+          <td><strong>Cloudflare Workers AI</strong></td>
+          <td>Cloudflare</td>
+          <td>AI prompt compilation (fallback)</td>
+          <td>Extracted prompt text (for processing only)</td>
+        </tr>
+        <tr>
+          <td><strong>Cloudflare Workers KV</strong></td>
+          <td>Cloudflare</td>
+          <td>Cloud data storage and backend</td>
+          <td>User profile, history, prompts</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>When you use the "Compile" feature, your extracted prompts are sent to an AI service (Google Gemini or Cloudflare Workers AI) for processing. These services process the data transiently and do not retain it after generating the response. Please refer to <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a> and <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare's Privacy Policy</a> for details on their data handling practices.</p>
+
+    <!-- 6. Permissions -->
+    <h2 id="permissions">6. Browser Permissions</h2>
+    <p>1-prompt requests the following Chrome permissions and why:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Permission</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>activeTab</code></td>
+          <td>Access the current tab to extract prompts from AI platforms</td>
+        </tr>
+        <tr>
+          <td><code>storage</code></td>
+          <td>Store extracted prompts and settings locally</td>
+        </tr>
+        <tr>
+          <td><code>unlimitedStorage</code></td>
+          <td>Store larger extraction histories locally</td>
+        </tr>
+        <tr>
+          <td><code>scripting</code></td>
+          <td>Inject content scripts into AI platform pages for prompt extraction</td>
+        </tr>
+        <tr>
+          <td><code>sidePanel</code></td>
+          <td>Display the extension's side panel UI</td>
+        </tr>
+        <tr>
+          <td><code>identity</code> / <code>identity.email</code></td>
+          <td>Google sign-in via Chrome's identity API</td>
+        </tr>
+        <tr>
+          <td><code>alarms</code></td>
+          <td>Schedule background tasks (e.g., periodic sync)</td>
+        </tr>
+        <tr>
+          <td><code>tabs</code></td>
+          <td>Detect when you navigate to a supported AI platform</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Supported AI Platforms</h3>
+    <p>The extension only activates on these websites:</p>
+    <ul>
+      <li>ChatGPT (chatgpt.com, chat.openai.com)</li>
+      <li>Claude (claude.ai)</li>
+      <li>Gemini (gemini.google.com)</li>
+      <li>Perplexity (perplexity.ai)</li>
+      <li>DeepSeek (chat.deepseek.com)</li>
+      <li>Lovable (lovable.dev)</li>
+      <li>Bolt (bolt.new)</li>
+      <li>Cursor (cursor.sh, cursor.com)</li>
+      <li>Meta AI (meta.ai)</li>
+    </ul>
+
+    <!-- 7. Data Retention -->
+    <h2 id="data-retention">7. Data Retention</h2>
+    <ul>
+      <li><strong>Local data:</strong> Stored until you clear it manually or uninstall the extension.</li>
+      <li><strong>Cloud history:</strong> Stored until you delete it via the extension or request account deletion.</li>
+      <li><strong>User profile:</strong> Stored as long as your account is active.</li>
+      <li><strong>Telemetry:</strong> Aggregated and anonymized; individual events are not retained long-term.</li>
+      <li><strong>Rate limiting data:</strong> Automatically expires after 2 minutes.</li>
+    </ul>
+
+    <!-- 8. Your Rights -->
+    <h2 id="your-rights">8. Your Rights</h2>
+    <p>You have the following rights regarding your data:</p>
+
+    <h3>8.1 Access and Export</h3>
+    <p>You can view all your extracted prompts and history directly within the extension's side panel.</p>
+
+    <h3>8.2 Deletion</h3>
+    <ul>
+      <li><strong>Local data:</strong> Clear via Chrome's extension storage settings or by uninstalling the extension.</li>
+      <li><strong>Cloud data:</strong> Use the "Clear History" option in the extension, or request complete account data deletion through the extension settings. This deletes your profile, history, and all associated data from our servers.</li>
+    </ul>
+
+    <h3>8.3 Consent Withdrawal</h3>
+    <ul>
+      <li><strong>Telemetry:</strong> Disable at any time from extension settings.</li>
+      <li><strong>Cloud sync:</strong> Sign out to stop cloud synchronization.</li>
+      <li><strong>All data processing:</strong> Uninstall the extension to stop all data collection.</li>
+    </ul>
+
+    <h3>8.4 GDPR Rights (EU Users)</h3>
+    <p>If you are located in the European Economic Area, you have additional rights under GDPR including the right to access, rectification, erasure, data portability, and the right to lodge a complaint with a supervisory authority. To exercise these rights, contact us at the email below.</p>
+
+    <h3>8.5 CCPA Rights (California Users)</h3>
+    <p>California residents have the right to know what personal information is collected, request deletion, and opt out of the sale of personal information. We do not sell personal information.</p>
+
+    <!-- 9. Children -->
+    <h2 id="children">9. Children's Privacy</h2>
+    <p>1-prompt is not directed at children under the age of 13. We do not knowingly collect personal information from children. If you believe a child has provided us with personal data, please contact us and we will delete it promptly.</p>
+
+    <!-- 10. Changes -->
+    <h2 id="changes">10. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. When we make material changes, we will update the "Last updated" date at the top of this page and may notify you via the extension. Your continued use of the extension after changes constitutes acceptance of the updated policy.</p>
+
+    <!-- 11. Contact -->
+    <h2 id="contact">11. Contact Us</h2>
+    <p>If you have questions about this Privacy Policy or your data, please contact us:</p>
+    <ul>
+      <li><strong>Email:</strong> <a href="mailto:amaravadhibharath@gmail.com">amaravadhibharath@gmail.com</a></li>
+      <li><strong>Website:</strong> <a href="https://1-prompt.in" target="_blank" rel="noopener">https://1-prompt.in</a></li>
+    </ul>
+  </div>
+
+</body>
+</html>
