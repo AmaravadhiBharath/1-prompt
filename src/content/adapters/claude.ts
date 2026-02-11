@@ -12,26 +12,42 @@ export class ClaudeAdapter extends BaseAdapter {
     const prompts: ScrapedPrompt[] = [];
     const seen = new Set<string>();
 
-    // Find all potential prompt elements
     const candidates = this.deepQuerySelectorAll(
       [
         '[data-testid="human-message"]',
         ".human-message",
         '[class*="human"]',
-        '[class*="message"]:not([class*="assistant"]):not([class*="ai"]):not([class*="claude"])',
+        'article:has([data-testid="human-message"]) div[class*="markdown"]',
+        'article:has(.human-message) div[class*="markdown"]',
       ].join(", "),
-    );
+    ).filter((el) => {
+      const htmlEl = el as HTMLElement;
+      // Claude sometimes hides inactive turns in the DOM - check visibility
+      if (htmlEl.offsetParent === null && !el.closest('article')) return false;
 
-    // Filter to keep only the top-most elements
-    const topLevelElements = candidates.filter((el) => {
-      return !candidates.some((other) => other !== el && other.contains(el));
+      // EXCLUDE composer
+      if (this.isInputElement(el)) return false;
+
+      const isUser =
+        el.closest('[data-testid="human-message"]') ||
+        el.closest(".human-message") ||
+        el.closest('article[class*="turn"]:has([data-testid="human-message"])') ||
+        el.closest('article:has(.human-message)');
+
+      return !!isUser;
     });
 
-    topLevelElements.forEach((el, index) => {
+    const leafContainers = candidates.filter((el) => {
+      return !Array.from(el.querySelectorAll("*")).some((child) =>
+        candidates.includes(child),
+      );
+    });
+
+    leafContainers.forEach((el, index) => {
       const content = this.cleanText(this.getVisibleText(el));
       if (content && !this.isUIElement(content) && !seen.has(content)) {
         seen.add(content);
-        prompts.push({ content, index });
+        prompts.push({ content, index, platform: "Claude" });
       }
     });
 

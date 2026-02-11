@@ -12,7 +12,6 @@ export class GeminiAdapter extends BaseAdapter {
     const prompts: ScrapedPrompt[] = [];
     const seen = new Set<string>();
 
-    // Find all potential prompt elements
     const candidates = this.deepQuerySelectorAll(
       [
         "user-query",
@@ -20,50 +19,38 @@ export class GeminiAdapter extends BaseAdapter {
         '[class*="query-text"]',
         ".query-content",
         ".user-message",
-        "[data-query]",
-        'div[data-message-author-role="user"]',
+        'article:has(user-query) div[class*="content"]',
+        'article:has(.user-query) div[class*="content"]',
       ].join(", "),
-    );
+    ).filter((el) => {
+      const htmlEl = el as HTMLElement;
+      if (htmlEl.offsetParent === null && !el.closest('article')) return false;
 
-    // Filter to keep only the top-most elements (avoid splitting one message into multiple prompts)
-    console.log(`[1-prompt] Gemini candidates found: ${candidates.length}`);
-    const topLevelElements = candidates.filter((el) => {
-      return !candidates.some((other) => other !== el && other.contains(el));
+      // EXCLUDE composer
+      if (this.isInputElement(el)) return false;
+
+      const isUser =
+        el.closest("user-query") ||
+        el.closest('[class*="user-query"]') ||
+        el.closest(".user-message") ||
+        el.closest('article:has(user-query)');
+
+      return !!isUser;
     });
 
-    topLevelElements.forEach((el, index) => {
+    const leafContainers = candidates.filter((el) => {
+      return !Array.from(el.querySelectorAll("*")).some((child) =>
+        candidates.includes(child),
+      );
+    });
+
+    leafContainers.forEach((el, index) => {
       const content = this.cleanText(this.getVisibleText(el));
       if (content && !this.isUIElement(content) && !seen.has(content)) {
         seen.add(content);
-        prompts.push({ content, index });
+        prompts.push({ content, index, platform: "Gemini" });
       }
     });
-
-    // Fallback: Strategy 3: Look in main conversation area if nothing found
-    if (prompts.length === 0) {
-      const main = document.querySelector('main, [role="main"]');
-      if (main) {
-        const turns = main.querySelectorAll(
-          '[class*="turn"], [class*="message"]',
-        );
-        let promptIndex = 0;
-        turns.forEach((turn) => {
-          const classList = turn.className.toLowerCase();
-          if (
-            classList.includes("model") ||
-            classList.includes("response") ||
-            classList.includes("answer")
-          ) {
-            return;
-          }
-          const content = this.cleanText(this.getVisibleText(turn));
-          if (content && content.length > 5 && !seen.has(content)) {
-            seen.add(content);
-            prompts.push({ content, index: promptIndex++ });
-          }
-        });
-      }
-    }
 
     return prompts;
   }

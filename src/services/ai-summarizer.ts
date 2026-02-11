@@ -5,7 +5,7 @@ import { enhancedAISummarizer } from "../config/enhanced-ai-summarizer";
 import { dynamicConfigLoader } from "../config/dynamic-loader";
 
 // Cloudflare Worker URL - API keys stored server-side
-const BACKEND_URL = "https://1-prompt-backend.amaravadhibharath.workers.dev";
+const BACKEND_URL = "https://1prompt-backend.amaravadhibharath.workers.dev";
 
 export interface SummaryOptions {
   format?: "paragraph" | "points" | "JSON" | "XML";
@@ -292,6 +292,11 @@ function filterPrompts(prompts: ScrapedPrompt[]): FilteredPrompt[] {
 */
 
 export class AISummarizer {
+  // Cache for AI results to avoid redundant calls
+  private cache = new Map<string, SummaryResult>();
+  private cacheExpiry = new Map<string, number>();
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
   /**
    * Summarize extracted prompts using the configured AI provider
    * Now uses the enhanced configuration system for provider flexibility
@@ -309,24 +314,40 @@ export class AISummarizer {
       };
     }
 
+    // Generate cache key from prompts content
+    const cacheKey = this.generateCacheKey(prompts, options);
+
+    // Check cache
+    const cached = this.getCachedResult(cacheKey);
+    if (cached) {
+      console.log("[AISummarizer] 📝 Using cached AI result");
+      return cached;
+    }
+
     console.log(
       `[AISummarizer] 📝 Starting AI compilation for ${prompts.length} prompts`,
     );
 
     try {
-      // First, try the enhanced AI summarizer with dynamic configuration
-      const result = await enhancedAISummarizer.summarize(prompts, {
-        format: options.format,
-        tone: options.tone,
-        includeAI: options.includeAI,
-        userId: options.userId,
-        userEmail: options.userEmail,
-        authToken: options.authToken,
-      });
+      // First, try the enhanced AI summarizer with dynamic configuration and retry
+      const result = await this.retryWithBackoff(async () =>
+        enhancedAISummarizer.summarize(prompts, {
+          format: options.format,
+          tone: options.tone,
+          includeAI: options.includeAI,
+          userId: options.userId,
+          userEmail: options.userEmail,
+          authToken: options.authToken,
+        })
+      );
 
       console.log(
         `[AISummarizer] ✅ Enhanced AI summary completed via ${result.provider || "backend"}`,
       );
+
+      // Cache the result
+      this.setCachedResult(cacheKey, result);
+
       return result;
     } catch (enhancedError) {
       console.warn(
@@ -334,8 +355,15 @@ export class AISummarizer {
         enhancedError,
       );
 
-      // Fallback to legacy backend method
-      return await this.legacySummarize(prompts, options);
+      // Fallback to legacy backend method with retry
+      const result = await this.retryWithBackoff(async () =>
+        this.legacySummarize(prompts, options)
+      );
+
+      // Cache the result
+      this.setCachedResult(cacheKey, result);
+
+      return result;
     }
   }
 
@@ -365,6 +393,12 @@ export class AISummarizer {
       const provider = config.primary.provider;
       const model = config.primary.model;
 
+      // Use the defined Enterprise Consolidation Protocol
+      const promptTemplate = CONSOLIDATION_RULES.replace("[END PROTOCOL v5.1]", "")
+        + "\n\nConversation:\n{prompts}\n\nOutput a single, consolidated prompt:";
+
+      const finalPrompt = promptTemplate.replace("{prompts}", content);
+
       const response = await resilientFetch(BACKEND_URL, {
         method: "POST",
         headers: {
@@ -374,8 +408,8 @@ export class AISummarizer {
             : {}),
         },
         body: JSON.stringify({
-          content,
-          additionalInfo: CONSOLIDATION_RULES,
+          content: finalPrompt,
+          additionalInfo: "", // Not needed since content includes the full prompt
           provider: provider,
           model: model,
           userId: options.userId,
@@ -450,6 +484,81 @@ export class AISummarizer {
         throw error;
       }
     }
+  }
+
+  /**
+   * Generate a cache key from prompts and options
+   */
+  private generateCacheKey(prompts: ScrapedPrompt[], options: SummaryOptions): string {
+    const contentHash = prompts
+      .map(p => p.content)
+      .sort()
+      .join('')
+      .slice(0, 1000); // Limit to avoid too long keys
+    const optionsStr = JSON.stringify({
+      format: options.format,
+      tone: options.tone,
+      includeAI: options.includeAI,
+    });
+    return btoa(contentHash + optionsStr).slice(0, 100); // Base64 and limit length
+  }
+
+  /**
+   * Get cached result if valid
+   */
+  private getCachedResult(key: string): SummaryResult | null {
+    const expiry = this.cacheExpiry.get(key);
+    if (expiry && Date.now() < expiry) {
+      return this.cache.get(key) || null;
+    }
+    // Clean up expired entries
+    this.cache.delete(key);
+    this.cacheExpiry.delete(key);
+    return null;
+  }
+
+  /**
+   * Set cached result with TTL
+   */
+  private setCachedResult(key: string, result: SummaryResult): void {
+    this.cache.set(key, result);
+    this.cacheExpiry.set(key, Date.now() + this.CACHE_TTL);
+
+    // Limit cache size to prevent memory leaks
+    if (this.cache.size > 50) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) {
+        this.cache.delete(oldestKey);
+        this.cacheExpiry.delete(oldestKey);
+      }
+    }
+  }
+
+  /**
+   * Retry operation with exponential backoff
+   */
+  private async retryWithBackoff<T>(
+    operation: () => Promise<T>,
+    maxRetries = 3,
+    baseDelay = 1000
+  ): Promise<T> {
+    let lastError: any;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+
+        if (attempt < maxRetries) {
+          const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000; // Jitter
+          console.log(`[AISummarizer] Retry ${attempt + 1}/${maxRetries} after ${delay}ms`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+
+    throw lastError;
   }
 }
 

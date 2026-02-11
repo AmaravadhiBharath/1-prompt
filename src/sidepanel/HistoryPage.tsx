@@ -464,7 +464,7 @@ export default function HistoryPage() {
                   <PlatformIcon platform={selectedItem.platform} />
                   <span>
                     {!selectedItem.platform ||
-                    selectedItem.platform === "unknown"
+                      selectedItem.platform === "unknown"
                       ? "LEGACY"
                       : selectedItem.platform.toUpperCase()}
                   </span>

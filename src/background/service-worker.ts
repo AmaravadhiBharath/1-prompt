@@ -320,43 +320,88 @@ chrome.runtime.onMessage.addListener(
           chrome.sidePanel.open({ windowId }).catch(() => {});
         }
 
-        // If mode is 'compile', run AI compilation first
+        // If mode is 'compile', run reliable compilation (local first, AI enhancement)
         if (mode === "compile" && result.prompts.length > 0) {
           console.log(
-            "[1-prompt SW] Mode is COMPILE - calling AI summarizer...",
+            "[1-prompt SW] Mode is COMPILE - using reliable summarization...",
           );
+          
+          // Send extraction started message to side panel
+          chrome.runtime
+            .sendMessage({
+              action: "EXTRACTION_STARTED",
+              mode,
+            })
+            .catch(() => {});
+          
           (async () => {
+            let localResult: any = null;
+            
             try {
-              const userId = await getCurrentUserId();
-              const summaryResult = await aiSummarizer.summarize(
-                result.prompts,
-                { userId: userId || undefined },
-              );
-              console.log("[1-prompt SW] AI compilation complete");
-
-              // Broadcast the compiled summary
+              // Step 1: Immediate local summarization (fast and reliable)
+              console.log("[1-prompt SW] Running local summarization...");
+              localResult = await localSummarizer.summarize(result.prompts);
+              
+              // Broadcast local result immediately
               chrome.runtime
                 .sendMessage({
                   action: "EXTRACTION_FROM_PAGE_RESULT",
                   result: {
                     ...result,
-                    summary: summaryResult.summary,
-                    promptCount: summaryResult.promptCount,
-                    model: summaryResult.model,
-                    provider: summaryResult.provider,
+                    summary: localResult.summary,
+                    promptCount: localResult.promptCount,
+                    model: "Local (Reliable)",
+                    provider: "client-side",
+                  },
+                  mode,
+                })
+                .catch(() => {});
+              
+              console.log("[1-prompt SW] Local compilation complete and broadcasted");
+              
+              // Step 2: Attempt AI enhancement in background (10s timeout)
+              console.log("[1-prompt SW] Attempting AI enhancement...");
+              const userId = await getCurrentUserId();
+              
+              const aiTimeoutPromise = new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error("AI enhancement timed out after 10 seconds")), 10000);
+              });
+              
+              const aiSummaryResult = await Promise.race([
+                aiSummarizer.summarize(result.prompts, { userId: userId || undefined }),
+                aiTimeoutPromise
+              ]);
+              
+              console.log("[1-prompt SW] AI enhancement successful, broadcasting upgrade");
+              
+              // Broadcast AI-enhanced result
+              chrome.runtime
+                .sendMessage({
+                  action: "EXTRACTION_FROM_PAGE_RESULT",
+                  result: {
+                    ...result,
+                    summary: aiSummaryResult.summary,
+                    promptCount: aiSummaryResult.promptCount,
+                    model: aiSummaryResult.model,
+                    provider: aiSummaryResult.provider,
                   },
                   mode,
                 })
                 .catch(() => {});
             } catch (error: any) {
-              console.error("[1-prompt SW] AI compilation failed:", error);
-              // Fallback: broadcast raw prompts
+              console.log("[1-prompt SW] AI enhancement failed, sending local result as final:", error.message);
+              // Send local result as the final result since AI failed
               chrome.runtime
                 .sendMessage({
                   action: "EXTRACTION_FROM_PAGE_RESULT",
-                  result,
+                  result: {
+                    ...result,
+                    summary: localResult.summary,
+                    promptCount: localResult.promptCount,
+                    model: "Local (AI Failed)",
+                    provider: "client-side-fallback",
+                  },
                   mode,
-                  error: error.message || "AI compilation failed",
                 })
                 .catch(() => {});
             }
@@ -386,7 +431,7 @@ chrome.runtime.onMessage.addListener(
         const { result, mode } = message as ExtractionResultMessage;
         lastExtractionResult = result;
 
-        // Only trigger AI if the result comes from a tab (content script)
+        // Only trigger summarization if the result comes from a tab (content script)
         // AND we are in compile mode AND it hasn't been compiled yet.
         if (
           sender.tab &&
@@ -395,40 +440,63 @@ chrome.runtime.onMessage.addListener(
           !result.summary
         ) {
           console.log(
-            "[1-prompt SW] Mode is COMPILE - calling AI summarizer...",
+            "[1-prompt SW] Mode is COMPILE - using reliable summarization...",
           );
           (async () => {
             try {
-              const userId = await getCurrentUserId();
-              const summaryResult = await aiSummarizer.summarize(
-                result.prompts,
-                { userId: userId || undefined },
-              );
-              console.log("[1-prompt SW] AI compilation complete");
-
-              // Broadcast the compiled summary
+              // Step 1: Immediate local summarization
+              console.log("[1-prompt SW] Running local summarization...");
+              const localResult = await localSummarizer.summarize(result.prompts);
+              
               const updatedResult = {
                 ...result,
-                summary: summaryResult.summary,
-                promptCount: summaryResult.promptCount,
-                model: summaryResult.model,
-                provider: summaryResult.provider,
+                summary: localResult.summary,
+                promptCount: localResult.promptCount,
+                model: "Local (Reliable)",
+                provider: "client-side",
               };
-              lastExtractionResult = updatedResult; // Save compiled version
-
+              lastExtractionResult = updatedResult;
+              
               broadcastToSidePanels({
                 action: "EXTRACTION_RESULT",
                 result: updatedResult,
                 mode,
               });
-            } catch (error: any) {
-              console.error("[1-prompt SW] AI compilation failed:", error);
+              
+              console.log("[1-prompt SW] Local compilation complete and broadcasted");
+              
+              // Step 2: Attempt AI enhancement
+              console.log("[1-prompt SW] Attempting AI enhancement...");
+              const userId = await getCurrentUserId();
+              
+              const aiTimeoutPromise = new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error("AI enhancement timed out after 10 seconds")), 10000);
+              });
+              
+              const aiSummaryResult = await Promise.race([
+                aiSummarizer.summarize(result.prompts, { userId: userId || undefined }),
+                aiTimeoutPromise,
+              ]);
+              
+              console.log("[1-prompt SW] AI enhancement successful, broadcasting upgrade");
+              
+              const aiUpdatedResult = {
+                ...result,
+                summary: aiSummaryResult.summary,
+                promptCount: aiSummaryResult.promptCount,
+                model: aiSummaryResult.model,
+                provider: aiSummaryResult.provider,
+              };
+              lastExtractionResult = aiUpdatedResult;
+              
               broadcastToSidePanels({
                 action: "EXTRACTION_RESULT",
-                result,
+                result: aiUpdatedResult,
                 mode,
-                error: error.message || "AI compilation failed",
               });
+            } catch (error: any) {
+              console.log("[1-prompt SW] AI enhancement failed, keeping local result:", error.message);
+              // Local result already broadcasted
             }
           })();
         } else {
@@ -455,34 +523,59 @@ chrome.runtime.onMessage.addListener(
         console.log("[1-prompt SW] RE_SUMMARIZE requested");
         (async () => {
           try {
-            const userId = await getCurrentUserId();
-            const summaryResult = await aiSummarizer.summarize(
-              lastExtractionResult!.prompts,
-              { userId: userId || undefined },
-            );
-
+            // Step 1: Immediate local summarization
+            console.log("[1-prompt SW] Running local re-summarization...");
+            const localResult = await localSummarizer.summarize(lastExtractionResult!.prompts);
+            
             const updatedResult = {
               ...lastExtractionResult!,
-              summary: summaryResult.summary,
-              promptCount: summaryResult.promptCount,
-              model: summaryResult.model,
-              provider: summaryResult.provider,
+              summary: localResult.summary,
+              promptCount: localResult.promptCount,
+              model: "Local (Reliable)",
+              provider: "client-side",
             };
             lastExtractionResult = updatedResult;
-
+            
             broadcastToSidePanels({
               action: "EXTRACTION_RESULT",
               result: updatedResult,
               mode: "compile",
             });
-          } catch (error: any) {
-            console.error("[1-prompt SW] RE_SUMMARIZE failed:", error);
+            
+            console.log("[1-prompt SW] Local re-summarization complete and broadcasted");
+            
+            // Step 2: Attempt AI enhancement
+            console.log("[1-prompt SW] Attempting AI re-enhancement...");
+            const userId = await getCurrentUserId();
+            
+            const aiTimeoutPromise = new Promise<never>((_, reject) => {
+              setTimeout(() => reject(new Error("AI re-enhancement timed out after 10 seconds")), 10000);
+            });
+            
+            const aiSummaryResult = await Promise.race([
+              aiSummarizer.summarize(lastExtractionResult!.prompts, { userId: userId || undefined }),
+              aiTimeoutPromise,
+            ]);
+            
+            console.log("[1-prompt SW] AI re-enhancement successful, broadcasting upgrade");
+            
+            const aiUpdatedResult = {
+              ...lastExtractionResult!,
+              summary: aiSummaryResult.summary,
+              promptCount: aiSummaryResult.promptCount,
+              model: aiSummaryResult.model,
+              provider: aiSummaryResult.provider,
+            };
+            lastExtractionResult = aiUpdatedResult;
+            
             broadcastToSidePanels({
               action: "EXTRACTION_RESULT",
-              result: lastExtractionResult!,
+              result: aiUpdatedResult,
               mode: "compile",
-              error: error.message || "AI refinement failed",
             });
+          } catch (error: any) {
+            console.log("[1-prompt SW] AI re-enhancement failed, keeping local result:", error.message);
+            // Local result already broadcasted
           }
         })();
         sendResponse({ success: true });
@@ -847,7 +940,7 @@ async function handleSidePanelMessage(message: Message) {
     }
 
     case "SUMMARIZE_PROMPTS": {
-      // Handle compilation request with Gemini
+      // Handle compilation request with reliable summarization
       const { prompts, userId, userEmail, authToken } = message as {
         prompts: Array<{ content: string; index: number }>;
         userId?: string;
@@ -855,62 +948,51 @@ async function handleSidePanelMessage(message: Message) {
         authToken?: string;
       };
 
-      try {
-        console.log(`[1-prompt] Summarizing ${prompts.length} prompts...`);
-        const result = await withKeepAlive(async () => {
-          return await aiSummarizer.summarize(prompts, {
-            userId,
-            userEmail,
-            authToken,
-          });
-        });
-        console.log("[1-prompt] Compilation successful");
-
-        broadcastToSidePanels({
-          action: "SUMMARY_RESULT",
-          result,
-          success: true,
-        });
-      } catch (error) {
-        console.error(
-          "[1-prompt] AI Compilation error, falling back to local:",
-          error,
-        );
-
+      (async () => {
         try {
-          // Use the LocalSummarizer created by the user
-          const result = await localSummarizer.summarize(prompts);
+          console.log(`[1-prompt] Summarizing ${prompts.length} prompts reliably...`);
+
+          // Step 1: Immediate local summarization
+          console.log("[1-prompt] Running local summarization...");
+          const localResult = await localSummarizer.summarize(prompts);
 
           broadcastToSidePanels({
             action: "SUMMARY_RESULT",
-            result,
+            result: localResult,
             success: true,
-            error:
-              error instanceof Error
-                ? error.message
-                : "AI Backend unavailable. Using local compilation.",
           });
-        } catch (localError) {
-          console.error(
-            "[1-prompt] Local compilation also failed:",
-            localError,
-          );
 
-          // Absolute last resort: raw join
-          const fallbackSummary = prompts.map((p) => p.content).join("\n\n");
+          console.log("[1-prompt] Local compilation complete and broadcasted");
+
+          // Step 2: Attempt AI enhancement
+          console.log("[1-prompt] Attempting AI enhancement...");
+          const aiTimeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error("AI enhancement timed out after 10 seconds")), 10000);
+          });
+
+          const aiResult = await Promise.race([
+            withKeepAlive(async () => {
+              return await aiSummarizer.summarize(prompts, {
+                userId,
+                userEmail,
+                authToken,
+              });
+            }),
+            aiTimeoutPromise,
+          ]);
+
+          console.log("[1-prompt] AI enhancement successful, broadcasting upgrade");
 
           broadcastToSidePanels({
             action: "SUMMARY_RESULT",
-            result: {
-              original: prompts,
-              summary: fallbackSummary,
-              promptCount: { before: prompts.length, after: prompts.length },
-            },
+            result: aiResult,
             success: true,
-            error: "Compilation failed. Showing raw content.",
           });
+        } catch (error) {
+          console.log("[1-prompt] AI enhancement failed, keeping local result:", error instanceof Error ? error.message : String(error));
+          // Local result already broadcasted
         }
-      }
+      })();
       break;
     }
   }

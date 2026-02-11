@@ -41,6 +41,8 @@ function broadcastStatus() {
     supported: !!adapter,
     platform: platformName,
     hasPrompts: adapter ? adapter.scrapePrompts().length > 0 : false,
+  }).catch(() => {
+    // Ignore errors - status broadcasts are fire-and-forget
   });
 }
 
@@ -636,13 +638,18 @@ async function scrollConversation(): Promise<void> {
     topMaxHeight = currentHeight;
   }
 
+  // Phase 3: Final Scroll to BOTTOM to ensure latest prompts are in DOM
+  // (Crucial for virtual-scrolled sites like ChatGPT/Claude)
+  console.log("[1-prompt] Phase 3: Final scroll to bottom for latest prompts...");
+  container.scrollTop = container.scrollHeight;
+  container.scrollTo({ top: container.scrollHeight, behavior: "auto" });
+  await new Promise((resolve) => setTimeout(resolve, config.waitPerScroll * 2));
+
   console.log(
     `[1-prompt] Scroll complete. Total height: ${container.scrollHeight}px. Ready for extraction.`,
   );
 }
 
-// Extract from multiple scroll positions in parallel (ba96d2c original slow method)
-// Uses platform-specific wait time for optimal rendering
 async function extractFromMultiplePositions(
   adapter: any,
 ): Promise<ScrapedPrompt[]> {
@@ -661,9 +668,8 @@ async function extractFromMultiplePositions(
   console.log(
     `[1-prompt] Starting parallel extraction from height: ${totalHeight}px`,
   );
-  console.log(`[1-prompt] Using platform wait time: ${config.parallelWait}ms`);
 
-  // Define extraction points: top, 25%, 50%, 75%, bottom
+  // Define extraction points
   const extractionPoints = [
     { name: "TOP", position: 0 },
     { name: "25%", position: totalHeight * 0.25 },
@@ -672,49 +678,23 @@ async function extractFromMultiplePositions(
     { name: "BOTTOM", position: totalHeight },
   ];
 
-  console.log(
-    `[1-prompt] Extracting from ${extractionPoints.length} positions...`,
-  );
-
-  // Extract from each position
   for (const point of extractionPoints) {
-    console.log(
-      `[1-prompt] [${point.name}] Scrolling to ${Math.round(point.position)}px...`,
-    );
-
-    // Scroll to position
     container.scrollTop = point.position;
     container.scrollTo({ top: point.position, behavior: "auto" });
-
-    // Wait for content to render (async - allows browser to render)
-    // Uses platform-specific wait time from config
     await new Promise((resolve) => setTimeout(resolve, config.parallelWait));
 
-    // Extract from this position
-    const pointPrompts = await adapter.scrape();
-    console.log(`[1-prompt] [${point.name}] Found ${pointPrompts.length} prompts`);
-
-    // Merge without duplicates
+    const pointPrompts = await adapter.scrapePrompts();
     for (const prompt of pointPrompts) {
-      if (!globalSeen.has(prompt.content)) {
-        globalSeen.add(prompt.content);
+      const normalized = normalizeForComparison(prompt.content);
+      if (!globalSeen.has(normalized)) {
+        globalSeen.add(normalized);
         prompt.index = nextIndex++;
         prompt.source = "dom";
         allPrompts.push(prompt);
-        console.log(
-          `[1-prompt] [${point.name}] Added: ${prompt.content.slice(0, 40)}...`,
-        );
-      } else {
-        console.log(
-          `[1-prompt] [${point.name}] Duplicate: ${prompt.content.slice(0, 40)}...`,
-        );
       }
     }
   }
 
-  console.log(
-    `[1-prompt] Parallel extraction complete: ${allPrompts.length} unique prompts`,
-  );
   return allPrompts;
 }
 
@@ -783,6 +763,7 @@ async function extractPrompts(
         allKeyloggedPrompts.push(p);
       }
     }
+
   }
 
   // If Keylog only, return immediately
@@ -846,7 +827,8 @@ async function extractPrompts(
     const normalizedContent = normalizeForComparison(domPrompt.content);
 
     // Skip if already added (handles any duplicate edge cases)
-    if (addedContent.has(normalizedContent)) {
+    // EXCEPTION: Allow duplication for short prompts (< 10 chars) like "ok" or "."
+    if (addedContent.has(normalizedContent) && normalizedContent.length > 10) {
       continue;
     }
 
@@ -899,7 +881,8 @@ async function extractPrompts(
 
 // Normalize text for comparison
 function normalizeForComparison(text: string): string {
-  return text.toLowerCase().trim().replace(/\s+/g, " ").slice(0, 200); // Compare first 200 chars
+  // Use a longer slice to avoid collisions on similar prompts
+  return text.toLowerCase().trim().replace(/\s+/g, " ").slice(0, 1000);
 }
 
 // Create extraction result
@@ -1308,10 +1291,28 @@ async function handleButtonClick(
   const originalText = isSummarize ? "Compile" : "Capture";
 
   // 1. Open sidepanel immediately
-  chrome.runtime.sendMessage({ action: "OPEN_SIDE_PANEL" });
+  try {
+    await chrome.runtime.sendMessage({ action: "OPEN_SIDE_PANEL" });
+  } catch (error: any) {
+    if (error.message.includes("Extension context invalidated")) {
+      console.warn("[1-prompt] Extension reloaded, refreshing page...");
+      window.location.reload();
+      return;
+    }
+    console.error("[1-prompt] Failed to open side panel:", error);
+  }
 
   // 1.5. Notify sidepanel that extraction was triggered
-  chrome.runtime.sendMessage({ action: "EXTRACT_TRIGERED_FROM_PAGE", mode });
+  try {
+    await chrome.runtime.sendMessage({ action: "EXTRACT_TRIGERED_FROM_PAGE", mode });
+  } catch (error: any) {
+    if (error.message.includes("Extension context invalidated")) {
+      console.warn("[1-prompt] Extension reloaded during trigger, refreshing page...");
+      window.location.reload();
+      return;
+    }
+    console.error("[1-prompt] Failed to notify side panel:", error);
+  }
 
   updateButtonLoading(button);
   if (isSummarize) {
@@ -1332,14 +1333,19 @@ async function handleButtonClick(
     const result = createExtractionResult(prompts);
 
     console.log("[1-prompt] Sending EXTRACTION_FROM_PAGE to background...");
-    chrome.runtime.sendMessage({
+    await chrome.runtime.sendMessage({
       action: "EXTRACTION_FROM_PAGE",
       result,
       mode,
     });
 
     updateButtonDone(button, originalText);
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message.includes("Extension context invalidated")) {
+      console.warn("[1-prompt] Extension reloaded during extraction, refreshing page...");
+      window.location.reload();
+      return;
+    }
     console.error("[1-prompt] Error:", error);
     button.textContent = "Error";
     setTimeout(() => {
@@ -1540,7 +1546,7 @@ function removeZonedLayout() {
 }
 
 // Initialize with retry - optimized to avoid polling
-let scheduleCheckGlobal: () => void = () => {};
+let scheduleCheckGlobal: () => void = () => { };
 
 function initZonedLayout() {
   let attempts = 0;
@@ -1764,6 +1770,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         .finally(() => {
           isExtracting = false;
         });
+
+      // Safety timeout to reset the extraction lock after 45 seconds
+      setTimeout(() => {
+        if (isExtracting) {
+          console.warn("[1-prompt] Extraction lock safety timeout reached");
+          isExtracting = false;
+        }
+      }, 45000);
+
       return true; // Keep channel open for async response
     }
 

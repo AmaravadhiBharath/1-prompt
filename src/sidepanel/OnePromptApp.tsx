@@ -54,6 +54,7 @@ export default function OnePromptApp() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [isRefining, setIsRefining] = useState(false);
+  const [aiEnhancing, setAiEnhancing] = useState(false);
 
   // Timer States
   const [extractionTime, setExtractionTime] = useState<number | null>(null);
@@ -70,6 +71,9 @@ export default function OnePromptApp() {
     const unsubscribe = subscribeToAuthChanges((u) => setUser(u));
 
     // Status polling & Event Listeners
+    let pollInterval = 1000; // Start fast for immediate feedback
+    let statusInterval: number;
+
     const checkStatus = () => {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const activeTab = tabs[0];
@@ -98,6 +102,12 @@ export default function OnePromptApp() {
                   }
                 } else {
                   setStatus(response || { supported: false, platform: null });
+                  // Once connected, slow down polling to reduce load
+                  if (response?.supported && pollInterval === 1000) {
+                    pollInterval = 3000;
+                    clearInterval(statusInterval);
+                    statusInterval = setInterval(checkStatus, pollInterval);
+                  }
                 }
               },
             );
@@ -112,17 +122,33 @@ export default function OnePromptApp() {
       });
     };
 
-    const statusInterval = setInterval(checkStatus, 1000);
+    statusInterval = setInterval(checkStatus, pollInterval);
     checkStatus();
 
     // Listen for tab switches and updates
-    const onTabActivated = () => checkStatus();
+    const onTabActivated = () => {
+      // Reset to fast polling on tab change for immediate feedback
+      if (pollInterval !== 1000) {
+        pollInterval = 1000;
+        clearInterval(statusInterval);
+        statusInterval = setInterval(checkStatus, pollInterval);
+      }
+      checkStatus();
+    };
     const onTabUpdated = (
       _tabId: number,
       _changeInfo: any,
       tab: chrome.tabs.Tab,
     ) => {
-      if (tab.active) checkStatus();
+      if (tab.active) {
+        // Reset to fast polling on tab update for immediate feedback
+        if (pollInterval !== 1000) {
+          pollInterval = 1000;
+          clearInterval(statusInterval);
+          statusInterval = setInterval(checkStatus, pollInterval);
+        }
+        checkStatus();
+      }
     };
 
     chrome.tabs.onActivated.addListener(onTabActivated);
@@ -192,8 +218,17 @@ export default function OnePromptApp() {
     const messageListener = async (msg: any) => {
       if (
         msg.action === "EXTRACTION_RESULT" ||
-        msg.action === "EXTRACTION_FROM_PAGE_RESULT"
+        msg.action === "EXTRACTION_FROM_PAGE_RESULT" ||
+        msg.action === "EXTRACTION_STARTED"
       ) {
+        if (msg.action === "EXTRACTION_STARTED") {
+          setLoading(true);
+          setAiError(null);
+          setAiEnhancing(msg.mode === "compile");
+          startTimer();
+          return;
+        }
+
         if (msg.error) {
           setAiError(msg.error);
         } else {
@@ -209,22 +244,28 @@ export default function OnePromptApp() {
           return;
         }
 
-        // If we are in 'compile' mode, but this is a raw result (no summary and no error),
-        // we should ONLY update the data but STAY in the loading state.
-        // This prevents the "flash" of raw prompts before the AI finishes.
-        if (msg.mode === "compile" && !msg.result.summary && !msg.error) {
+        // If we are in 'compile' mode and this is a local result (not AI-enhanced),
+        // we should NOT update the UI but STAY in the loading state.
+        // This prevents showing local results - only show final AI-enhanced results.
+        // Exception: Allow local results when AI completely failed
+        if (msg.mode === "compile" && msg.result.model === "Local (Reliable)") {
           console.log(
-            "[Sidepanel] Received raw compile result, waiting for AI...",
+            "[Sidepanel] Received local compile result, waiting for AI enhancement...",
           );
-          setExtractionResult(msg.result);
+          // Don't set extractionResult - keep waiting for AI
           return;
         }
 
         setIsRefining(false);
-        setExtractionResult(msg.result);
         setMode(msg.mode || "capture");
+
+        // For compile mode, this should always be the final AI-enhanced result
+        // Set it immediately since we didn't show the local results
+        setExtractionResult(msg.result);
+        setAiEnhancing(false);
         setLoading(false);
         stopTimer();
+
         setViewingHistory(false); // Close history if open
         setShowResults(true);
 
@@ -332,26 +373,25 @@ export default function OnePromptApp() {
   };
 
   const handleCopy = async () => {
-    // Filter out the AI signature line from copy
-    const cleanContent = (content: string) => {
-      // Remove local compilation signature if present
-      return content.replace(/\n\n⚡ Compiled by .*$/, "");
-    };
-
     const promptsToCopy =
       selectedPrompts.length > 0
         ? selectedPrompts
           .map((i) =>
-            cleanContent(extractionResult?.prompts[i].content || ""),
+            stripSignature(extractionResult?.prompts[i].content || ""),
           )
           .join("\n\n")
         : extractionResult?.prompts
-          .map((p) => cleanContent(p.content))
+          .map((p) => stripSignature(p.content))
           .join("\n\n");
 
     if (promptsToCopy) {
       await navigator.clipboard.writeText(promptsToCopy);
     }
+  };
+
+  // Helper to remove visible signature from text when copying
+  const stripSignature = (content: string) => {
+    return content.replace(/\n\n⚡ Compiled by .*$/s, "");
   };
 
   const handleDelete = () => {
@@ -742,7 +782,7 @@ export default function OnePromptApp() {
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2.5"
+            strokeWidth="2.0"
             strokeLinecap="round"
             strokeLinejoin="round"
           >
@@ -759,7 +799,7 @@ export default function OnePromptApp() {
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2.5"
+              strokeWidth="2.0"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
@@ -799,7 +839,28 @@ export default function OnePromptApp() {
       <div className="kb-results-card">
         {mode === "compile" && extractionResult?.summary ? (
           <div className="kb-compile-section">
-            <div className="kb-compile-content">{extractionResult.summary}</div>
+            {
+              (() => {
+                const raw = extractionResult.summary || "";
+                const summaryText = raw.replace(/\n\n⚡ Compiled by .*$/s, "");
+                let signatureText = "";
+                if (extractionResult.provider) {
+                  signatureText = `⚡ Compiled by ${extractionResult.provider}${extractionResult.model ? ` (${extractionResult.model})` : ""}`;
+                } else {
+                  const m = raw.match(/\n\n(⚡ Compiled by .*?)$/s);
+                  if (m) signatureText = m[1];
+                }
+
+                return (
+                  <>
+                    <div className="kb-compile-content">{summaryText}</div>
+                    {signatureText && (
+                      <div style={{ fontSize: 11, marginTop: 8, opacity: 0.7, textAlign: "center" }}>{signatureText}</div>
+                    )}
+                  </>
+                );
+              })()
+            }
             {extractionResult.summary.includes("1-prompt Local Logic") && (
               <div
                 style={{
@@ -883,9 +944,10 @@ export default function OnePromptApp() {
               className="kb-footer-btn-primary"
               onClick={() => {
                 if (extractionResult?.summary) {
+                  const textToCopy = stripSignature(extractionResult.summary || "");
                   chrome.runtime.sendMessage({
                     action: "COPY_TEXT",
-                    text: extractionResult.summary,
+                    text: textToCopy,
                   });
                   setCopySuccess(true);
                   setTimeout(() => setCopySuccess(false), 2000);
@@ -998,7 +1060,9 @@ export default function OnePromptApp() {
               fontWeight: 500,
             }}
           >
-            {mode === "compile" ? "Compiling..." : "Capturing..."}{" "}
+            {mode === "compile"
+              ? (aiEnhancing ? "Enhancing with AI..." : "Compiling...")
+              : "Capturing..."}{" "}
             {liveTime.toFixed(1)}s
           </p>
         </div>
@@ -1006,7 +1070,7 @@ export default function OnePromptApp() {
 
       {/* View Switcher */}
       {viewingHistory ? (
-        <div className="kb-history-overlay kb-fade-in">
+        <div className="kb-history-overlay">
           <div className="kb-results-header">
             <button
               className="kb-back-circle"

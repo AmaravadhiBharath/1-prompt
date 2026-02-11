@@ -1,6 +1,6 @@
 {
   "name": "1-prompt",
-  "version": "1.2.19",
+  "version": "1.2.25",
   "description": "Extract user prompts from AI chat platforms in One Click",
   "author": "Bharath Amaravadhi <Cursor Layout LLP>",
   "homepage": "https://1-prompt.in",
@@ -11,7 +11,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite build --watch & vite build --config vite.content.config.ts --watch",
-    "build": "rm -rf dist && tsc && vite build && vite build --config vite.content.config.ts",
+    "build": "rm -rf dist && tsc && vite build && vite build --config vite.background.config.ts && vite build --config vite.content.config.ts",
     "build:web": "npm run build && node scripts/prepare-web.js",
     "preview": "vite preview"
   },

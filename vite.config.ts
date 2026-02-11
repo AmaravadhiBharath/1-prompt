@@ -135,6 +135,9 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: false,
     minify: false,
+    modulePreload: {
+      polyfill: false,
+    },
     rollupOptions: {
       input: {
         sidepanel: resolve(__dirname, "src/sidepanel/index.html"),
@@ -144,10 +147,6 @@ export default defineConfig({
           "src/sidepanel/welcome-v2.html",
         ),
         welcome: resolve(__dirname, "src/welcome/index.html"),
-        "service-worker": resolve(
-          __dirname,
-          "src/background/service-worker.ts",
-        ),
       },
       output: {
         entryFileNames: "[name].js",

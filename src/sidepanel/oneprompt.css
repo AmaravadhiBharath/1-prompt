@@ -36,6 +36,7 @@ html,
   width: 100%;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;
   /* Prevent bounce */
 }
@@ -61,6 +62,13 @@ html,
   position: relative;
 }
 
+.kb-view-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 /* --- HEADER --- */
 .kb-header-icons {
   position: absolute;
@@ -72,13 +80,13 @@ html,
 }
 
 .kb-icon-button {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 0.8px solid rgba(0, 45, 139, 0.1);
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 45, 139, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -86,13 +94,33 @@ html,
   color: var(--kb-logo-midnight);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .kb-icon-button:hover {
-  background: rgba(255, 255, 255, 0.8);
+  background: #ffffff;
   border-color: var(--kb-logo-vibrant);
+  color: var(--kb-logo-vibrant);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 16px rgba(0, 45, 139, 0.15);
+}
+
+.kb-icon-button:active {
+  transform: scale(0.95);
+}
+
+.kb-abs-left {
+  position: absolute !important;
+  top: 12px !important;
+  left: 12px !important;
+  z-index: 100 !important;
+}
+
+.kb-abs-right {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  z-index: 100 !important;
 }
 
 /* --- MAIN CONTENT (States) --- */
@@ -190,11 +218,9 @@ html,
   position: absolute;
   width: 150px;
   height: 150px;
-  background: radial-gradient(
-    circle,
-    rgba(0, 122, 255, 0.12) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(circle,
+      rgba(0, 122, 255, 0.12) 0%,
+      transparent 70%);
   border-radius: 50%;
   filter: blur(20px);
   opacity: 0;
@@ -209,11 +235,9 @@ html,
 /* Compile Card: Moves in a lazy infinity-like path */
 .kb-action-card:nth-of-type(2)::before {
   animation: wander-2 24s infinite ease-in-out;
-  background: radial-gradient(
-    circle,
-    rgba(0, 122, 255, 0.1) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(circle,
+      rgba(0, 122, 255, 0.1) 0%,
+      transparent 70%);
 }
 
 @keyframes wander-1 {
@@ -304,6 +328,25 @@ html,
   box-shadow: 0 8px 32px rgba(0, 90, 226, 0.08);
 }
 
+/* Disabled state for action cards (e.g., Compile for Basic users) */
+.kb-action-card.disabled {
+  opacity: 0.56;
+  cursor: pointer;
+  /* still clickable to open upgrade modal */
+  transform: none !important;
+  border-color: rgba(0, 0, 0, 0.04);
+}
+
+.quota-badge {
+  display: inline-block;
+  background: rgba(0, 90, 226, 0.08);
+  color: var(--kb-logo-vibrant);
+  padding: 6px 10px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
 .kb-card-label {
   font-size: 18px;
   font-weight: 700;
@@ -337,27 +380,24 @@ html,
 }
 
 .kb-back-circle {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: white;
-  border: 1px solid #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid #e5e7eb;
   color: #4b5563;
-  transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .kb-back-circle:hover {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: var(--kb-logo-vibrant);
-  color: var(--kb-logo-midnight);
-  transform: scale(1.1);
-  box-shadow: none;
-  z-index: 10;
+  background: #fdfdfd;
+  color: #2563eb;
+  border-color: #d1d5db;
+  transform: translateX(-1px);
 }
 
 .kb-mode-pill {
@@ -400,8 +440,6 @@ html,
 .kb-results-scroll {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 80px;
-  /* Space for floating pill */
   min-height: 0;
   -webkit-overflow-scrolling: touch;
 
@@ -412,6 +450,11 @@ html,
 
 .kb-results-scroll::-webkit-scrollbar {
   display: none;
+}
+
+.kb-scroll-spacer {
+  height: 90px;
+  flex-shrink: 0;
 }
 
 /* Footer as Floating Pill */
@@ -428,12 +471,12 @@ html,
   padding: 2px 4px;
   display: flex;
   gap: 0;
-  box-shadow: 0 8px 32px rgba(0, 45, 139, 0.12);
-  z-index: 10;
+  box-shadow: 0 12px 48px rgba(0, 45, 139, 0.2);
+  z-index: 100;
   min-width: 140px;
-  height: 44px;
+  height: 48px;
   align-items: center;
-  border: 0.8px solid rgba(0, 90, 226, 0.2);
+  border: 1px solid rgba(0, 90, 226, 0.25);
   /* Thin logo-vibrant stroke */
 }
 
@@ -602,21 +645,36 @@ html,
 .kb-popup-backdrop {
   position: fixed;
   inset: 0;
-  background: transparent;
+  background: rgba(0, 0, 0, 0.05);
   z-index: 99;
 }
 
 .kb-profile-menu {
-  position: absolute;
-  top: 60px;
+  position: fixed;
+  /* anchor to viewport to avoid container-relative shifts */
+  top: 64px;
   right: 16px;
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   width: 200px;
-  padding: 8px;
-  z-index: 100;
+  padding: 6px;
+  z-index: 101;
   border: 1px solid #f3f4f6;
+  transform-origin: top right;
+  animation: menuAppear 0.15s cubic-bezier(0, 0, 0.2, 1);
+}
+
+@keyframes menuAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .kb-menu-item {
@@ -626,7 +684,7 @@ html,
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.1s;
+  transition: background 0.05s ease;
 }
 
 .kb-menu-item:hover {
@@ -635,13 +693,27 @@ html,
 
 /* --- HISTORY VIEW --- */
 .kb-history-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   background: var(--kb-bg-gradient);
-  z-index: 50;
+  z-index: 200;
   padding: 16px;
   display: flex;
   flex-direction: column;
+  animation: kbSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes kbSlideUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 15px, 0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 .kb-history-list {
@@ -816,17 +888,15 @@ html,
 }
 
 .kb-fade-in {
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.2s ease-out;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }

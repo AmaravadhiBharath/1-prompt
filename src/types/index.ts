@@ -3,6 +3,7 @@
 export interface ScrapedPrompt {
   content: string;
   index: number;
+  platform?: string;
   timestamp?: number;
   conversationId?: string;
   source?: "dom" | "keylog" | "network";

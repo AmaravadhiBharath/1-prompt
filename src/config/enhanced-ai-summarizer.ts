@@ -3,71 +3,30 @@ import { dynamicConfigLoader } from "./dynamic-loader";
 import { resilientFetch } from "../services/resilient-api";
 import { localSummarizer } from "../services/local-summarizer";
 
-// Consolidation rules for AI providers
+// Consolidation rules v5.1 - Enterprise Grade
 const CONSOLIDATION_RULES = `[INTENT COMPILATION PROTOCOL v5.1 - ENTERPRISE]
 
 CORE DIRECTIVE: Compile user intent into a single, cohesive paragraph.
 PHILOSOPHY: 1-prompt does not summarize conversations. It compiles intent into a unified narrative.
 
-═══════════════════════════════════════════════════════════════════════════════
 SECTION A: OUTPUT FORMAT
-═══════════════════════════════════════════════════════════════════════════════
+A1. SINGLE PARAGRAPH ONLY - Output MUST be a single, justified-style paragraph.
+A2. NO CATEGORY HEADERS - Do NOT use prefixes like "Story requirement:" or "Output:".
+A3. FINAL STATE ONLY - Output the resolved state of all requirements.
+A4. PURE INSTRUCTION ONLY - No headers or meta-commentary.
 
-A1. SINGLE PARAGRAPH ONLY
-- Output MUST be a single, justified-style paragraph.
-- No bullet points, no numbered lists, no newlines within the text.
-- Merge all requirements into a continuous flow.
-
-A2. NO CATEGORY HEADERS
-- Do NOT use prefixes like "Story requirement:", "Color elements:", "Output:", "Request:".
-- Start sentences directly with the subject.
-- ✗ "Story requirement: A story about a cat."
-- ✓ "Create a story about a cat..."
-
-A3. FINAL STATE ONLY
-- Output the resolved state of all requirements
-- No temporal language: "initially", "later", "then", "changed to"
-- No conversation narration
-- ✗ "User first wanted blue, then green"
-- ✓ "The design should use green coloring."
-
-A4. PURE INSTRUCTION ONLY (OUTPUT-ONLY)
-- No headers like "Project Specification" or "Summary"
-- No intro sentences like "The project entails..." or "The user wants..."
-- Start directly with the commands.
-
-A10. NO INTENT FALLBACK
-- If no actionable instruction exists after processing, prepend [unprocessed: no actionable intent detected] and preserve raw input verbatim.
-
-═══════════════════════════════════════════════════════════════════════════════
 SECTION B: ZERO INFORMATION LOSS
-═══════════════════════════════════════════════════════════════════════════════
+B1. INCLUDE EVERYTHING - Every noun/constraint mentioned ONCE must appear.
+B2. COHESIVE NARRATIVE - Weave distinct requirements into the paragraph naturally.
 
-B1. INCLUDE EVERYTHING
-- Every noun, constraint, requirement mentioned ONCE must appear
-- Single mentions are equally important as repeated ones
-
-B2. COHESIVE NARRATIVE
-- Weave distinct requirements into the paragraph naturally.
-- Instead of "Colors: red, blue.", use "The visual elements should incorporate red and blue colors."
-
-B3. DEDUPLICATION WITHOUT LOSS
-- Identical statements → merge into ONE complete version
-
-═══════════════════════════════════════════════════════════════════════════════
 SECTION C: CONFLICT RESOLUTION
-═══════════════════════════════════════════════════════════════════════════════
+C1. LATEST WINS - Latest explicit instruction takes precedence.
+C2. SPECIFICITY OVERRIDE - Specific overrides generic.
 
-C1. LATEST WINS (OVERRIDE SUPREMACY)
-- Latest explicit instruction takes precedence.
-- Remove earlier conflicting instruction completely.
-- Do not reference discarded states.
-
-C2. SPECIFICITY OVERRIDE
-- Specific overrides generic.
-- "Make colorful" → "Use blue and white only" = "Use blue and white only."
-
-[END PROTOCOL v5.1]`;
+SECTION D: STYLE
+D1. PROFESSIONAL & DIRECT - Use imperative or descriptive language.
+D2. NO META-COMMENTARY - No "Here is the summary" or similar.
+`;
 
 export interface EnhancedSummaryOptions {
   format?: "paragraph" | "points" | "JSON" | "XML";
@@ -80,7 +39,7 @@ export interface EnhancedSummaryOptions {
 
 export class EnhancedAISummarizer {
   private static instance: EnhancedAISummarizer;
-  private backendUrl = "https://1-prompt-backend.amaravadhibharath.workers.dev";
+  private backendUrl = "https://1prompt-backend.amaravadhibharath.workers.dev";
 
   private constructor() { }
 
@@ -144,6 +103,7 @@ export class EnhancedAISummarizer {
         },
         body: JSON.stringify({
           content,
+          platform: prompts[0]?.platform || "unknown",
           additionalInfo: CONSOLIDATION_RULES,
           provider: config.primary.provider,
           model: config.primary.model,
@@ -223,8 +183,12 @@ export class EnhancedAISummarizer {
    * Prepare content from prompts for summarization
    */
   private prepareContent(prompts: ScrapedPrompt[]): string {
+    // Simple approach: just provide the conversation as-is
+    // The AI prompt template will handle the summarization
     return prompts.map((p, i) => `${i + 1}. ${p.content.trim()}`).join("\n\n");
   }
+
+
 
   /**
    * Get current configuration info for debugging

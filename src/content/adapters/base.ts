@@ -59,8 +59,11 @@ export abstract class BaseAdapter implements PlatformAdapter {
           // Check exclusions
           if (strategy.excludeSelectors?.some((s) => el.matches(s))) continue;
 
+          // GLOBAL EXCLUSION: Skip if it's an input box
+          if (this.isInputElement(el)) continue;
+
           const content = this.cleanText(this.getVisibleText(el));
-          const minLength = strategy.minContentLength || 3;
+          const minLength = strategy.minContentLength || 1;
 
           if (
             content &&
@@ -113,13 +116,40 @@ export abstract class BaseAdapter implements PlatformAdapter {
   protected isUIElement(text: string): boolean {
     const uiPatterns =
       /^(copy|regenerate|share|edit|delete|save|retry|cancel|submit|send|stop|continue|new chat|clear)$/i;
-    return uiPatterns.test(text.trim()) || text.trim().length < 3;
+    return uiPatterns.test(text.trim()) || text.trim().length < 1;
   }
 
   // Utility: Extract visible text from element
   protected getVisibleText(element: Element): string {
-    const el = element as HTMLElement;
-    return el.innerText || el.textContent || "";
+    return (element as HTMLElement).innerText || element.textContent || "";
+  }
+
+  // Utility: Check if element is an input box or inside one
+  protected isInputElement(el: Element): boolean {
+    const htmlEl = el as HTMLElement;
+
+    // Check definitive properties
+    if (htmlEl.isContentEditable || htmlEl.tagName === "TEXTAREA" || htmlEl.tagName === "INPUT") {
+      return true;
+    }
+
+    // Check containers and roles
+    const isInput =
+      el.closest('[contenteditable="true"]') ||
+      el.closest("textarea") ||
+      el.closest("input") ||
+      el.closest('[role="textbox"]') ||
+      el.closest('[role="composer"]') ||
+      // Only reject form if it's likely a composer form
+      (el.closest("form") && (el.closest("footer") || el.closest('[class*="composer"]'))) ||
+      el.closest("footer") || // Common composer location
+      el.closest("#prompt-textarea") ||
+      el.closest(".composer-parent") ||
+      el.closest('[data-testid="composer-background"]') ||
+      el.closest('[class*="composer"]') ||
+      el.closest('[class*="prompt-box"]');
+
+    return !!isInput;
   }
 
   // Utility: Find the main scroll container for the chat

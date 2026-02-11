@@ -114,7 +114,8 @@ export class LocalSummarizer {
 
     // 1. Try Gemini Nano (Chrome Built-in AI) if available
     try {
-      const ai = (window as any).ai;
+      const globalObj = typeof self !== "undefined" ? self : (typeof window !== "undefined" ? window : {});
+      const ai = (globalObj as any).ai;
       if (ai && ai.languageModel) {
         const capabilities = await ai.languageModel.capabilities();
         if (capabilities.available !== "no") {
