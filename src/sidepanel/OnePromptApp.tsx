@@ -487,27 +487,25 @@ export default function OnePromptApp() {
 
   const renderHeader = () => (
     <div className="kb-header-icons">
-      {tier !== "guest" && (
-        <button
-          className="kb-icon-button"
-          onClick={loadHistory}
-          title="History"
+      <button
+        className="kb-icon-button"
+        onClick={loadHistory}
+        title="History"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-        </button>
-      )}
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      </button>
       <button
         className="kb-icon-button"
         onClick={() => setShowPopup(!showPopup)}
@@ -766,30 +764,6 @@ export default function OnePromptApp() {
   const renderResults = () => (
     <div className="kb-results-wrapper">
       <div className="kb-results-header">
-        <button
-          className="kb-back-circle"
-          onClick={() => {
-            if (selectedPrompts.length > 0) {
-              setSelectedPrompts([]);
-            } else {
-              setShowResults(false);
-            }
-          }}
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.0"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M19 12H5" />
-            <path d="M12 19l-7-7 7-7" />
-          </svg>
-        </button>
         <div className="kb-mode-pill">
           {mode === "compile" ? "Compile" : "Capture"}
           {mode === "compile" && (
@@ -983,52 +957,38 @@ export default function OnePromptApp() {
 
   return (
     <div className="kb-app-container">
-      {/* Conditional Header Buttons (Hide in results as it has its own) */}
-      {!showResults && !viewingHistory && renderHeader()}
-
-      {/* Header for Results/History is built-in or separate */}
-      {(showResults || viewingHistory) && (
-        <div className="kb-header-icons">
-          {!viewingHistory && tier !== "guest" && (
-            <button
-              className="kb-icon-button"
-              onClick={() => loadHistory()}
-              title="History"
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-            </button>
-          )}
-          <button
-            className="kb-icon-button"
-            onClick={() => setShowPopup(!showPopup)}
-            title="Profile"
+      {/* Persistent Back (left) — render only when there's something to go back from */}
+      {(selectedPrompts.length > 0 || showResults || viewingHistory) && (
+        <button
+          className="kb-back-circle kb-abs-left"
+          title="Back"
+          onClick={() => {
+            if (selectedPrompts.length > 0) {
+              setSelectedPrompts([]);
+            } else if (showResults) {
+              setShowResults(false);
+            } else if (viewingHistory) {
+              setViewingHistory(false);
+            }
+          }}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.0"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill={user ? "currentColor" : "none"}
-              stroke="currentColor"
-              strokeWidth={user ? "0" : "2"}
-            >
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </button>
-        </div>
+            <path d="M19 12H5" />
+            <path d="M12 19l-7-7 7-7" />
+          </svg>
+        </button>
       )}
+
+      {renderHeader()}
 
       {loading && (
         <div
@@ -1072,25 +1032,7 @@ export default function OnePromptApp() {
       {viewingHistory ? (
         <div className="kb-history-overlay">
           <div className="kb-results-header">
-            <button
-              className="kb-back-circle"
-              onClick={() => setViewingHistory(false)}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M19 12H5" />
-                <path d="M12 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h2 style={{ fontSize: 18, fontWeight: 700 }}>History</h2>
+            <h2 className="kb-history-title">History</h2>
             <div style={{ width: 40 }} />
           </div>
 

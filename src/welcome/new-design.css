@@ -73,16 +73,14 @@
   max-width: 1400px;
 }
 
-/* Full-width blur shield when scrolled to prevent content overlap */
+/* Full-width shield when scrolled to prevent content overlap - removed blur */
 .nav-new.scrolled {
-  background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 1);
   padding: 12px 5%;
   min-height: 72px;
 }
 
-/* The actual floating pill inside the scrolled header */
+/* Removing the actual floating pill shimmer inside the scrolled header */
 .nav-new.scrolled .nav-inner-pill {
   background: rgba(10, 10, 10, 0.95);
   padding: 6px 6px 6px 22px;
@@ -97,36 +95,9 @@
   overflow: hidden;
 }
 
-/* Shimmer Movement on the inner pill */
-.nav-new.scrolled .nav-inner-pill::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 200%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.05) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  animation: pillShimmer 4s infinite linear;
-  pointer-events: none;
-  z-index: 1;
-}
+/* Removed Shimmer Movement on the inner pill */
 
-@keyframes pillShimmer {
-  0% {
-    transform: translateX(-50%);
-  }
-
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-/* Ensure content stays above pill and shimmer */
+/* Ensure content stays above pill */
 .nav-new.scrolled .nav-left,
 .nav-new.scrolled .nav-right {
   position: relative;

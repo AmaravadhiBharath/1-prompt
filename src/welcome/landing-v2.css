@@ -189,13 +189,13 @@
   top: 25%;
   right: 10%;
   color: #0055ff;
-  animation: float 4s ease-in-out infinite;
+  /* animation: float 4s ease-in-out infinite; */
 }
 
 .tag-bottom {
   bottom: 30%;
   left: 10%;
-  animation: float 5s ease-in-out infinite reverse;
+  /* animation: float 5s ease-in-out infinite reverse; */
 }
 
 @keyframes float {

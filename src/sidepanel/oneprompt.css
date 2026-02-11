@@ -24,6 +24,15 @@
   --kb-radius-full: 9999px;
 }
 
+/* Spacing & type tokens for consistent rhythm (used for results/history/profile tweaks) */
+:root {
+  --kb-space: 8px;
+  --kb-space-2: 16px;
+  --kb-space-3: 24px;
+  --kb-touch: 40px;
+  --kb-title-lg: 28px;
+}
+
 body,
 html,
 #root {
@@ -76,16 +85,14 @@ html,
   right: 12px;
   display: flex;
   gap: 8px;
-  z-index: 10;
+  z-index: 420;
 }
 
 .kb-icon-button {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 1);
   border: 1px solid rgba(0, 45, 139, 0.1);
   display: flex;
   align-items: center;
@@ -113,7 +120,7 @@ html,
   position: absolute !important;
   top: 12px !important;
   left: 12px !important;
-  z-index: 100 !important;
+  z-index: 420 !important;
 }
 
 .kb-abs-right {
@@ -152,9 +159,7 @@ html,
 
 /* --- BUTTONS --- */
 .kb-btn-refresh {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 1);
   border: 0.8px solid rgba(0, 90, 226, 0.2);
   color: var(--kb-logo-midnight);
   border-radius: var(--kb-radius-full);
@@ -197,47 +202,29 @@ html,
 
 /* --- CONNECTED STATE CARDS --- */
 .kb-action-card {
-  background: #ffffff;
+  background: white;
   border-radius: 20px;
-  padding: 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 32px 24px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-bottom: 16px;
-  border: 0.8px solid rgba(0, 90, 226, 0.15);
-  /* Thin logo-vibrant border */
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  background-clip: padding-box;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
   position: relative;
   overflow: hidden;
 }
 
-.kb-action-card::before {
-  content: "";
-  position: absolute;
-  width: 150px;
-  height: 150px;
-  background: radial-gradient(circle,
-      rgba(0, 122, 255, 0.12) 0%,
-      transparent 70%);
-  border-radius: 50%;
-  filter: blur(20px);
-  opacity: 0;
-  pointer-events: none;
+/* Capture Card: Removed glowing background effect */
+.kb-action-card:nth-of-type(1) {
+  /* ... */
 }
 
-/* Capture Card: Moves in a wandering triangular path */
-.kb-action-card:nth-of-type(1)::before {
-  animation: wander-1 18s infinite ease-in-out;
-}
-
-/* Compile Card: Moves in a lazy infinity-like path */
-.kb-action-card:nth-of-type(2)::before {
-  animation: wander-2 24s infinite ease-in-out;
-  background: radial-gradient(circle,
-      rgba(0, 122, 255, 0.1) 0%,
-      transparent 70%);
+/* Compile Card: Removed glowing background effect */
+.kb-action-card:nth-of-type(2) {
+  /* ... */
 }
 
 @keyframes wander-1 {
@@ -379,6 +366,24 @@ html,
   z-index: 5;
 }
 
+/* Center the mode pill (Capture / Compile) in the header similar to History */
+.kb-results-wrapper .kb-results-header {
+  position: relative;
+}
+
+.kb-results-wrapper .kb-results-header .kb-mode-pill {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 12px; /* nudge down so it doesn't overlap content */
+  z-index: 6;
+}
+
+/* Ensure header reserves vertical space so centered pill doesn't overlap list */
+.kb-results-header {
+  min-height: 48px;
+}
+
 .kb-back-circle {
   display: flex;
   align-items: center;
@@ -446,6 +451,7 @@ html,
   /* Hide scrollbar */
   scrollbar-width: none;
   -ms-overflow-style: none;
+  padding-bottom: 80px; /* extra bottom padding so footer doesn't overlap content */
 }
 
 .kb-results-scroll::-webkit-scrollbar {
@@ -453,27 +459,25 @@ html,
 }
 
 .kb-scroll-spacer {
-  height: 90px;
+  height: 120px;
   flex-shrink: 0;
 }
 
 /* Footer as Floating Pill */
 .kb-card-footer {
   position: absolute;
-  bottom: 20px;
+  bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.8);
-  /* Glass effect */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 1);
+  /* Solid background */
   border-radius: 9999px;
-  padding: 2px 4px;
+  padding: 4px;
   display: flex;
   gap: 0;
   box-shadow: 0 12px 48px rgba(0, 45, 139, 0.2);
   z-index: 100;
-  min-width: 140px;
+  min-width: 160px;
   height: 48px;
   align-items: center;
   border: 1px solid rgba(0, 90, 226, 0.25);
@@ -498,6 +502,12 @@ html,
   justify-content: center;
   border-radius: 9999px;
   white-space: nowrap;
+}
+
+.kb-footer-btn-primary,
+.kb-footer-btn-secondary {
+  min-height: 40px;
+  padding: 0 16px;
 }
 
 .kb-footer-btn-primary:hover {
@@ -543,7 +553,7 @@ html,
   /* Minimal spacing */
   margin-bottom: 0px;
   padding: 0;
-  white-space: nowrap;
+  white-space: normal;
   overflow: hidden;
   text-overflow: ellipsis;
   opacity: 1;
@@ -599,11 +609,11 @@ html,
 }
 
 .kb-result-item {
-  padding: 16px;
-  /* Consistent 16px padding */
+  padding: 16px 16px 16px 28px;
+  /* left padding increased to account for selection dot */
   display: flex;
   gap: 16px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #e5e7eb; /* made darker for better visibility */
   cursor: pointer;
   transition: background 0.1s;
   position: relative;
@@ -622,9 +632,9 @@ html,
 
 .kb-selection-dot {
   position: absolute;
-  left: 8px;
-  top: 20px;
-  /* Adjusted for 16px padding */
+  left: 12px;
+  top: 18px;
+  /* Adjusted for increased left padding */
   width: 6px;
   height: 6px;
   background: var(--kb-primary-blue);
@@ -646,7 +656,7 @@ html,
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.05);
-  z-index: 99;
+  z-index: 430;
 }
 
 .kb-profile-menu {
@@ -657,9 +667,9 @@ html,
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  width: 200px;
-  padding: 6px;
-  z-index: 101;
+  width: 220px;
+  padding: 10px;
+  z-index: 440;
   border: 1px solid #f3f4f6;
   transform-origin: top right;
   animation: menuAppear 0.15s cubic-bezier(0, 0, 0.2, 1);
@@ -691,6 +701,11 @@ html,
   background: #f9fafb;
 }
 
+.kb-menu-item:focus {
+  outline: 3px solid rgba(0,90,226,0.12);
+  border-radius: 8px;
+}
+
 /* --- HISTORY VIEW --- */
 .kb-history-overlay {
   position: absolute;
@@ -702,6 +717,30 @@ html,
   flex-direction: column;
   animation: kbSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   will-change: transform, opacity;
+}
+
+/* Ensure the History title is centered relative to the panel horizontally
+   and sits below the persistent header icons/back button */
+.kb-history-overlay {
+  padding-top: 36px; /* tightened further so header area is denser */
+}
+
+.kb-history-overlay .kb-results-header {
+  position: relative;
+}
+
+.kb-history-overlay .kb-history-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 4px 0; /* reduced bottom margin for denser layout */
+}
+
+/* Slightly tighter spacing between heading and filter pills */
+.kb-history-overlay .kb-history-filters {
+  margin-top: 4px; /* tighter to bring filters closer to title */
 }
 
 @keyframes kbSlideUp {
@@ -721,13 +760,13 @@ html,
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-top: 8px;
+  gap: 4px; /* maximum density: tighter gap between cards */
+  padding-top: 4px;
 }
 
 /* --- REFINED HISTORY UI (MATCH SPEC) --- */
 .kb-history-separator {
-  padding: 24px 8px 12px;
+  padding: 12px 8px 6px; /* tightened separator spacing */
   font-size: 13px;
   font-weight: 700;
   color: #6b7280;
@@ -739,14 +778,14 @@ html,
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 16px;
+  padding: 10px; /* maximum density: reduced padding */
+  margin-bottom: 12px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
   position: relative;
 }
 
@@ -787,7 +826,7 @@ html,
   font-size: 15px;
   font-weight: 600;
   color: #111827;
-  line-height: 1.5;
+  line-height: 1.45; /* slightly tighter line-height */
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -813,8 +852,8 @@ html,
   background: transparent;
   border: 1px solid #e5e7eb;
   color: #6b7280;
-  padding: 6px 14px;
-  border-radius: 8px;
+  padding: 4px 10px; /* slightly reduced padding for a tighter row */
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -860,6 +899,7 @@ html,
   flex-direction: column;
   height: 100%;
   overflow-y: auto;
+  padding-bottom: 80px; /* ensure compile summary has extra bottom scroll space */
 }
 
 .kb-compile-content {
