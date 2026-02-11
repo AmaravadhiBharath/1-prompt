@@ -422,8 +422,24 @@ html,
 }
 
 .kb-footer-btn-primary {
-  color: var(--kb-logo-midnight);
-  font-weight: 700;
+  min-width: 60px;
+  padding: 6px 18px;
+  font-size: 15px;
+  font-weight: 800;
+  border-radius: 18px;
+  background: #f3f4f6;
+  color: var(--kb-logo-vibrant);
+  border: 1.5px solid var(--kb-logo-vibrant);
+  box-shadow: none;
+  transition: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kb-footer-btn-primary:hover {
+  background: #e0e7ff;
+  color: #002d8b;
 }
 
 .kb-footer-btn-secondary {
