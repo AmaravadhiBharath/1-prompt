@@ -3,6 +3,7 @@ import { dynamicConfigLoader } from "./dynamic-loader";
 import { resilientFetch } from "../services/resilient-api";
 import { localSummarizer } from "../services/local-summarizer";
 import { config } from "./index";
+import { getUserTier, getDailyUsage } from "../services/pricing";
 
 // Consolidation rules v5.1 - Enterprise Grade
 const CONSOLIDATION_RULES = `[INTENT COMPILATION PROTOCOL v5.1 - ENTERPRISE]
@@ -100,13 +101,25 @@ export class EnhancedAISummarizer {
 
     try {
       const content = this.prepareContent(prompts);
+      const tier = await getUserTier();
+      const usage = await getDailyUsage();
+
+      let provider = config.primary.provider === "auto" ? "gemini" : config.primary.provider;
+      let model = config.primary.model || "gemini-1.5-flash";
+
+      // LOGIC: If Go tier (logged-in) and > 10 compiles today, switch to Llama
+      if ((tier === "go" || tier === "free") && usage.compiles >= 10) {
+        console.log(`[EnhancedAISummarizer] 🔄 Go tier limit reached (${usage.compiles}/10), switching to Llama fallback...`);
+        provider = "groq"; // Using groq as the Llama provider
+        model = "llama-3.3-70b-versatile";
+      }
 
       console.log(`[EnhancedAISummarizer] 📦 Request payload:`, {
         url: this.backendUrl,
         contentLength: content.length,
         platform: prompts[0]?.platform || "unknown",
-        provider: config.primary.provider === "auto" ? "gemini" : config.primary.provider,
-        model: config.primary.model || "gemini-1.5-flash",
+        provider,
+        model,
       });
 
       const response = await resilientFetch(this.backendUrl, {
@@ -121,8 +134,8 @@ export class EnhancedAISummarizer {
           content,
           platform: prompts[0]?.platform || "unknown",
           additionalInfo: CONSOLIDATION_RULES,
-          provider: config.primary.provider === "auto" ? "gemini" : config.primary.provider,
-          model: config.primary.model || "gemini-1.5-flash",
+          provider,
+          model,
           apiKey: config.primary.apiKey, // Extension may pass a user key if needed
           userId: options.userId,
           userEmail: options.userEmail,

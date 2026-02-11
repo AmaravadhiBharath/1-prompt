@@ -145,6 +145,11 @@ const Welcome: React.FC = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
 
+  const logoUrl =
+    typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL
+      ? chrome.runtime.getURL("icons/logo-new.png")
+      : "/icons/logo-new.png";
+
   const [isPinned, setIsPinned] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [activeSection, setActiveSection] = useState<
@@ -155,6 +160,11 @@ const Welcome: React.FC = () => {
   const [currentFeature, setCurrentFeature] = useState(0);
   const [animClass, setAnimClass] = useState("fade-init");
   const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Waitlist State
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "submitting" | "joined">("idle");
+  const [emailError, setEmailError] = useState("");
 
   const startAutoPlay = (delay: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -286,6 +296,36 @@ const Welcome: React.FC = () => {
     }
   };
 
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!waitlistEmail || !waitlistEmail.includes("@")) {
+      setEmailError("Please enter a valid email");
+      return;
+    }
+
+    setEmailError("");
+    setWaitlistStatus("submitting");
+
+    try {
+      const { config } = await import("../config");
+      const response = await fetch(`${config.backend.url}/waitlist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: waitlistEmail }),
+      });
+
+      if (response.ok) {
+        setWaitlistStatus("joined");
+      } else {
+        throw new Error("Failed to join");
+      }
+    } catch (err) {
+      console.error("Waitlist error:", err);
+      setEmailError("Something went wrong. Please try again.");
+      setWaitlistStatus("idle");
+    }
+  };
+
   const handleGuestContinue = () => {
     if (window.location.pathname.includes("sidepanel")) {
       window.location.href = "index.html";
@@ -397,7 +437,7 @@ const Welcome: React.FC = () => {
               style={{ justifyContent: "center", marginBottom: "24px" }}
             >
               <img
-                src="./icons/logo-new.png"
+                src={logoUrl}
                 alt="1-prompt Logo"
                 style={{ width: "64px", height: "64px" }}
               />
@@ -433,7 +473,7 @@ const Welcome: React.FC = () => {
                 style={{ cursor: "pointer" }}
               >
                 <img
-                  src="./icons/logo-new.png"
+                  src={logoUrl}
                   alt="1-prompt Logo"
                   className="nav-logo-img"
                 />
@@ -573,14 +613,10 @@ const Welcome: React.FC = () => {
                   <button
                     className="btn-chrome-new"
                     onClick={() => {
-                      if (isInstalled) {
-                        navigate("/install");
-                      } else {
-                        window.open(
-                          "https://chromewebstore.google.com/detail/1-prompt/pckiikjlgoimpnimojpfpnfndilaogol",
-                          "_blank",
-                        );
-                      }
+                      window.open(
+                        "https://chromewebstore.google.com/detail/1-prompt/opdaaehibnkaabelcjhoefnfmebciekj",
+                        "_blank",
+                      );
                     }}
                   >
                     <span style={{ fontSize: "24px", lineHeight: "1" }}>+</span>
@@ -645,16 +681,16 @@ const Welcome: React.FC = () => {
                     $0<span>/mo</span>
                   </div>
                   <ul className="features-list">
-                    <li>10 Daily Captures</li>
-                    <li>Local Workspace</li>
-                    <li>Direct Clipboard Export</li>
+                    <li><b>Unlimited</b> Captures</li>
+                    <li>10 Daily AI Compiles</li>
                     <li>Instant Access</li>
+                    <li>Community Support</li>
                   </ul>
                   <button
                     className="tier-btn"
                     onClick={() => setActiveSection("setup")}
                   >
-                    Book a Demo
+                    Get Started
                   </button>
                 </div>
                 <div className="pricing-card popular">
@@ -669,7 +705,7 @@ const Welcome: React.FC = () => {
                         marginRight: "8px",
                       }}
                     >
-                      $1
+                      $5
                     </span>
                     $0<span>/mo</span>
                   </div>
@@ -682,35 +718,28 @@ const Welcome: React.FC = () => {
                       textTransform: "uppercase",
                     }}
                   >
-                    Free until June 2026
+                    Free for early users
                   </div>
                   <ul className="features-list">
-                    <li>Unlimited Capture</li>
-                    <li>10 AI Orchestrations / day</li>
-                    <li>Cloud Synchronization</li>
-                    <li>Personal Library</li>
+                    <li><b>Unlimited</b> Captures</li>
+                    <li><b>Unlimited</b> AI Compiles*</li>
+                    <li>Cloud History Sync</li>
+                    <li>Permanent Pinning</li>
                   </ul>
+                  <div style={{ fontSize: '10px', color: '#888', marginBottom: '16px', fontStyle: 'italic' }}>
+                    *10 High-speed (Gemini), then Llama 3
+                  </div>
                   <button
                     className="tier-btn primary"
                     onClick={() => setActiveSection("setup")}
                   >
-                    Claim Free Access
+                    Join Go Free
                   </button>
                 </div>
-                <div className="pricing-card">
+                <div className="pricing-card coming-soon" style={{ opacity: 0.8 }}>
                   <div className="tier-name">Pro</div>
                   <div className="price">
-                    <span
-                      style={{
-                        textDecoration: "line-through",
-                        fontSize: "18px",
-                        color: "#888",
-                        marginRight: "8px",
-                      }}
-                    >
-                      $9
-                    </span>
-                    $5<span>/mo</span>
+                    TBA<span>/mo</span>
                   </div>
                   <div
                     style={{
@@ -718,22 +747,61 @@ const Welcome: React.FC = () => {
                       color: "#666",
                       marginBottom: "15px",
                       textTransform: "uppercase",
+                      fontWeight: 'bold'
                     }}
                   >
-                    Introductory rate
+                    Coming Soon
                   </div>
                   <ul className="features-list">
-                    <li>999 Orchestrations / mo</li>
-                    <li>Slack Automations</li>
-                    <li>Webhook Integration</li>
-                    <li>Priority Support</li>
+                    <li>Unlimited High-speed AI</li>
+                    <li>Advanced AI Models</li>
+                    <li>API Access / Webhooks</li>
+                    <li>Figma & Slack Sync</li>
                   </ul>
                   <button
                     className="tier-btn"
-                    onClick={() => setActiveSection("setup")}
+                    onClick={() => scrollToSection("contact-section")}
+                    style={{ background: "#f3f4f6", color: "#374151" }}
                   >
-                    Unlock Pro
+                    Details
                   </button>
+
+                  <div style={{ marginTop: "20px", borderTop: "1px solid #f3f4f6", paddingTop: "20px" }}>
+                    {waitlistStatus === "joined" ? (
+                      <div style={{ color: "var(--kb-primary-blue)", fontWeight: "600", textAlign: "center", padding: "10px", background: "#eef2ff", borderRadius: "8px" }}>
+                        🎉 Successfully Joined!
+                      </div>
+                    ) : (
+                      <form onSubmit={handleWaitlistSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        <input
+                          type="email"
+                          placeholder="Your email address"
+                          value={waitlistEmail}
+                          onChange={(e) => setWaitlistEmail(e.target.value)}
+                          style={{
+                            padding: "12px",
+                            borderRadius: "8px",
+                            border: emailError ? "1px solid #ef4444" : "1px solid #e5e7eb",
+                            fontSize: "14px",
+                            outline: "none"
+                          }}
+                        />
+                        {emailError && <div style={{ fontSize: "11px", color: "#ef4444" }}>{emailError}</div>}
+                        <button
+                          type="submit"
+                          className="tier-btn"
+                          disabled={waitlistStatus === "submitting"}
+                          style={{
+                            width: "100%",
+                            background: "var(--kb-primary-blue)",
+                            color: "white"
+                          }}
+                        >
+                          {waitlistStatus === "submitting" ? "Joining..." : "Join Waitlist"}
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -823,7 +891,7 @@ const Welcome: React.FC = () => {
                   </div>
                   <div style={{ marginBottom: "24px" }}>
                     <img
-                      src="./icons/logo-new.png"
+                      src={logoUrl}
                       alt="1-prompt Logo"
                       style={{ width: "48px", height: "48px" }}
                     />

@@ -49,7 +49,7 @@ export const PRICING_TIERS: Record<UserTier, PricingConfig> = {
   go: {
     tier: "go",
     maxCaptures: -1,
-    maxCompiles: 10,
+    maxCompiles: -1, // Unlimited compiles (switches to Llama after 10)
     hasHistory: true,
     canEdit: true,
     hasGenerateMode2: false,
@@ -193,7 +193,7 @@ interface DailyUsage {
 
 const USAGE_KEY = "daily_usage_stats";
 
-async function getDailyUsage(): Promise<DailyUsage> {
+export async function getDailyUsage(): Promise<DailyUsage> {
   return new Promise((resolve) => {
     chrome.storage.local.get([USAGE_KEY], (data) => {
       const today = new Date().toLocaleDateString("en-CA");
@@ -242,24 +242,24 @@ export async function canUserCompile(): Promise<{
   reason?: string;
 }> {
   const tier = await getUserTier();
-  const limit = PRICING_TIERS[tier].maxCompiles;
-
-  if (limit === -1) return { allowed: true };
-
   const usage = await getDailyUsage();
-  const remaining = limit - usage.compiles;
 
-  if (remaining <= 0) {
-    return {
-      allowed: false,
-      reason:
-        tier === "guest"
-          ? "Daily compile limit reached. Sign in to unlock Go tier with more compiles!"
-          : "Daily compile limit reached. Join the Pro waitlist for unlimited access!",
-    };
+  // Basic (Guest) is limited to 10 compiles
+  if (tier === "guest") {
+    const limit = 10;
+    const remaining = limit - usage.compiles;
+
+    if (remaining <= 0) {
+      return {
+        allowed: false,
+        reason: "Daily compile limit reached. Sign in to unlock Go tier with unlimited compiles!",
+      };
+    }
+    return { allowed: true, remaining };
   }
 
-  return { allowed: true, remaining };
+  // All other tiers (Go, Pro, Admin) are unlimited
+  return { allowed: true };
 }
 
 export async function incrementCapture(): Promise<void> {

@@ -190,6 +190,14 @@ export default {
         return handleGetUsageReport(request, env, headers);
       }
 
+      if (url.pathname === "/waitlist" && request.method === "POST") {
+        return handleSaveWaitlist(request, env, headers);
+      }
+
+      if (url.pathname === "/admin/waitlist" && request.method === "GET") {
+        return handleGetWaitlist(request, env, headers);
+      }
+
       return new Response("Not Found", { status: 404, headers });
     } catch (e: any) {
       console.error("Unhandled error:", e);
@@ -722,10 +730,10 @@ async function handleGetUsageReport(
   let cursor: string | undefined = undefined;
 
   do {
-    const list: any = await env.PromptExtractor_KV.list({
+    const list: { keys: { name: string }[]; list_complete: boolean; cursor?: string } = await env.PromptExtractor_KV.list({
       prefix: "user:",
-      cursor
-    });
+      cursor,
+    }) as any;
 
     for (const key of list.keys) {
       if (key.name.includes(":usage:")) {
@@ -737,6 +745,8 @@ async function handleGetUsageReport(
     cursor = list.list_complete ? undefined : list.cursor;
   } while (cursor);
 
+  // Flattened usage reports might need grouping or sorting?
+  // For now, return as is.
   return new Response(JSON.stringify({ reports: usageReports }), { headers });
 }
 
@@ -1065,4 +1075,75 @@ async function handleSummarize(
       { status: 500, headers: finalHeaders },
     );
   }
+}
+async function handleSaveWaitlist(
+  req: Request,
+  env: Env,
+  headers: Record<string, string>,
+) {
+  try {
+    const { email } = (await req.json()) as { email: string };
+    if (!email || !email.includes("@")) {
+      return new Response("Invalid email", { status: 400, headers });
+    }
+
+    const key = `waitlist:${email.toLowerCase()}`;
+    const timestamp = Date.now();
+
+    await env.PromptExtractor_KV.put(
+      key,
+      JSON.stringify({ email, timestamp }),
+    );
+
+    return new Response(JSON.stringify({ success: true }), { headers });
+  } catch (e: any) {
+    return new Response(e.message, { status: 500, headers });
+  }
+}
+
+async function handleGetWaitlist(
+  req: Request,
+  env: Env,
+  headers: Record<string, string>,
+) {
+  // Verify auth and admin
+  let verifiedEmail: string | undefined;
+  try {
+    const auth = await verifyAuth(req);
+    verifiedEmail = auth.email;
+  } catch (e: any) {
+    return new Response(e.message, { status: 401, headers });
+  }
+
+  const adminEmails = (
+    env.ADMIN_EMAILS || "bharathamaravadi@gmail.com,bharath.amaravadi@gmail.com"
+  )
+    .split(",")
+    .map((e) => e.trim().toLowerCase());
+
+  if (!verifiedEmail || !adminEmails.includes(verifiedEmail.toLowerCase())) {
+    return new Response("Forbidden", { status: 403, headers });
+  }
+
+  const waitlist: any[] = [];
+  let cursor: string | undefined = undefined;
+
+  do {
+    const list: any = await env.PromptExtractor_KV.list({
+      prefix: "waitlist:",
+      cursor,
+    });
+
+    for (const key of list.keys) {
+      const val = await env.PromptExtractor_KV.get(key.name);
+      if (val) waitlist.push(JSON.parse(val));
+    }
+
+    cursor = list.list_complete ? undefined : list.cursor;
+  } while (cursor);
+
+  // Sort by timestamp descending
+  waitlist.sort((a, b) => b.timestamp - a.timestamp);
+
+  return new Response(JSON.stringify({ waitlist }), { headers });
 }
