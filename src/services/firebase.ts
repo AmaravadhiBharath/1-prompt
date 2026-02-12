@@ -8,6 +8,38 @@
 import { config } from "../config";
 import { resilientFetch } from "./resilient-api";
 
+// Firebase web auth helper (lazy-loaded)
+let _firebaseApp: any = null;
+let _firebaseAuth: any = null;
+
+async function initFirebaseIfNeeded() {
+  if (_firebaseApp && _firebaseAuth) return;
+  try {
+    const firebaseAppModule = await import("firebase/app");
+    const firebaseAuthModule = await import("firebase/auth");
+
+    const env = (import.meta as any).env || {};
+    const firebaseConfig = {
+      apiKey: env.VITE_FIREBASE_API_KEY,
+      authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
+      projectId: env.VITE_FIREBASE_PROJECT_ID,
+      appId: env.VITE_FIREBASE_APP_ID,
+    };
+
+    if (!firebaseAppModule.getApps || !firebaseAppModule.getApps().length) {
+      _firebaseApp = firebaseAppModule.initializeApp
+        ? firebaseAppModule.initializeApp(firebaseConfig)
+        : null;
+    }
+
+    _firebaseAuth = firebaseAuthModule.getAuth
+      ? firebaseAuthModule.getAuth()
+      : null;
+  } catch (e) {
+    console.warn("[Firebase] Initialization failed or not configured", e);
+  }
+}
+
 const USER_ID_KEY = "prompt_extractor_user_id";
 
 // Helper to get backend headers
@@ -29,15 +61,79 @@ async function getHeaders() {
  * Get Google Access Token from Chrome Identity
  */
 export async function getAuthToken(): Promise<string | null> {
-  return new Promise((resolve) => {
-    chrome.identity.getAuthToken({ interactive: false }, (token) => {
-      if (chrome.runtime.lastError || !token) {
-        resolve(null);
-        return;
-      }
-      resolve(token);
+  // Prefer Chrome Identity in extension environment
+  if (typeof chrome !== "undefined" && chrome.identity) {
+    return new Promise((resolve) => {
+      chrome.identity.getAuthToken({ interactive: false }, (token) => {
+        if (chrome.runtime.lastError || !token) {
+          resolve(null);
+          return;
+        }
+        resolve(token);
+      });
     });
-  });
+  }
+
+  // Web path: try to read stored Firebase ID token
+  try {
+    const t = localStorage.getItem("firebase_id_token");
+    return t || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Sign in using Firebase web Google popup. Stores ID token in localStorage
+ * and posts profile to the backend using the token.
+ */
+export async function signInWithGoogleWeb(): Promise<{ idToken: string | null; user: any | null }> {
+  await initFirebaseIfNeeded();
+  if (!_firebaseAuth) {
+    throw new Error("Firebase not configured");
+  }
+
+  // Dynamic import of auth helpers (ensures they're only bundled for web)
+  const { GoogleAuthProvider, signInWithPopup } = await import("firebase/auth");
+
+  const provider = new GoogleAuthProvider();
+  const result = await signInWithPopup(_firebaseAuth, provider);
+  const firebaseUser = result.user;
+  const idToken = await firebaseUser.getIdToken();
+
+  // Store id token locally for subsequent requests
+  try {
+    localStorage.setItem("firebase_id_token", idToken);
+    const profile = {
+      id: firebaseUser.uid,
+      email: firebaseUser.email,
+      name: firebaseUser.displayName,
+      picture: firebaseUser.photoURL,
+    };
+    localStorage.setItem("oneprompt_user", JSON.stringify(profile));
+    // Notify listeners (storage event)
+    try {
+      window.dispatchEvent(new StorageEvent("storage", { key: "oneprompt_user", newValue: JSON.stringify(profile) }));
+    } catch (e) {
+      // Some browsers may restrict constructing StorageEvent; ignore
+    }
+
+    // Post profile to backend with authorization
+    try {
+      await fetch(`${config.backend.url}/user/profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify(profile),
+      });
+    } catch (e) {
+      console.warn("[Firebase] Failed to post profile to backend", e);
+    }
+
+    return { idToken, user: profile };
+  } catch (e) {
+    console.error("[Firebase] Web sign-in storage failed", e);
+    return { idToken, user: null };
+  }
 }
 
 // ============================================

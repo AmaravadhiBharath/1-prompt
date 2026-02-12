@@ -22,6 +22,7 @@ export interface Env {
   AI_PROVIDER?: string;
   AI_MODEL?: string;
   AI_GEMINI_FIRST_PLATFORMS?: string;
+  FIREBASE_PROJECT_ID?: string;
 }
 
 const CUTOFF_PROMPT_COUNT = 50;
@@ -261,6 +262,61 @@ async function verifyGoogleToken(
   }
 }
 
+// Verify Firebase ID token (issued by securetoken.google.com)
+async function verifyFirebaseIdToken(token: string, env: Env) {
+  try {
+    const projectId = env.FIREBASE_PROJECT_ID;
+    if (!projectId) {
+      console.warn("[Auth] FIREBASE_PROJECT_ID not configured in Worker env");
+      return null;
+    }
+
+    // Decode header to find `kid`
+    let header: any;
+    try {
+      header = jose.decodeProtectedHeader(token);
+    } catch (e) {
+      console.error("[Auth] Failed to decode token header", e);
+      return null;
+    }
+
+    const kid = header.kid;
+    if (!kid) {
+      console.error("[Auth] Token missing kid header");
+      return null;
+    }
+
+    // Fetch Google's certs for Firebase tokens
+    const certsUrl = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
+    const res = await fetch(certsUrl);
+    if (!res.ok) {
+      console.error("[Auth] Failed to fetch Firebase certs", await res.text());
+      return null;
+    }
+    const certs = await res.json();
+
+    const cert = certs[kid];
+    if (!cert) {
+      console.error("[Auth] No cert found for kid", kid);
+      return null;
+    }
+
+    // Import X509 certificate to a key usable by jose
+    const key = await jose.importX509(cert, "RS256");
+
+    // Verify the token
+    const { payload } = await jose.jwtVerify(token, key, {
+      issuer: `https://securetoken.google.com/${projectId}`,
+      audience: projectId,
+    });
+
+    return payload as any;
+  } catch (e) {
+    console.error("[Auth] verifyFirebaseIdToken error:", e);
+    return null;
+  }
+}
+
 async function verifyAuth(
   req: Request,
 ): Promise<{ userId: string; verified: boolean; email?: string }> {
@@ -268,6 +324,13 @@ async function verifyAuth(
 
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.substring(7);
+    // Try Firebase ID token verification first (web sign-in)
+    const fbPayload = await verifyFirebaseIdToken(token, env);
+    if (fbPayload && fbPayload.sub) {
+      return { userId: fbPayload.sub, verified: true, email: fbPayload.email };
+    }
+
+    // Fallback: Google token verification for other flows
     const payload = await verifyGoogleToken(token);
 
     if (payload) {

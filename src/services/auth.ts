@@ -29,6 +29,9 @@ export interface UserState {
 
 // Get cached auth token without prompting the user
 export async function getAuthToken(): Promise<string | null> {
+  // If running outside the extension (e.g. Pages), `chrome.identity` won't exist.
+  if (typeof chrome === "undefined" || !chrome.identity) return null;
+
   return new Promise((resolve) => {
     chrome.identity.getAuthToken({ interactive: false }, (token) => {
       if (chrome.runtime.lastError || !token) {
@@ -72,6 +75,17 @@ async function loadQuotas(): Promise<void> {
 
 // Get stored user data
 export async function getStoredUser(): Promise<ChromeUser | null> {
+  // Fallback to localStorage when not running inside a browser extension
+  const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
+  if (!hasChromeStorage) {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as ChromeUser) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   return new Promise((resolve) => {
     chrome.storage.local.get([STORAGE_KEY], (result) => {
       resolve(result[STORAGE_KEY] || null);
@@ -81,6 +95,22 @@ export async function getStoredUser(): Promise<ChromeUser | null> {
 
 // Store user data
 async function storeUser(user: ChromeUser | null): Promise<void> {
+  const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
+  if (!hasChromeStorage) {
+    return new Promise((resolve) => {
+      try {
+        if (user) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      } catch (e) {
+        console.warn("[Auth] localStorage unavailable", e);
+      }
+      resolve();
+    });
+  }
+
   return new Promise((resolve) => {
     if (user) {
       chrome.storage.local.set({ [STORAGE_KEY]: user }, resolve);
@@ -92,6 +122,16 @@ async function storeUser(user: ChromeUser | null): Promise<void> {
 
 // Get usage count
 export async function getUsageCount(): Promise<number> {
+  const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
+  if (!hasChromeStorage) {
+    try {
+      const raw = localStorage.getItem("usage_count");
+      return raw ? parseInt(raw, 10) || 0 : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   return new Promise((resolve) => {
     chrome.storage.local.get(["usage_count"], (result) => {
       resolve(result.usage_count || 0);
@@ -103,13 +143,31 @@ export async function getUsageCount(): Promise<number> {
 export async function incrementUsage(): Promise<number> {
   const current = await getUsageCount();
   const newCount = current + 1;
-  await chrome.storage.local.set({ usage_count: newCount });
+  const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
+  if (!hasChromeStorage) {
+    try {
+      localStorage.setItem("usage_count", String(newCount));
+    } catch (e) {
+      console.warn("[Auth] localStorage unavailable for usage_count", e);
+    }
+  } else {
+    await chrome.storage.local.set({ usage_count: newCount });
+  }
   return newCount;
 }
 
 // Reset usage (for testing or new billing period)
 export async function resetUsage(): Promise<void> {
-  await chrome.storage.local.set({ usage_count: 0 });
+  const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
+  if (!hasChromeStorage) {
+    try {
+      localStorage.setItem("usage_count", "0");
+    } catch (e) {
+      console.warn("[Auth] localStorage unavailable for resetUsage", e);
+    }
+  } else {
+    await chrome.storage.local.set({ usage_count: 0 });
+  }
 }
 
 // Admin emails (hardcoded - only these can use debug tier switcher)
@@ -125,6 +183,16 @@ export function isAdmin(user: ChromeUser | null): boolean {
 
 // Debug: Get tier override (for admin testing only)
 export async function getDebugTierOverride(): Promise<UserTier | null> {
+  const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
+  if (!hasChromeStorage) {
+    try {
+      const raw = localStorage.getItem("debug_tier_override");
+      return raw ? (JSON.parse(raw) as UserTier) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   return new Promise((resolve) => {
     chrome.storage.local.get(["debug_tier_override"], (result) => {
       resolve(result.debug_tier_override || null);
@@ -139,6 +207,21 @@ export async function setDebugTierOverride(
   const user = await getStoredUser();
   if (!isAdmin(user)) {
     console.warn("[Auth] setDebugTierOverride called by non-admin user");
+    return;
+  }
+  const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
+  if (!hasChromeStorage) {
+    try {
+      if (tier) {
+        localStorage.setItem("debug_tier_override", JSON.stringify(tier));
+        console.log(`[Auth] Debug tier override set to: ${tier}`);
+      } else {
+        localStorage.removeItem("debug_tier_override");
+        console.log("[Auth] Debug tier override removed");
+      }
+    } catch (e) {
+      console.warn("[Auth] localStorage unavailable for debug_tier_override", e);
+    }
     return;
   }
 
@@ -281,6 +364,12 @@ export async function signOut(): Promise<void> {
   await signOutFromBackend();
 
   return new Promise((resolve) => {
+    // If not an extension environment, simply clear stored user
+    if (typeof chrome === "undefined" || !chrome.identity) {
+      storeUser(null).then(resolve);
+      return;
+    }
+
     chrome.identity.getAuthToken({ interactive: false }, (token) => {
       if (token) {
         // Revoke the token
@@ -298,20 +387,42 @@ export async function signOut(): Promise<void> {
 export function subscribeToAuthChanges(
   callback: (user: ChromeUser | null) => void,
 ): () => void {
-  const listener = (
-    changes: { [key: string]: chrome.storage.StorageChange },
-    area: string,
-  ) => {
-    if (area === "local" && changes[STORAGE_KEY]) {
-      callback(changes[STORAGE_KEY].newValue || null);
+  const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged;
+
+  if (hasChromeStorage) {
+    const listener = (
+      changes: { [key: string]: chrome.storage.StorageChange },
+      area: string,
+    ) => {
+      if (area === "local" && changes[STORAGE_KEY]) {
+        callback(changes[STORAGE_KEY].newValue || null);
+      }
+    };
+
+    chrome.storage.onChanged.addListener(listener);
+
+    // Return unsubscribe function
+    return () => {
+      chrome.storage.onChanged.removeListener(listener);
+    };
+  }
+
+  // Fallback for non-extension environments: use localStorage + 'storage' event
+  const storageListener = (ev: StorageEvent) => {
+    if (ev.key === STORAGE_KEY) {
+      try {
+        const newValue = ev.newValue ? (JSON.parse(ev.newValue) as ChromeUser) : null;
+        callback(newValue);
+      } catch (e) {
+        callback(null);
+      }
     }
   };
 
-  chrome.storage.onChanged.addListener(listener);
+  window.addEventListener("storage", storageListener);
 
-  // Return unsubscribe function
   return () => {
-    chrome.storage.onChanged.removeListener(listener);
+    window.removeEventListener("storage", storageListener);
   };
 }
 

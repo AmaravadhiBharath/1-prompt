@@ -1,0 +1,14 @@
+name = "1prompt-site"
+type = "javascript"
+main = "workers-site"
+compatibility_date = "2026-02-12"
+
+# Deploys the static `dist/` folder as a Workers Site. Use `npx wrangler publish`
+# or `npx wrangler pages publish dist` depending on whether you want a Worker
+# or Pages deployment. If you already have a backend Worker (in `backend/`),
+# make sure the backend Worker is NOT routed to `/*` in the Cloudflare dashboard
+# otherwise it will intercept root requests.
+
+[site]
+bucket = "./dist"
+entry-point = "workers-site"

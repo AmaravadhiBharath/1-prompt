@@ -74,10 +74,30 @@ if (fs.existsSync(WELCOME_HTML)) {
   fs.writeFileSync(INDEX_HTML, html);
   console.log("Generated index.html with web patches");
 
+  // Also create dedicated static pages so Pages serves them directly
+  // (Cloudflare Pages will prefer an existing file over the SPA redirect)
+  const extraPages = ["home", "install", "supported-sites"];
+  extraPages.forEach((p) => {
+    const pageDir = path.join(DIST_DIR, p);
+    if (!fs.existsSync(pageDir)) {
+      fs.mkdirSync(pageDir, { recursive: true });
+    }
+    fs.writeFileSync(path.join(pageDir, "index.html"), html);
+    console.log(`Created static page: /${p}/index.html`);
+  });
+
   // Create _redirects for SPA routing on Cloudflare Pages
-  const redirectsContent = "/* /index.html 200";
-  fs.writeFileSync(path.join(DIST_DIR, "_redirects"), redirectsContent);
-  console.log("Created _redirects for SPA routing");
+  // Create _redirects for SPA routing on Cloudflare Pages
+  // NOTE: Some platforms (e.g. Chrome extension packaging) disallow filenames
+  // starting with an underscore. To skip creating this file set the
+  // environment variable `SKIP_REDIRECTS=true` when running the script.
+  if (process.env.SKIP_REDIRECTS !== "true") {
+    const redirectsContent = "/* /index.html 200";
+    fs.writeFileSync(path.join(DIST_DIR, "_redirects"), redirectsContent);
+    console.log("Created _redirects for SPA routing");
+  } else {
+    console.log("Skipping _redirects file (SKIP_REDIRECTS=true)");
+  }
 }
 
 // 3. Remove conflicting worker

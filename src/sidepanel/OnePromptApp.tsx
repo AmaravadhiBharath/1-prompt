@@ -77,7 +77,7 @@ export default function OnePromptApp() {
 
     // Status polling & Event Listeners
     let pollInterval = 1000; // Start fast for immediate feedback
-    let statusInterval: number;
+    let statusInterval: ReturnType<typeof setInterval>;
 
     const checkStatus = () => {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {

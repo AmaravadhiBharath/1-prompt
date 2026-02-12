@@ -5,6 +5,7 @@ import {
   subscribeToAuthChanges,
   signOut,
 } from "../services/auth";
+import { signInWithGoogleWeb } from "../services/firebase";
 import "./new-design.css";
 
 const features = [
@@ -324,16 +325,27 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
   const handleGoogleLogin = async () => {
     // 1. Browser check
     const isExtension = window.location.protocol === "chrome-extension:";
-    if (!isExtension) {
-      alert("Please login via the 1-prompt Chrome extension. Website login is coming soon!");
-      setIsLoggingIn(false);
-      return;
-    }
-
     try {
       setIsLoggingIn(true);
-      await signInWithGoogle();
-      setLoginSuccess(true);
+
+      if (!isExtension) {
+        // Web sign-in via Firebase
+        try {
+          const res = await signInWithGoogleWeb();
+          if (res && res.idToken) {
+            setLoginSuccess(true);
+            setUserEmail(res.user?.email || null);
+          }
+        } catch (e) {
+          console.error("Web login failed:", e);
+          alert("Web login failed. Check console for details.");
+        }
+      } else {
+        // Extension sign-in
+        await signInWithGoogle();
+        setLoginSuccess(true);
+      }
+
       setIsLoggingIn(false);
 
       if (onComplete) {
