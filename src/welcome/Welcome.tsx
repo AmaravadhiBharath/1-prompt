@@ -488,6 +488,48 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
           : `welcome-container ${showFinalStage ? "final-stage" : ""}`
       }
     >
+      {!isLandingPage && !onComplete && (
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate("/home");
+          }}
+          style={{
+            position: 'fixed',
+            top: '32px',
+            left: '32px',
+            zIndex: 999999,
+            color: '#999',
+            textDecoration: 'none',
+            fontSize: '13px',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            letterSpacing: '0.02em',
+            opacity: 0.8,
+            transition: 'opacity 0.2s'
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.8')}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          HOME
+        </a>
+      )}
       {activeSection === "uninstall" ? (
         <div
           className="landing-section fade-in"
@@ -971,22 +1013,6 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigate("/home");
-                          }}
-                          style={{
-                            color: "#999",
-                            textDecoration: "none",
-                            borderBottom: "1px solid rgba(153, 153, 153, 0.2)",
-                            fontSize: "13px",
-                            fontWeight: 500
-                          }}
-                        >
-                          Home
-                        </a>
-                        <a
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
                             signOut();
                           }}
                           style={{
@@ -1043,24 +1069,6 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                       <button className="guest-link" onClick={handleGuestContinue}>
                         Continue without signing in
                       </button>
-                      <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center' }}>
-                        <a
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            navigate("/home");
-                          }}
-                          style={{
-                            color: "#999",
-                            textDecoration: "none",
-                            borderBottom: "1px solid rgba(153, 153, 153, 0.2)",
-                            fontSize: "13px",
-                            fontWeight: 500
-                          }}
-                        >
-                          Home
-                        </a>
-                      </div>
                     </>
                   )}
                 </div>
