@@ -1024,7 +1024,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 if (chrome.runtime.setUninstallURL) {
   const isDevelopment = !("update_url" in chrome.runtime.getManifest());
   if (!isDevelopment) {
-    chrome.runtime.setUninstallURL("https://1-prompt.in/uninstall");
+    chrome.runtime.setUninstallURL("https://1-prompt.in/can't-say-goodbye");
   } else {
     console.log("[1-prompt] Development mode detected: skipping setUninstallURL");
   }

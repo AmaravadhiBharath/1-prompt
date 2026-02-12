@@ -265,6 +265,40 @@ body {
   cursor: pointer;
 }
 
+/* Floating Home Button for App Flow */
+.back-to-site-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a1a1a;
+  cursor: pointer;
+  z-index: 99999;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.back-to-site-btn:hover {
+  transform: scale(1.05);
+  background: white;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  border-color: #0265dc;
+}
+
+.back-to-site-btn svg {
+  color: #0265dc;
+}
+
 /* --- Right Column: Onboarding / Pinning --- */
 .onboarding-section {
   flex: 1;

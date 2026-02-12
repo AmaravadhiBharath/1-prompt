@@ -161,6 +161,44 @@ html,
   line-height: 1.5;
   color: var(--kb-text-secondary);
   margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Platform Contextual Backgrounds */
+.kb-screen-content::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--platform-color, rgba(0, 90, 226, 0.05)) 0%, transparent 70%);
+  filter: blur(60px);
+  z-index: -1;
+  opacity: 0.6;
+  transition: background 0.5s ease;
+}
+
+.platform-chatgpt {
+  --platform-color: rgba(16, 185, 129, 0.15);
+}
+
+.platform-claude {
+  --platform-color: rgba(217, 119, 87, 0.15);
+}
+
+.platform-gemini {
+  --platform-color: rgba(66, 133, 244, 0.15);
+}
+
+.platform-perplexity {
+  --platform-color: rgba(20, 184, 166, 0.15);
+}
+
+.platform-deepseek {
+  --platform-color: rgba(79, 70, 229, 0.15);
 }
 
 /* --- BUTTONS --- */
@@ -255,6 +293,21 @@ html,
   /* still clickable to open upgrade modal */
   transform: none !important;
   border-color: rgba(0, 0, 0, 0.04);
+}
+
+.kb-action-card.inactive {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  border-color: rgba(0, 0, 0, 0.04) !important;
+  background: #f9fafb !important;
+  pointer-events: none;
+  /* simpler: just block clicks at CSS level */
+}
+
+.kb-action-card.inactive:hover {
+  box-shadow: none !important;
+  border-color: rgba(0, 0, 0, 0.04) !important;
 }
 
 .quota-badge {

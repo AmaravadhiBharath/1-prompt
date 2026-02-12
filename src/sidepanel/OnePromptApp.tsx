@@ -652,10 +652,13 @@ export default function OnePromptApp() {
         Please navigate to a{" "}
         <a
           href="#"
-          onClick={() => setShowUpgradeModal(true)}
+          onClick={(e) => {
+            e.preventDefault();
+            chrome.tabs.create({ url: "https://1-prompt.in/supported-sites" });
+          }}
           style={{
             color: "var(--kb-primary-blue)",
-            textDecoration: "none",
+            textDecoration: "underline",
             fontWeight: 600,
           }}
         >
@@ -667,26 +670,33 @@ export default function OnePromptApp() {
         Try{" "}
         <a
           href="#"
-          onClick={() => chrome.tabs.create({ url: "https://chatgpt.com" })}
-          style={{ color: "inherit" }}
+          onClick={(e) => {
+            e.preventDefault();
+            chrome.tabs.create({ url: "https://chatgpt.com" });
+          }}
+          style={{ color: "inherit", textDecoration: "underline" }}
         >
           ChatGPT
         </a>
         ,{" "}
         <a
           href="#"
-          onClick={() => chrome.tabs.create({ url: "https://claude.ai" })}
-          style={{ color: "inherit" }}
+          onClick={(e) => {
+            e.preventDefault();
+            chrome.tabs.create({ url: "https://claude.ai" });
+          }}
+          style={{ color: "inherit", textDecoration: "underline" }}
         >
           Claude
         </a>
         , or{" "}
         <a
           href="#"
-          onClick={() =>
-            chrome.tabs.create({ url: "https://chat.deepseek.com" })
-          }
-          style={{ color: "inherit" }}
+          onClick={(e) => {
+            e.preventDefault();
+            chrome.tabs.create({ url: "https://chat.deepseek.com" });
+          }}
+          style={{ color: "inherit", textDecoration: "underline" }}
         >
           DeepSeek
         </a>
@@ -723,20 +733,31 @@ export default function OnePromptApp() {
   );
 
   const renderConnected = () => (
-    <div className="kb-screen-content">
+    <div className={`kb-screen-content platform-${status.platform || "generic"}`}>
       <h1 className="kb-title-large">
         One Click
         <br />
         Away
       </h1>
-      <p className="kb-text-body">
-        {status.hasPrompts
-          ? `Connected to ${status.platform || "AI Chat"}. Choose a mode to begin.`
-          : `Connected to ${status.platform || "AI Chat"}. Open or start a chat to begin capturing.`
-        }
-      </p>
+      <div className="kb-text-body">
+        <p style={{ margin: 0 }}>
+          {status.hasPrompts
+            ? `Connected to ${status.platform ? status.platform.charAt(0).toUpperCase() + status.platform.slice(1) : "AI Chat"}.`
+            : `Connected to ${status.platform ? status.platform.charAt(0).toUpperCase() + status.platform.slice(1) : "AI Chat"}.`
+          }
+        </p>
+        <p style={{ margin: 0, fontSize: "14px", opacity: 0.8 }}>
+          {status.hasPrompts
+            ? "Choose a mode to begin."
+            : "Open or start a chat to begin capturing."
+          }
+        </p>
+      </div>
 
-      <div className="kb-action-card" onClick={() => handleExtract("capture")}>
+      <div
+        className={`kb-action-card ${!status.hasPrompts ? "inactive" : ""}`}
+        onClick={() => status.hasPrompts && handleExtract("capture")}
+      >
         <span className="kb-card-label">Capture</span>
         <svg
           width="24"
@@ -752,7 +773,10 @@ export default function OnePromptApp() {
         </svg>
       </div>
 
-      <div className="kb-action-card" onClick={() => handleExtract("compile")}>
+      <div
+        className={`kb-action-card ${!status.hasPrompts ? "inactive" : ""}`}
+        onClick={() => status.hasPrompts && handleExtract("compile")}
+      >
         <span className="kb-card-label">Compile</span>
         <svg
           width="24"

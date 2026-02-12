@@ -13,7 +13,7 @@ if (
   chrome.tabs.getCurrent((tab) => {
     if (tab) {
       // We are in a real tab, redirect to the landing page
-      window.location.href = "../welcome.html";
+      window.location.href = "https://1-prompt.in";
     }
   });
 }

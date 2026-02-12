@@ -217,10 +217,17 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
     // Handle URL-based routing (Simple Client-Side Router)
     const handleRouting = () => {
       const path = window.location.pathname;
-      if (path.includes("uninstall")) {
+      const hash = window.location.hash;
+      const combined = path + hash;
+
+      if (combined.includes("can't-say-goodbye")) {
         setActiveSection("uninstall");
-      } else if (path.includes("install")) {
+      } else if (combined.includes("install")) {
         setActiveSection("setup");
+      } else if (combined.includes("supported-sites")) {
+        setActiveSection("dashboard");
+      } else if (combined.includes("home")) {
+        setActiveSection("landing");
       } else {
         setActiveSection("landing");
       }
@@ -291,15 +298,19 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
     const isExtension = window.location.protocol === "chrome-extension:";
 
     if (isExtension) {
-      if (path === "/" || path === "") {
+      if (path === "/" || path === "" || path.includes("home")) {
         setActiveSection("landing");
+        window.location.hash = "home";
       } else if (path.includes("install")) {
         setActiveSection("setup");
-      } else if (path.includes("uninstall")) {
+        window.location.hash = "install";
+      } else if (path.includes("supported-sites")) {
+        setActiveSection("dashboard");
+        window.location.hash = "supported-sites";
+      } else if (path.includes("can't-say-goodbye")) {
         setActiveSection("uninstall");
+        window.location.hash = "can't-say-goodbye";
       }
-      // Still push state but keep it relative to current file if needed,
-      // though state change is enough for logic
       return;
     }
 
@@ -308,9 +319,16 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
     window.dispatchEvent(event);
   };
 
+  const isHomePath = window.location.pathname.includes("home") || window.location.hash.includes("home");
+
   const handleGoogleLogin = async () => {
-    // 1. OPEN SIDE PANEL IMMEDIATELY - Critical for user gesture
-    if (!onComplete) openSidePanel(false);
+    // 1. Browser check
+    const isExtension = window.location.protocol === "chrome-extension:";
+    if (!isExtension) {
+      alert("Please login via the 1-prompt Chrome extension. Website login is coming soon!");
+      setIsLoggingIn(false);
+      return;
+    }
 
     try {
       setIsLoggingIn(true);
@@ -321,7 +339,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
       if (onComplete) {
         onComplete();
       } else {
-        setActiveSection("dashboard");
+        navigate("/supported-sites");
       }
     } catch (error) {
       console.error("Login failed:", error);
@@ -368,7 +386,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
     } else if (window.location.pathname.includes("sidepanel")) {
       window.location.href = "index.html";
     } else {
-      setActiveSection("dashboard");
+      navigate("/supported-sites");
     }
   };
 
@@ -410,8 +428,9 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
       const installed = hasExtensionAPI || hasMarkerAttribute;
 
       // AUTO-REDIRECT: If installed and user is on marketing landing, skip to app flow
-      if (installed && activeSection === "landing") {
-        setActiveSection("setup");
+      // But allow if they are explicitly on /home
+      if (installed && activeSection === "landing" && !isHomePath) {
+        navigate("/install");
       }
 
       return installed;
@@ -431,7 +450,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
             response.isOpen &&
             window.location.pathname.includes("install")
           ) {
-            setActiveSection("dashboard");
+            navigate("/supported-sites");
           }
         },
       );
@@ -440,7 +459,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
           message.action === "SIDEPANEL_OPENED" &&
           window.location.pathname.includes("install")
         ) {
-          setActiveSection("dashboard");
+          navigate("/supported-sites");
         }
       };
       chrome.runtime.onMessage.addListener(messageListener);
@@ -469,6 +488,46 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
           : `welcome-container ${showFinalStage ? "final-stage" : ""}`
       }
     >
+      {!isLandingPage && !onComplete && (
+        <button
+          className="back-to-site-btn"
+          onClick={() => navigate("/home")}
+          title="Back to Website"
+          style={{
+            position: 'fixed',
+            top: '24px',
+            left: '24px',
+            zIndex: 999999,
+            backgroundColor: '#0265dc',
+            color: 'white',
+            padding: '10px 20px',
+            borderRadius: '100px',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '13px',
+            fontWeight: 'bold',
+            boxShadow: '0 4px 15px rgba(2, 101, 220, 0.4)',
+            cursor: 'pointer'
+          }}
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          <span>HOME</span>
+        </button>
+      )}
       {activeSection === "uninstall" ? (
         <div
           className="landing-section fade-in"
@@ -499,7 +558,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
               we can do better.
             </p>
             <div className="landing-cta-group">
-              <button className="google-btn" onClick={() => navigate("/")}>
+              <button className="google-btn" onClick={() => navigate("/home")}>
                 <span>Return to Home</span>
               </button>
             </div>
@@ -557,7 +616,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                   className="btn-demo"
                   onClick={(e) => {
                     e.preventDefault();
-                    setActiveSection("setup");
+                    navigate("/install");
                   }}
                 >
                   Get Started
@@ -731,7 +790,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                   </ul>
                   <button
                     className="tier-btn"
-                    onClick={() => setActiveSection("setup")}
+                    onClick={() => navigate("/install")}
                   >
                     Get Started
                   </button>
@@ -774,7 +833,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                   </div>
                   <button
                     className="tier-btn primary"
-                    onClick={() => setActiveSection("setup")}
+                    onClick={() => navigate("/install")}
                   >
                     Join Go Free
                   </button>
@@ -914,13 +973,33 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
           <div
             className={`setup-container ${activeSection !== "dashboard" ? "expanded-mode" : "sidebar-mode"}`}
             onClick={() =>
-              activeSection === "dashboard" && setActiveSection("setup")
+              activeSection === "dashboard" && navigate("/install")
             }
           >
             {activeSection !== "dashboard" ? (
               <div className="setup-wrapper fade-in">
-                <div className="auth-section">
-                  <div style={{ marginBottom: "24px" }}>
+                <div className="auth-section" style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => navigate("/home")}
+                    style={{
+                      position: 'absolute',
+                      top: '20px',
+                      left: '20px',
+                      background: '#0265dc',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      zIndex: 10000,
+                      boxShadow: '0 4px 12px rgba(2, 101, 220, 0.3)'
+                    }}
+                  >
+                    ← WEBSITE
+                  </button>
+                  <div style={{ marginBottom: "24px", marginTop: '40px' }}>
                     <img
                       src={logoUrl}
                       alt="1-prompt Logo"
@@ -947,7 +1026,23 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                         </div>
                       </div>
 
-                      <div style={{ display: "flex", gap: "24px", marginTop: "4px" }}>
+                      <div style={{ display: "flex", gap: "16px", marginTop: "4px" }}>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            navigate("/home");
+                          }}
+                          style={{
+                            color: "#0265dc",
+                            textDecoration: "none",
+                            borderBottom: "1px solid rgba(2, 101, 220, 0.3)",
+                            fontSize: "13px",
+                            fontWeight: 700
+                          }}
+                        >
+                          Home
+                        </a>
                         <a
                           href="#"
                           onClick={(e) => {
@@ -968,7 +1063,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            setActiveSection("landing");
+                            navigate("/home");
                             setTimeout(() => scrollToSection("contact-section"), 100);
                           }}
                           style={{
@@ -1007,6 +1102,22 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                       </div>
                       <button className="guest-link" onClick={handleGuestContinue}>
                         Continue without signing in
+                      </button>
+                      <button
+                        className="guest-link"
+                        style={{
+                          marginTop: '24px',
+                          color: '#0265dc',
+                          fontSize: '14px',
+                          fontWeight: '800',
+                          border: '2px solid #0265dc',
+                          padding: '10px 20px',
+                          borderRadius: '8px',
+                          background: 'rgba(2, 101, 220, 0.05)'
+                        }}
+                        onClick={() => navigate("/home")}
+                      >
+                        ← BACK TO WEBSITE
                       </button>
                     </>
                   )}
@@ -1090,7 +1201,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
           <div
             className={`dashboard-section ${activeSection === "dashboard" ? "expanded-mode" : "sidebar-mode"}`}
             onClick={() =>
-              activeSection !== "dashboard" && setActiveSection("dashboard")
+              activeSection !== "dashboard" && navigate("/supported-sites")
             }
           >
             {activeSection === "dashboard" ? (
@@ -1163,8 +1274,8 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
             )}
           </div>
         </>
-      )
-      }
+      )}
+
     </div >
   );
 };
