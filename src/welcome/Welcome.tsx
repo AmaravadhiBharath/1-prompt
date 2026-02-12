@@ -488,46 +488,6 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
           : `welcome-container ${showFinalStage ? "final-stage" : ""}`
       }
     >
-      {!isLandingPage && !onComplete && (
-        <button
-          className="back-to-site-btn"
-          onClick={() => navigate("/home")}
-          title="Back to Website"
-          style={{
-            position: 'fixed',
-            top: '24px',
-            left: '24px',
-            zIndex: 999999,
-            backgroundColor: '#0265dc',
-            color: 'white',
-            padding: '10px 20px',
-            borderRadius: '100px',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '13px',
-            fontWeight: 'bold',
-            boxShadow: '0 4px 15px rgba(2, 101, 220, 0.4)',
-            cursor: 'pointer'
-          }}
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-          <span>HOME</span>
-        </button>
-      )}
       {activeSection === "uninstall" ? (
         <div
           className="landing-section fade-in"
@@ -978,28 +938,8 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
           >
             {activeSection !== "dashboard" ? (
               <div className="setup-wrapper fade-in">
-                <div className="auth-section" style={{ position: 'relative' }}>
-                  <button
-                    onClick={() => navigate("/home")}
-                    style={{
-                      position: 'absolute',
-                      top: '20px',
-                      left: '20px',
-                      background: '#0265dc',
-                      color: 'white',
-                      border: 'none',
-                      padding: '8px 16px',
-                      borderRadius: '20px',
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      zIndex: 10000,
-                      boxShadow: '0 4px 12px rgba(2, 101, 220, 0.3)'
-                    }}
-                  >
-                    ← WEBSITE
-                  </button>
-                  <div style={{ marginBottom: "24px", marginTop: '40px' }}>
+                <div className="auth-section">
+                  <div style={{ marginBottom: "24px" }}>
                     <img
                       src={logoUrl}
                       alt="1-prompt Logo"
@@ -1034,11 +974,11 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                             navigate("/home");
                           }}
                           style={{
-                            color: "#0265dc",
+                            color: "#999",
                             textDecoration: "none",
-                            borderBottom: "1px solid rgba(2, 101, 220, 0.3)",
+                            borderBottom: "1px solid rgba(153, 153, 153, 0.2)",
                             fontSize: "13px",
-                            fontWeight: 700
+                            fontWeight: 500
                           }}
                         >
                           Home
@@ -1103,22 +1043,24 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                       <button className="guest-link" onClick={handleGuestContinue}>
                         Continue without signing in
                       </button>
-                      <button
-                        className="guest-link"
-                        style={{
-                          marginTop: '24px',
-                          color: '#0265dc',
-                          fontSize: '14px',
-                          fontWeight: '800',
-                          border: '2px solid #0265dc',
-                          padding: '10px 20px',
-                          borderRadius: '8px',
-                          background: 'rgba(2, 101, 220, 0.05)'
-                        }}
-                        onClick={() => navigate("/home")}
-                      >
-                        ← BACK TO WEBSITE
-                      </button>
+                      <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center' }}>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            navigate("/home");
+                          }}
+                          style={{
+                            color: "#999",
+                            textDecoration: "none",
+                            borderBottom: "1px solid rgba(153, 153, 153, 0.2)",
+                            fontSize: "13px",
+                            fontWeight: 500
+                          }}
+                        >
+                          Home
+                        </a>
+                      </div>
                     </>
                   )}
                 </div>
@@ -1274,7 +1216,8 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
             )}
           </div>
         </>
-      )}
+      )
+      }
 
     </div >
   );
