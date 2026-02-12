@@ -153,6 +153,7 @@ interface WelcomeProps {
 const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const logoUrl =
     typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL
@@ -160,7 +161,6 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
       : "/icons/logo-new.png";
 
   const [isPinned, setIsPinned] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
   const [activeSection, setActiveSection] = useState<
     "landing" | "pricing" | "contact" | "setup" | "dashboard" | "uninstall"
   >("landing");
@@ -233,12 +233,14 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
     getStoredUser().then((user) => {
       if (user) {
         setLoginSuccess(true);
+        setUserEmail(user.email);
       }
     });
 
     // Real-time Auth Listening
     const unsubscribeAuth = subscribeToAuthChanges((user) => {
       setLoginSuccess(!!user);
+      setUserEmail(user?.email || null);
     });
 
     const checkPinnedStatus = async () => {
@@ -307,15 +309,19 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
   };
 
   const handleGoogleLogin = async () => {
+    // 1. OPEN SIDE PANEL IMMEDIATELY - Critical for user gesture
+    if (!onComplete) openSidePanel(false);
+
     try {
       setIsLoggingIn(true);
       await signInWithGoogle();
-      setIsLoggingIn(false);
       setLoginSuccess(true);
+      setIsLoggingIn(false);
+
       if (onComplete) {
         onComplete();
       } else {
-        openSidePanel(true);
+        setActiveSection("dashboard");
       }
     } catch (error) {
       console.error("Login failed:", error);
@@ -354,12 +360,15 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
   };
 
   const handleGuestContinue = () => {
+    // 1. Trigger side panel IMMEDIATELY
+    if (!onComplete) openSidePanel(false);
+
     if (onComplete) {
       onComplete();
     } else if (window.location.pathname.includes("sidepanel")) {
       window.location.href = "index.html";
     } else {
-      openSidePanel(true);
+      setActiveSection("dashboard");
     }
   };
 
@@ -369,14 +378,22 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
         window.location.href = "index.html";
         return;
       }
-      const currentWindow = await chrome.windows.getCurrent();
-      if (chrome.sidePanel && chrome.sidePanel.open && currentWindow.id) {
-        await chrome.sidePanel.open({ windowId: currentWindow.id });
-        if (closeWindow) window.close();
-      } else {
-        chrome.runtime.sendMessage({ action: "OPEN_SIDE_PANEL" });
+
+      // Detection
+      const hasExtension = typeof chrome !== "undefined" && chrome.runtime;
+      if (!hasExtension) return;
+
+      // GET WINDOW ID AND OPEN - Most reliable method
+      chrome.windows.getCurrent((currentWindow) => {
+        if (chrome.sidePanel && chrome.sidePanel.open && currentWindow.id) {
+          chrome.sidePanel.open({ windowId: currentWindow.id });
+        } else {
+          // Fallback to background script
+          chrome.runtime.sendMessage({ action: "OPEN_SIDE_PANEL" });
+        }
+
         if (closeWindow) setTimeout(() => window.close(), 100);
-      }
+      });
     } catch (e) {
       console.log("Could not open sidepanel automatically:", e);
     }
@@ -391,7 +408,6 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
         "data-1-prompt-installed",
       );
       const installed = hasExtensionAPI || hasMarkerAttribute;
-      setIsInstalled(!!installed);
 
       // AUTO-REDIRECT: If installed and user is on marketing landing, skip to app flow
       if (installed && activeSection === "landing") {
@@ -436,16 +452,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
     return () => clearInterval(pollTimer);
   }, []);
 
-  useEffect(() => {
-    if (!isInstalled) return;
-    // ONLY show dashboard automatically if we are in the side panel (onComplete provided)
-    // If in a tab, stay on setup/success screen so user can open sidepanel
-    if (loginSuccess && isPinned && onComplete) {
-      setActiveSection("dashboard");
-    } else {
-      setActiveSection("setup");
-    }
-  }, [loginSuccess, isPinned, isInstalled, onComplete]);
+
 
   const showFinalStage = loginSuccess && isPinned;
   const isLandingPage = ["landing", "uninstall", "pricing", "contact"].includes(
@@ -911,20 +918,8 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
             }
           >
             {activeSection !== "dashboard" ? (
-              <div className="setup-wrapper">
+              <div className="setup-wrapper fade-in">
                 <div className="auth-section">
-                  <div
-                    onClick={() => navigate("/")}
-                    style={{
-                      cursor: "pointer",
-                      opacity: 0.6,
-                      fontSize: "14px",
-                      marginBottom: "20px",
-                      display: "inline-block",
-                    }}
-                  >
-                    ← Back to home
-                  </div>
                   <div style={{ marginBottom: "24px" }}>
                     <img
                       src={logoUrl}
@@ -939,52 +934,82 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                     Sign in to sync your prompts across devices and access your
                     library from any browser.
                   </p>
+
+
                   {loginSuccess ? (
-                    <div className="success-message">
-                      ✓ Signed in successfully{" "}
-                      <div className="auth-button-group" style={{ marginTop: "20px", display: "flex", gap: "10px", justifyContent: "center" }}>
-                        <button
-                          className="google-btn success"
-                          onClick={() => openSidePanel(true)}
-                        >
-                          <span>Open Side Panel</span>
-                        </button>
-                        <button
-                          className="guest-link"
-                          style={{ margin: 0, padding: "8px 16px" }}
-                          onClick={() => {
+                    <div className="success-message" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", background: "none", padding: "0", borderRadius: "0", border: "none", width: "100%", marginBottom: "20px" }}>
+                      <div className="google-btn success" style={{ cursor: "default", opacity: 1, border: "1px solid #10b981", background: "#f0fdf4" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", justifyContent: "center" }}>
+                          <span style={{ fontSize: "14px", fontWeight: 500, color: "#065f46" }}>Signed in: {userEmail}</span>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", gap: "24px", marginTop: "4px" }}>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
                             signOut();
                           }}
+                          style={{
+                            color: "#ef4444",
+                            textDecoration: "none",
+                            borderBottom: "1px solid rgba(239, 68, 68, 0.3)",
+                            fontSize: "13px",
+                            fontWeight: 500
+                          }}
                         >
-                          Sign Out
-                        </button>
+                          Logout
+                        </a>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setActiveSection("landing");
+                            setTimeout(() => scrollToSection("contact-section"), 100);
+                          }}
+                          style={{
+                            color: "#666",
+                            textDecoration: "none",
+                            borderBottom: "1px solid rgba(0, 0, 0, 0.1)",
+                            fontSize: "13px",
+                            fontWeight: 500
+                          }}
+                        >
+                          Contact
+                        </a>
                       </div>
                     </div>
                   ) : (
-                    <button
-                      className="google-btn"
-                      onClick={handleGoogleLogin}
-                      disabled={isLoggingIn}
-                    >
-                      {isLoggingIn ? (
-                        <span>Signing in...</span>
-                      ) : (
-                        <>
-                          <img
-                            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                            alt="Google"
-                          />
-                          <span>Continue with Google</span>
-                        </>
-                      )}
-                    </button>
+                    <>
+                      <button
+                        className="google-btn"
+                        onClick={handleGoogleLogin}
+                        disabled={isLoggingIn}
+                      >
+                        {isLoggingIn ? (
+                          <span>Signing in...</span>
+                        ) : (
+                          <>
+                            <img
+                              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                              alt="Google"
+                            />
+                            <span>Continue with Google</span>
+                          </>
+                        )}
+                      </button>
+                      <div className="divider">
+                        <span>OR</span>
+                      </div>
+                      <button className="guest-link" onClick={handleGuestContinue}>
+                        Continue without signing in
+                      </button>
+                    </>
                   )}
-                  <div className="divider">
-                    <span>OR</span>
-                  </div>
-                  <button className="guest-link" onClick={handleGuestContinue}>
-                    Continue without signing in
-                  </button>
                 </div>
 
                 <div className="onboarding-section">
@@ -995,9 +1020,14 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                     {isPinned ? "1-prompt is pinned!" : "Pin to Toolbar"}
                   </h2>
                   <p className="onboarding-desc">
-                    {isPinned
-                      ? "You are all set. Click the icon to start capturing."
-                      : "Keep 1-prompt within reach for the best capturing experience."}
+                    {isPinned ? (
+                      <>
+                        You are all set! <br />
+                        Capture insights, compile prompts, and build better with 1-prompt.
+                      </>
+                    ) : (
+                      "Pin 1-prompt for the fastest way to capture and compile your prompts."
+                    )}
                   </p>
                   <div className="visual-card">
                     <div className="animated-cursor"></div>
@@ -1133,8 +1163,9 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
             )}
           </div>
         </>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 };
 

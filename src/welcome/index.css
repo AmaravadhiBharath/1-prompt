@@ -802,32 +802,41 @@ body {
 }
 
 .setup-container {
-  transition:
-    flex 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-    background-color 0.3s ease;
+  transition: flex 0.7s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease;
   background: white;
   overflow: hidden !important;
   position: relative;
   display: flex;
   flex-direction: column;
+  will-change: flex;
+}
+
+.dashboard-section {
+  transition: flex 0.7s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease;
+  background: white;
+  overflow: hidden !important;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  will-change: flex;
 }
 
 .dashboard-section.expanded-mode,
 .setup-container.expanded-mode {
-  flex: 10;
-  /* Grow to fill */
+  flex: 1 1 auto !important;
   cursor: default;
 }
 
 .dashboard-section.sidebar-mode,
 .setup-container.sidebar-mode {
-  flex: 0 0 80px;
-  /* Collapse to fixed width */
+  flex: 0 0 80px !important;
   width: 80px;
+  min-width: 80px;
   padding: 0;
   cursor: pointer;
   background: #f9fafb;
   border-left: 1px solid #f3f4f6;
+  border-right: 1px solid #f3f4f6;
 }
 
 .dashboard-section.sidebar-mode:hover,
@@ -871,13 +880,17 @@ body {
 @keyframes fadeInScale {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.98) translateY(5px);
   }
 
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
+}
+
+.fade-in {
+  animation: fadeInScale 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .dashboard-title {

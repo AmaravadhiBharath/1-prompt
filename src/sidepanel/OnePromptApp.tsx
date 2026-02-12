@@ -36,6 +36,7 @@ export default function OnePromptApp() {
   const [status, setStatus] = useState({
     supported: false,
     platform: null as string | null,
+    hasPrompts: false,
   });
 
   // UI States
@@ -100,12 +101,12 @@ export default function OnePromptApp() {
                 if (chrome.runtime.lastError) {
                   // If message fails but URL is supported -> Unconnected
                   if (tempPlatform) {
-                    setStatus({ supported: false, platform: tempPlatform });
+                    setStatus({ supported: false, platform: tempPlatform, hasPrompts: false });
                   } else {
-                    setStatus({ supported: false, platform: null });
+                    setStatus({ supported: false, platform: null, hasPrompts: false });
                   }
                 } else {
-                  setStatus(response || { supported: false, platform: null });
+                  setStatus(response || { supported: false, platform: null, hasPrompts: false });
                   // Once connected, slow down polling to reduce load
                   if (response?.supported && pollInterval === 1000) {
                     pollInterval = 3000;
@@ -117,9 +118,9 @@ export default function OnePromptApp() {
             );
           } catch (e) {
             if (tempPlatform) {
-              setStatus({ supported: false, platform: tempPlatform });
+              setStatus({ supported: false, platform: tempPlatform, hasPrompts: false });
             } else {
-              setStatus({ supported: false, platform: null });
+              setStatus({ supported: false, platform: null, hasPrompts: false });
             }
           }
         }
@@ -329,7 +330,11 @@ export default function OnePromptApp() {
         const newTier = await fetchUserTier();
         setTier(newTier);
       } else if (msg.action === "STATUS_RESULT") {
-        setStatus({ supported: msg.supported, platform: msg.platform });
+        setStatus({
+          supported: msg.supported,
+          platform: msg.platform,
+          hasPrompts: !!msg.hasPrompts
+        });
       } else if (msg.action === "ERROR") {
         setAiError(msg.error);
         setLoading(false);
@@ -725,8 +730,10 @@ export default function OnePromptApp() {
         Away
       </h1>
       <p className="kb-text-body">
-        Connected to {status.platform || "AI Chat"}.<br />
-        Choose a mode to begin.
+        {status.hasPrompts
+          ? `Connected to ${status.platform || "AI Chat"}. Choose a mode to begin.`
+          : `Connected to ${status.platform || "AI Chat"}. Open or start a chat to begin capturing.`
+        }
       </p>
 
       <div className="kb-action-card" onClick={() => handleExtract("capture")}>

@@ -249,11 +249,15 @@ export async function signInWithGoogle(): Promise<ChromeUser> {
         // Store locally for UI
         await storeUser(user);
 
-        // Load quotas from Backend
-        await loadQuotas();
-
-        console.log("[Auth] Complete sign-in flow finished successfully");
+        // Resolve IMMEDIATELY for instant UI feedback
+        // Quotas and backend profile sync can happen in background
         resolve(user);
+
+        // Background tasks
+        saveUserProfile(user).catch(err => console.error("[Auth] Background profile save failed:", err));
+        loadQuotas().catch(err => console.error("[Auth] Background quota load failed:", err));
+
+        console.log("[Auth] Basic sign-in flow finished, background tasks started");
       } catch (error: any) {
         console.error("[Auth] Sign-in flow interrupted:", error);
         // Revoke the token on error so the user can try again fresh
