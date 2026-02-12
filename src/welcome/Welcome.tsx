@@ -1,5 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
-import { signInWithGoogle, getStoredUser } from "../services/auth";
+import {
+  signInWithGoogle,
+  getStoredUser,
+  subscribeToAuthChanges,
+  signOut,
+} from "../services/auth";
 import "./new-design.css";
 
 const features = [
@@ -231,6 +236,11 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
       }
     });
 
+    // Real-time Auth Listening
+    const unsubscribeAuth = subscribeToAuthChanges((user) => {
+      setLoginSuccess(!!user);
+    });
+
     const checkPinnedStatus = async () => {
       if (chrome.action && chrome.action.getUserSettings) {
         const settings = await chrome.action.getUserSettings();
@@ -241,6 +251,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
     const interval = setInterval(checkPinnedStatus, 1000);
     return () => {
       clearInterval(interval);
+      unsubscribeAuth();
       window.removeEventListener("popstate", handleRouting);
     };
   }, []);
@@ -542,7 +553,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                     setActiveSection("setup");
                   }}
                 >
-                  Book a Demo
+                  Get Started
                 </a>
               </div>
             </div>
@@ -931,13 +942,23 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                   {loginSuccess ? (
                     <div className="success-message">
                       ✓ Signed in successfully{" "}
-                      <button
-                        className="google-btn success"
-                        style={{ marginTop: "20px" }}
-                        onClick={() => openSidePanel(true)}
-                      >
-                        <span>Open Side Panel</span>
-                      </button>
+                      <div className="auth-button-group" style={{ marginTop: "20px", display: "flex", gap: "10px", justifyContent: "center" }}>
+                        <button
+                          className="google-btn success"
+                          onClick={() => openSidePanel(true)}
+                        >
+                          <span>Open Side Panel</span>
+                        </button>
+                        <button
+                          className="guest-link"
+                          style={{ margin: 0, padding: "8px 16px" }}
+                          onClick={() => {
+                            signOut();
+                          }}
+                        >
+                          Sign Out
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <button

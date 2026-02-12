@@ -88,10 +88,8 @@ const postBuildPlugin = () => ({
       });
     }
 
-    // Create Cloudflare Pages _redirects file for SPA routing
-    // This ensures that /install, /pricing, etc. redirect to index.html
-    const redirectsContent = "/*    /index.html   200";
-    writeFileSync("dist/_redirects", redirectsContent);
+    // Note: Removed _redirects generation here because it breaks Chrome Extension loading.
+    // For Cloudflare Pages, create this file manually or in a separate deploy script.
 
     if (existsSync(srcHistoryPath)) {
       let html = readFileSync(srcHistoryPath, "utf-8");

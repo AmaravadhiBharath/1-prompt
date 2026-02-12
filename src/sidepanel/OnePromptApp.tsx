@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import type { ExtractionResult, HistoryItem, Mode } from "../types";
-import Welcome from "../welcome/Welcome";
 import {
   initializeAuth,
   signInWithGoogle,
@@ -30,9 +29,6 @@ import "../services/tab-refresh"; // Import for side effects if needed (service 
 export default function OnePromptApp() {
   const [user, setUser] = useState<ChromeUser | null>(null);
   const [tier, setTier] = useState<UserTier>("guest");
-  const [hasSkippedWelcome, setHasSkippedWelcome] = useState<boolean | null>(
-    null,
-  );
   const [extractionResult, setExtractionResult] =
     useState<ExtractionResult | null>(null);
   const [mode, setMode] = useState<Mode>("capture");
@@ -75,10 +71,6 @@ export default function OnePromptApp() {
   // Initial Auth & Status Check
   useEffect(() => {
     initializeAuth().then((state) => setUser(state.user));
-
-    chrome.storage.local.get(["hasSkippedWelcome"], (result) => {
-      setHasSkippedWelcome(!!result.hasSkippedWelcome);
-    });
 
     const unsubscribe = subscribeToAuthChanges((u) => setUser(u));
 
@@ -1106,7 +1098,7 @@ export default function OnePromptApp() {
     </div>
   );
 
-  if (hasSkippedWelcome === null) {
+  if (loading && !extractionResult && !showResults && !viewingHistory) {
     return (
       <div
         style={{
@@ -1118,17 +1110,6 @@ export default function OnePromptApp() {
       >
         <div className="kb-spinner" />
       </div>
-    );
-  }
-
-  if (!user && !hasSkippedWelcome) {
-    return (
-      <Welcome
-        onComplete={() => {
-          chrome.storage.local.set({ hasSkippedWelcome: true });
-          setHasSkippedWelcome(true);
-        }}
-      />
     );
   }
 
@@ -1402,8 +1383,6 @@ export default function OnePromptApp() {
                   style={{ color: "#EF4444", marginTop: 4 }}
                   onClick={() => {
                     signOut();
-                    chrome.storage.local.remove(["hasSkippedWelcome"]);
-                    setHasSkippedWelcome(false);
                   }}
                 >
                   Sign Out
