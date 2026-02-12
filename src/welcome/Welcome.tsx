@@ -335,18 +335,28 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
           if (res && res.idToken) {
             setLoginSuccess(true);
             setUserEmail(res.user?.email || null);
+          } else {
+            // Login failed - no token received
+            setIsLoggingIn(false);
+            return;
           }
         } catch (e) {
           console.error("Web login failed:", e);
           alert("Web login failed. Check console for details.");
+          setIsLoggingIn(false);
+          return;
         }
       } else {
         // Extension sign-in
-        await signInWithGoogle();
+        const user = await signInWithGoogle();
         setLoginSuccess(true);
+        setUserEmail(user.email);
       }
 
       setIsLoggingIn(false);
+
+      // Open sidepanel (Task 3)
+      if (!onComplete) openSidePanel(false);
 
       if (onComplete) {
         onComplete();
