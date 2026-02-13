@@ -512,10 +512,14 @@ function initRealTimeCapture() {
     }, 500) as unknown as number;
   });
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+  if (document.body && document.body instanceof Node) {
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  } else {
+    console.warn("[1-prompt] initRealTimeCapture: document.body not available, skipping observer.observe(document.body)");
+  }
 
   // Also watch for URL changes (SPA navigation)
   let lastUrl = location.href;
@@ -536,10 +540,14 @@ function initRealTimeCapture() {
     }
   });
 
-  urlObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+  if (document.body && document.body instanceof Node) {
+    urlObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  } else {
+    console.warn("[1-prompt] initRealTimeCapture: document.body not available, skipping urlObserver.observe(document.body)");
+  }
 
   console.log("[1-prompt] Real-time capture initialized (optimized)");
 }

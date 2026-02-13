@@ -37,6 +37,7 @@ const ALLOWED_ORIGINS = [
 
 interface ExtendedEnv extends Env {
   ALLOW_DEV_EXT?: string;
+  ALLOWED_WEB_ORIGINS?: string;
 }
 
 function getCorsHeaders(
@@ -46,9 +47,15 @@ function getCorsHeaders(
   const headers: Record<string, string> = {
     "Access-Control-Allow-Methods": "GET, HEAD, POST, OPTIONS, DELETE",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, X-User-Id",
+    "Access-Control-Allow-Credentials": "true",
   };
 
   const allowDevExt = env.ALLOW_DEV_EXT === "true";
+
+  // Parse optional comma-separated web origins from env
+  const allowedWebOrigins = env.ALLOWED_WEB_ORIGINS
+    ? env.ALLOWED_WEB_ORIGINS.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
 
   // Allow ANY chrome-extension origin ONLY if ALLOW_DEV_EXT is set (development)
   if (origin && origin.startsWith("chrome-extension://")) {
@@ -59,9 +66,18 @@ function getCorsHeaders(
       headers["Access-Control-Allow-Origin"] = ALLOWED_ORIGINS[0];
     }
   } else if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    // Explicitly allowed (extension) origin
     headers["Access-Control-Allow-Origin"] = origin;
+  } else if (origin && allowedWebOrigins.includes(origin)) {
+    // Allowed web origin from configured env
+    headers["Access-Control-Allow-Origin"] = origin;
+  } else if (origin && origin.startsWith("http://") || origin && origin.startsWith("https://")) {
+    // Origin present but not in allowed list — do not set Access-Control-Allow-Origin
+    // Leaving the header unset will cause browsers to block the request, which is
+    // the desired secure behavior for unknown origins.
   } else {
-    // Fallback or specific default
+    // No origin or unrecognized — fall back to a safe extension origin to avoid
+    // completely removing the header in extension-to-extension flows.
     headers["Access-Control-Allow-Origin"] = ALLOWED_ORIGINS[0];
   }
 
@@ -319,6 +335,7 @@ async function verifyFirebaseIdToken(token: string, env: Env) {
 
 async function verifyAuth(
   req: Request,
+  env: Env,
 ): Promise<{ userId: string; verified: boolean; email?: string }> {
   const authHeader = req.headers.get("Authorization");
 
@@ -482,9 +499,9 @@ async function handleSaveProfile(
   const data: any = await req.json();
 
   // Verify auth
-  let userId: string;
+    let userId: string;
   try {
-    const auth = await verifyAuth(req);
+    const auth = await verifyAuth(req, env);
     userId = auth.userId;
   } catch (e: any) {
     return new Response(e.message, { status: 401, headers });
@@ -514,7 +531,7 @@ async function handleCheckTier(
   let verifiedEmail: string | undefined;
 
   try {
-    const auth = await verifyAuth(req);
+    const auth = await verifyAuth(req, env);
     verifiedUserId = auth.userId;
     verifiedEmail = auth.email;
   } catch (e: any) {
@@ -648,7 +665,7 @@ async function handleSaveHistory(
   // Verify auth
   let userId: string;
   try {
-    const auth = await verifyAuth(req);
+    const auth = await verifyAuth(req, env);
     userId = auth.userId;
   } catch (e: any) {
     return new Response(e.message, { status: 401, headers });
@@ -693,7 +710,7 @@ async function handleGetHistory(
   // Verify auth
   let userId: string;
   try {
-    const auth = await verifyAuth(req);
+    const auth = await verifyAuth(req, env);
     userId = auth.userId;
   } catch (e: any) {
     return new Response(e.message, { status: 401, headers });
@@ -724,7 +741,7 @@ async function handleDeleteHistory(
   // Verify auth
   let userId: string;
   try {
-    const auth = await verifyAuth(req);
+    const auth = await verifyAuth(req, env);
     userId = auth.userId;
   } catch (e: any) {
     return new Response(e.message, { status: 401, headers });
@@ -744,7 +761,7 @@ async function handleClearHistory(
   // Verify auth
   let userId: string;
   try {
-    const auth = await verifyAuth(req);
+    const auth = await verifyAuth(req, env);
     userId = auth.userId;
   } catch (e: any) {
     return new Response(e.message, { status: 401, headers });
@@ -771,7 +788,7 @@ async function handleGetUsageReport(
   // Verify auth and admin
   let verifiedEmail: string | undefined;
   try {
-    const auth = await verifyAuth(req);
+    const auth = await verifyAuth(req, env);
     verifiedEmail = auth.email;
   } catch (e: any) {
     return new Response(e.message, { status: 401, headers });
@@ -822,7 +839,7 @@ async function handleReportUsage(
   let userId: string;
   let email: string | undefined;
   try {
-    const auth = await verifyAuth(req);
+    const auth = await verifyAuth(req, env);
     userId = auth.userId;
     email = auth.email;
   } catch (e: any) {
@@ -853,7 +870,7 @@ async function handleDeleteAllUserData(
   // Verify auth
   let userId: string;
   try {
-    const auth = await verifyAuth(req);
+    const auth = await verifyAuth(req, env);
     userId = auth.userId;
   } catch (e: any) {
     return new Response(e.message, { status: 401, headers });
