@@ -75,6 +75,18 @@ chrome.storage.onChanged.addListener((changes, area) => {
 // 3. Message tunnel
 window.addEventListener('message', (event) => {
   if (event.source !== window || !event.data || event.data.type !== 'ONE_PROMPT_MSG') return;
+  // Support a simple ping from the website to confirm extension presence.
+  // Website can send: { type: 'ONE_PROMPT_MSG', action: 'PING' }
+  // We respond with: { type: 'ONE_PROMPT_PONG', extensionId }
+  if (event.data.action === 'PING') {
+    try {
+      const extensionId = chrome && chrome.runtime && chrome.runtime.id ? chrome.runtime.id : null;
+      window.postMessage({ type: 'ONE_PROMPT_PONG', extensionId }, '*');
+    } catch (e) {
+      // ignore
+    }
+    return;
+  }
 
   if (event.data.action === 'SYNC_AUTH') {
     syncToExtension();

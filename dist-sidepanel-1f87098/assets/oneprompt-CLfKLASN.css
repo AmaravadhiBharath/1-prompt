@@ -1,0 +1,1266 @@
+:root {
+  --kb-font:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  --kb-bg-gradient: linear-gradient(180deg, #f0f4f8 0%, #ffffff 100%);
+
+  /* Exact Logo Palette */
+  --kb-logo-midnight: #002d8b;
+  /* Deep corners */
+  --kb-logo-vibrant: #005ae2;
+  /* Core identity */
+  --kb-logo-sky: #4c91ff;
+  /* CTA tokens (use lightest logo color for highlights) */
+  --kb-cta-light: var(--kb-logo-sky);
+  --kb-cta-dark: var(--kb-logo-vibrant);
+  /* Light top highlight */
+
+  --kb-primary-blue: var(--kb-logo-vibrant);
+  --kb-primary-soft: rgba(0, 90, 226, 0.08);
+  /* Derived from logo center */
+
+  --kb-text-primary: #1a1a1a;
+  --kb-text-secondary: #6b7280;
+  --kb-surface-white: #ffffff;
+  --kb-border-light: #f3f4f6;
+  --kb-radius-lg: 24px;
+  --kb-radius-full: 9999px;
+}
+
+/* Spacing & type tokens for consistent rhythm (used for results/history/profile tweaks) */
+:root {
+  --kb-space: 8px;
+  --kb-space-2: 16px;
+  --kb-space-3: 24px;
+  --kb-touch: 40px;
+  --kb-title-lg: 28px;
+}
+
+body,
+html,
+#root {
+  margin: 0;
+  padding: 0;
+  font-family: var(--kb-font);
+  background: var(--kb-bg-gradient);
+  color: var(--kb-text-primary);
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+  /* Prevent bounce */
+}
+
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.kb-app-container {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  position: relative;
+  max-width: 420px;
+  /* Limit width to maintain popup-like density */
+  margin: 0 auto;
+  width: 100%;
+}
+
+.kb-view-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* --- HEADER --- */
+.kb-header-icons {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 420;
+}
+
+.kb-icon-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 1);
+  border: 1px solid rgba(0, 45, 139, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--kb-logo-midnight);
+  transition: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.kb-icon-button:hover {
+  background: #ffffff;
+  border-color: var(--kb-logo-vibrant);
+  color: var(--kb-logo-vibrant);
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+
+.kb-icon-button:active {
+  transform: scale(0.95);
+}
+
+.kb-abs-left {
+  position: absolute !important;
+  top: 12px !important;
+  left: 12px !important;
+  z-index: 420 !important;
+}
+
+.kb-abs-right {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  z-index: 100 !important;
+}
+
+/* --- MAIN CONTENT (States) --- */
+.kb-screen-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.kb-title-large {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 24px;
+  color: #111827;
+}
+
+.kb-text-body {
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--kb-text-secondary);
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Platform Contextual Backgrounds */
+.kb-screen-content::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--platform-color, rgba(0, 90, 226, 0.05)) 0%, transparent 70%);
+  filter: blur(60px);
+  z-index: -1;
+  opacity: 0.6;
+  transition: background 0.5s ease;
+}
+
+.platform-chatgpt {
+  --platform-color: rgba(16, 185, 129, 0.15);
+}
+
+.platform-claude {
+  --platform-color: rgba(217, 119, 87, 0.15);
+}
+
+.platform-gemini {
+  --platform-color: rgba(66, 133, 244, 0.15);
+}
+
+.platform-perplexity {
+  --platform-color: rgba(20, 184, 166, 0.15);
+}
+
+.platform-deepseek {
+  --platform-color: rgba(79, 70, 229, 0.15);
+}
+
+/* --- BUTTONS --- */
+.kb-btn-refresh {
+  background: rgba(255, 255, 255, 1);
+  border: 0.8px solid rgba(0, 90, 226, 0.2);
+  color: var(--kb-logo-midnight);
+  border-radius: var(--kb-radius-full);
+  padding: 12px 32px;
+  /* Slightly tighter padding for elegance */
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: none;
+  box-shadow: none;
+}
+
+.kb-btn-refresh:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--kb-logo-vibrant);
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+
+.kb-shortcut-hint {
+  margin-top: 16px;
+  color: #9ca3af;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.kb-bg-divider {
+  width: 40px;
+  height: 2px;
+  background: #e5e7eb;
+  margin: 32px 0;
+}
+
+.kb-link-text {
+  font-size: 14px;
+  color: #9ca3af;
+  line-height: 1.6;
+}
+
+/* --- CONNECTED STATE CARDS --- */
+.kb-action-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  cursor: pointer;
+  transition: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  background-clip: padding-box;
+  box-shadow: none;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.kb-action-card:nth-of-type(1) {
+  border-left: none;
+  /* accent removed per request */
+}
+
+.kb-action-card:nth-of-type(2) {
+  border-left: none;
+  /* accent removed per request */
+}
+
+.kb-action-card:hover {
+  transform: translateY(-2px);
+  /* stronger visible hover: subtle white lift + vivid blue border */
+  background: #ffffff;
+  border: 1px solid var(--kb-logo-vibrant);
+  box-shadow: 0 8px 20px rgba(76, 145, 255, 0.08);
+}
+
+.kb-action-card:focus,
+.kb-action-card:focus-within {
+  outline: 3px solid rgba(0, 90, 226, 0.12);
+  outline-offset: 2px;
+}
+
+/* Disabled state for action cards (e.g., Compile for Basic users) */
+.kb-action-card.disabled {
+  opacity: 0.56;
+  cursor: pointer;
+  /* still clickable to open upgrade modal */
+  transform: none !important;
+  border-color: rgba(0, 0, 0, 0.04);
+}
+
+.kb-action-card.inactive {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  border-color: rgba(0, 0, 0, 0.04) !important;
+  background: #f9fafb !important;
+  pointer-events: none;
+  /* simpler: just block clicks at CSS level */
+}
+
+.kb-action-card.inactive:hover {
+  box-shadow: none !important;
+  border-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+.quota-badge {
+  display: inline-block;
+  background: rgba(0, 90, 226, 0.08);
+  color: var(--kb-logo-vibrant);
+  padding: 6px 10px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.kb-card-label {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--kb-logo-midnight);
+}
+
+.kb-action-card svg {
+  stroke: var(--kb-logo-midnight);
+  opacity: 0.4;
+}
+
+/* --- RESULTS VIEW --- */
+.kb-results-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+}
+
+.kb-results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 2px 4px;
+  /* Space for hover glow */
+  position: relative;
+  z-index: 5;
+}
+
+/* Center the mode pill (Capture / Compile) in the header similar to History */
+.kb-results-wrapper .kb-results-header {
+  position: relative;
+}
+
+.kb-results-wrapper .kb-results-header .kb-mode-pill {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 8px;
+  /* tightened: bring the pill up slightly */
+  z-index: 6;
+}
+
+/* Ensure header reserves vertical space so centered pill doesn't overlap list */
+.kb-results-header {
+  min-height: 40px;
+  /* reduced to tighten vertical rhythm */
+}
+
+.kb-back-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid #e5e7eb;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.kb-back-circle:hover {
+  background: #fdfdfd;
+  color: #2563eb;
+  border-color: #d1d5db;
+  transform: translateX(-1px);
+}
+
+.kb-mode-pill {
+  background: #f3f4f6;
+  padding: 8px 16px;
+  border-radius: var(--kb-radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b5563;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kb-stats-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+  /* Consistent with base unit */
+}
+
+/* --- RESULTS CARD CONTAINER --- */
+.kb-results-card {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  position: relative;
+  /* Allow the card to be as tall as it needs to be, but flex-grow to fill space if needed */
+  /* For short content, it won't stretch weirdly */
+  flex: 1;
+  min-height: 0;
+}
+
+.kb-results-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
+
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 80px;
+  /* extra bottom padding so footer doesn't overlap content */
+}
+
+.kb-results-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.kb-scroll-spacer {
+  height: 120px;
+  flex-shrink: 0;
+}
+
+/* Footer as Floating Pill */
+.kb-card-footer {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 1);
+  /* Solid background */
+  border-radius: 9999px;
+  padding: 6px 12px;
+  /* increase horizontal padding so inner buttons aren't flush to edges */
+  display: flex;
+  gap: 8px;
+  box-shadow: none;
+  z-index: 100;
+  width: -moz-fit-content;
+  width: fit-content;
+  height: 48px;
+  align-items: center;
+  box-sizing: border-box;
+  border: none;
+  /* Thin logo-vibrant stroke */
+}
+
+/* Floating feedback removed: feedback appears inline inside buttons now */
+
+/* Action Buttons in Pill */
+.kb-footer-btn-primary,
+.kb-footer-btn-secondary {
+  flex: 1;
+  min-width: 70px;
+  /* Ensure equal visual weight */
+  background: transparent;
+  border: none;
+  height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.kb-footer-btn-primary {
+  /* default: balanced pill when paired with Delete */
+  flex: 1;
+  min-width: 70px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 9999px;
+  background: rgba(0, 90, 226, 0.12);
+  color: #fff;
+  border: 1px solid transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition: border 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+/* When the Copy button is the only child (single CTA) show the pill sized to content */
+.kb-card-footer .kb-footer-btn-primary:only-child {
+  /* Single Copy should size to its content (auto width) while keeping consistent height */
+  /* horizontal padding increased slightly (+~10%) so the pill appears wider by default */
+  flex: none;
+  min-width: 0;
+  height: 40px;
+  padding: 0 20px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--kb-cta-light) 0%, var(--kb-cta-dark) 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 14px 32px rgba(0, 90, 226, 0.16);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.kb-card-footer .kb-footer-btn-primary:only-child:hover {
+  background: linear-gradient(135deg, var(--kb-cta-dark) 0%, #0046c8 100%);
+  box-shadow: 0 18px 48px rgba(0, 80, 200, 0.22);
+}
+
+/* Compact styling for Delete when it's the only child (feedback-only) */
+.kb-card-footer .kb-footer-btn-secondary:only-child {
+  flex: none;
+  min-width: 0;
+  height: 40px;
+  padding: 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 9999px;
+  background: #ef4444;
+  /* solid red for deleted state */
+  color: #ffffff;
+  border: none;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kb-card-footer .kb-footer-btn-secondary:only-child:hover {
+  background: #dc2626;
+}
+
+/* Disable hover / interactions for compact feedback-only pills only when feedback is active */
+.kb-card-footer.kb-feedback-active .kb-footer-btn-primary:only-child,
+.kb-card-footer.kb-feedback-active .kb-footer-btn-secondary:only-child {
+  pointer-events: none;
+  /* no hover, clicks ignored during feedback */
+  cursor: default;
+  box-shadow: none;
+}
+
+.kb-card-footer.kb-feedback-active .kb-footer-btn-primary:only-child:hover,
+.kb-card-footer.kb-feedback-active .kb-footer-btn-secondary:only-child:hover {
+  /* Ensure hover doesn't change appearance */
+  box-shadow: none;
+  transform: none;
+}
+
+.kb-footer-btn-secondary {
+  /* Delete: visible red text by default, transparent background so it reads on the pill */
+  color: #ef4444;
+  font-weight: 700;
+  background: transparent;
+  border-radius: 9999px;
+  transition: background 0.12s ease, transform 0.12s ease, color 0.12s ease;
+}
+
+.kb-footer-btn-primary:hover {
+  background: var(--kb-primary-soft);
+  color: var(--kb-logo-vibrant);
+}
+
+.kb-footer-btn-secondary:hover {
+  /* Hover becomes solid brand red with white text; keep vertical centering */
+  background: #ef4444;
+  color: #ffffff;
+}
+
+/* When there are selected prompts (both Delete + Copy present),
+   color the footer pill with the extension blue and keep Delete text red */
+.kb-card-footer:has(.kb-footer-btn-secondary) {
+  background: linear-gradient(135deg, var(--kb-cta-light) 0%, var(--kb-cta-dark) 100%);
+  border: none;
+  box-shadow: 0 14px 32px rgba(0, 90, 226, 0.16);
+}
+
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-primary,
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-count {
+  /* Copy label and count should be white on the blue pill */
+  color: #ffffff;
+  background: transparent;
+  box-shadow: none;
+}
+
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-secondary {
+  /* Show Delete as red text on the pill (transparent background) */
+  color: #ef4444;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Hover states when both buttons are present */
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-secondary:hover {
+  /* Combined-state hover: use solid brand red with white text; keep vertical centering */
+  background: #ef4444;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-primary:hover {
+  /* blue hover for Copy; keep vertical centering */
+  background: linear-gradient(135deg, #005ae2 0%, #4c91ff 100%);
+  color: #ffffff;
+  box-shadow: 0 18px 40px rgba(0, 90, 226, 0.22);
+}
+
+/* Paired buttons: keep Copy and Delete the same visual weight and size */
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-primary,
+.kb-card-footer:has(.kb-footer-btn-secondary) .kb-footer-btn-secondary {
+  /* Content-based width for both buttons: width grows with content but height and padding are consistent */
+  flex: none;
+  min-width: 0;
+  height: 40px;
+  padding: 0 18px;
+  font-size: 16px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.kb-footer-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 0 4px;
+  display: none;
+  /* hide divider as requested */
+}
+
+.kb-footer-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--kb-logo-midnight);
+  padding: 0 2px;
+}
+
+.kb-disclaimer {
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+  /* Minimal spacing */
+  margin-bottom: 0px;
+  padding: 0;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 1;
+  position: relative;
+  z-index: 20;
+  line-height: 1.4;
+}
+
+/* Stats Bar & Pin */
+.kb-stats-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  /* Minimal spacing */
+  padding: 0 4px;
+}
+
+.kb-stats-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  /* Margin removed when in bar */
+}
+
+.kb-pin-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  /* Hit area */
+  color: #9ca3af;
+  transition: all 0.2s;
+  border-radius: 50%;
+  /* No shadow or border */
+}
+
+.kb-pin-btn:hover {
+  background: var(--kb-primary-soft);
+  color: var(--kb-logo-vibrant);
+  transform: translateY(-1px);
+}
+
+.kb-pin-btn.active {
+  color: var(--kb-logo-vibrant);
+  /* Logo Blue pin when active */
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.kb-result-item {
+  padding: 16px 16px 16px 28px;
+  /* left padding increased to account for selection dot */
+  display: flex;
+  gap: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  /* made darker for better visibility */
+  cursor: pointer;
+  transition: background 0.1s;
+  position: relative;
+}
+
+/* Last child border rule removed to show line at end */
+
+.kb-result-item:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.kb-result-item.selected {
+  background: #f0f9ff;
+  /* Very subtle blue tint */
+}
+
+.kb-selection-dot {
+  position: absolute;
+  left: 12px;
+  top: 18px;
+  /* Adjusted for increased left padding */
+  width: 6px;
+  height: 6px;
+  background: var(--kb-primary-blue);
+  border-radius: 50%;
+  box-shadow: none;
+}
+
+.kb-card-body {
+  flex: 1;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #374151;
+}
+
+/* Obsolete floating bar removed */
+
+/* --- PROFILE POPUP --- */
+.kb-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.05);
+  z-index: 430;
+}
+
+.kb-profile-menu {
+  position: fixed;
+  /* anchor to viewport to avoid container-relative shifts */
+  top: 64px;
+  right: 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 220px;
+  padding: 10px;
+  z-index: 440;
+  border: 1px solid #f3f4f6;
+  transform-origin: top right;
+  animation: menuAppear 0.15s cubic-bezier(0, 0, 0.2, 1);
+}
+
+@keyframes menuAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.kb-menu-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.05s ease;
+}
+
+.kb-menu-item:hover {
+  background: #f9fafb;
+}
+
+.kb-menu-item:focus {
+  outline: 3px solid rgba(0, 90, 226, 0.12);
+  border-radius: 8px;
+}
+
+/* --- HISTORY VIEW --- */
+.kb-history-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--kb-bg-gradient);
+  z-index: 200;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  animation: kbSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Ensure the History title is centered relative to the panel horizontally
+   and sits below the persistent header icons/back button */
+.kb-history-overlay {
+  padding-top: 30px;
+  /* tightened further so header area is denser */
+}
+
+.kb-history-overlay .kb-results-header {
+  position: relative;
+}
+
+.kb-history-overlay .kb-history-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 2px 0;
+  /* slightly reduced bottom margin */
+}
+
+/* Slightly tighter spacing between heading and filter pills */
+.kb-history-overlay .kb-history-filters {
+  margin-top: 2px;
+}
+
+.kb-pill-row-compact {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.kb-filter-pill-mini {
+  background: white;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.kb-filter-pill-mini.active {
+  background: var(--kb-primary-blue);
+  color: white;
+  border-color: var(--kb-primary-blue);
+  box-shadow: 0 2px 4px rgba(0, 90, 226, 0.2);
+}
+
+.kb-mini-select {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  outline: none;
+  cursor: pointer;
+  height: 28px;
+}
+
+.kb-mini-select:hover {
+  border-color: #cbd5e1;
+  background: white;
+}
+
+@keyframes kbSlideUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 15px, 0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.kb-history-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* maximum density: tighter gap between cards */
+  padding-top: 4px;
+}
+
+/* --- REFINED HISTORY UI (MATCH SPEC) --- */
+.kb-history-separator {
+  padding: 12px 8px 6px;
+  /* tightened separator spacing */
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+
+.kb-history-card-premium {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px;
+  /* maximum density: reduced padding */
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.kb-history-card-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+}
+
+.kb-history-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kb-history-platform-pill {
+  background: var(--kb-primary-soft);
+  color: var(--kb-logo-vibrant);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.kb-history-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kb-history-date {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.kb-history-card-preview {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.45;
+  /* slightly tighter line-height */
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.kb-history-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.kb-history-count {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Utilities */
+.kb-hidden {
+  display: none;
+}
+
+/* Utilities */
+.kb-hidden {
+  display: none;
+}
+
+/* Spinner Animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.kb-spinner {
+  animation: spin 1s linear infinite !important;
+}
+
+/* --- SUMMARY SECTION --- */
+.kb-compile-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  /* root container fixed, children scroll */
+  padding: 0;
+  padding-bottom: 0px;
+  /* Clear space handled by children padding/margin */
+}
+
+.kb-compile-content {
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--kb-text-primary);
+  white-space: pre-wrap;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.kb-link-btn {
+  background: transparent;
+  border: none;
+  color: var(--kb-logo-vibrant);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.kb-link-btn:hover {
+  opacity: 1;
+}
+
+.kb-compile-section.kb-split-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  /* container doesn't scroll, children do */
+  padding: 0;
+}
+
+.kb-summary-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 24px 0 24px;
+}
+
+/* No longer need ::after spacer here as sticky banner handles it */
+
+.kb-compile-section.kb-split-view .kb-summary-scroll-area {
+  flex: 0 0 30%;
+  /* Minimize compile output to 30% when prompts are shown */
+  border-bottom: 2px dashed var(--kb-border-light);
+  min-height: 100px;
+}
+
+.kb-prompts-toggle-sticky {
+  flex-shrink: 0;
+  /* don't compress the banner */
+  background: white;
+  padding: 16px 24px;
+  border-top: 1px solid var(--kb-border-light);
+  z-index: 10;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  /* Fixed spacing to stay 16px above CTA */
+  /* Align banner bottom edge to top of CTA (66px from bottom) */
+  /* Visible gap is now purely the 16px padding inside the banner */
+  margin-bottom: 66px;
+}
+
+.kb-split-view .kb-prompts-toggle-sticky {
+  margin-bottom: 0;
+  background: #f8fafc;
+  /* small distinction when open */
+  padding-bottom: 16px;
+  position: relative;
+  box-shadow: none;
+}
+
+.kb-inline-prompts-list-container {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.kb-inline-prompts-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 90px 24px;
+  /* Space for footer CTA */
+  margin: 0;
+}
+
+.kb-toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+  /* Spacing between toggle and copy */
+}
+
+.kb-link-btn-split {
+  background: transparent;
+  border: none;
+  color: var(--kb-logo-vibrant);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kb-link-main {
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.kb-toggle-chevron {
+  font-size: 10px;
+  color: var(--kb-logo-vibrant);
+  opacity: 0.8;
+}
+
+.kb-copy-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0f7ff;
+  color: #2563eb;
+  border: 1px solid #dbeafe;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kb-copy-pill-btn:hover {
+  background: #e0efff;
+  transform: translateY(-1px);
+}
+
+.kb-inline-prompts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 16px 24px 100px 24px;
+  /* Symmetrical left/right padding */
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: stretch;
+  /* Cards will fill the padding-defined width */
+}
+
+.kb-inline-prompt-item {
+  display: block;
+  /* Content will wrap naturally and center in parent via padding */
+  padding: 16px 20px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #f3f4f6;
+  text-align: left;
+  /* Keep text left aligned but card is centered */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.kb-inline-prompt-num {
+  font-size: 12px;
+  font-weight: 800;
+  color: #9ca3af;
+  min-width: 20px;
+  padding-top: 2px;
+}
+
+.kb-inline-prompt-content {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4b5563;
+  word-break: break-word;
+}
+
+.kb-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}

@@ -1,8 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import {
-    signInWithGoogleWeb,
-    signOutFromBackend
-} from '../services/firebase';
 import './new-design.css';
 
 // --- Confetti Component ---
@@ -91,14 +87,17 @@ const WelcomeWebsite: React.FC = () => {
     const logoUrl = "/icons/icon128.png";
 
     useEffect(() => {
-        if (typeof chrome !== 'undefined' && chrome.storage) {
-            chrome.storage.local.get(['firebase_user_email'], (res) => {
-                if (res.firebase_user_email) {
+        // Try to seed login state from localStorage if available (no firebase required)
+        try {
+            const u = localStorage.getItem('oneprompt_user');
+            if (u) {
+                const parsed = JSON.parse(u);
+                if (parsed && parsed.email) {
                     setLoginSuccess(true);
-                    setUserEmail(res.firebase_user_email);
+                    setUserEmail(parsed.email);
                 }
-            });
-        }
+            }
+        } catch (e) { }
     }, []);
 
     const openSidePanel = (closeWindow = true) => {
@@ -125,18 +124,13 @@ const WelcomeWebsite: React.FC = () => {
                 setLoginStep(i);
                 await new Promise(r => setTimeout(r, 600));
             }
-            const res = await signInWithGoogleWeb();
-            if (res && res.user) {
-                setUserEmail(res.user.email);
-                setLoginSuccess(true);
-                setLoginStep(3);
-                await new Promise(r => setTimeout(r, 800));
-                setIsTransitioning(true);
-                setIsLoggingIn(false);
-                // We show platforms now instead of auto-closing if they haven't pinned
-            } else {
-                setIsLoggingIn(false);
-            }
+            // Firebase is optional. Treat this as a local flow: mark success as Guest.
+            setUserEmail('Guest');
+            setLoginSuccess(true);
+            setLoginStep(3);
+            await new Promise(r => setTimeout(r, 400));
+            setIsTransitioning(true);
+            setIsLoggingIn(false);
         } catch (error) {
             console.error("Login failed:", error);
             setIsLoggingIn(false);
@@ -169,8 +163,36 @@ const WelcomeWebsite: React.FC = () => {
         setIsTransitioning(true);
         setIsLoggingIn(false);
         setTimeout(() => {
-            openSidePanel(false);
-            window.postMessage({ type: 'ONE_PROMPT_MSG', action: 'SYNC_AUTH' }, '*');
+            // Ask content script/extension if it's present. If present, open the extension install page.
+            try {
+                const pingTimeout = 700;
+                let handled = false;
+                function onMessage(e: MessageEvent) {
+                    if (!e.data || e.data.type !== 'ONE_PROMPT_PONG') return;
+                    handled = true;
+                    window.removeEventListener('message', onMessage as any);
+                    const extId = e.data.extensionId;
+                    if (extId) {
+                        // Open extension install page / anchor inside extension
+                        const url = `chrome-extension://${extId}/#install.html`;
+                        window.open(url, '_blank');
+                        return;
+                    }
+                }
+                window.addEventListener('message', onMessage as any);
+                // Send ping to content script (if extension installed it'll reply)
+                window.postMessage({ type: 'ONE_PROMPT_MSG', action: 'PING' }, '*');
+                setTimeout(() => {
+                    if (!handled) {
+                        window.removeEventListener('message', onMessage as any);
+                        // Fallback: open site install instructions
+                        window.open('/install/index.html', '_blank');
+                    }
+                }, pingTimeout);
+            } catch (e) {
+                console.log('Error pinging extension', e);
+                window.open('/install/index.html', '_blank');
+            }
         }, 800);
     };
 
@@ -305,7 +327,7 @@ const WelcomeWebsite: React.FC = () => {
 
                                 <div className="platforms-grid">
                                     {platforms.map(p => (
-                                        <a key={p.name} href={p.url} target="_blank" rel="noopener noreferrer" className="platform-card" onClick={() => openSidePanel(false)}>
+                                        <a key={p.name} href={p.url} target="_blank" rel="noopener noreferrer" className="platform-card" onClick={(e) => { e.preventDefault(); handleLaunchSidepanel(); }}>
                                             <img src={p.logo} alt={p.name} className="platform-logo" />
                                             <span className="platform-name">{p.name}</span>
                                         </a>
