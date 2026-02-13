@@ -184,361 +184,285 @@ async function trackDailyMetrics(_promptCount: number) {
   }
 }
 
-// Handle messages from content scripts
-chrome.runtime.onMessage.addListener(
-  (message: Message, sender, sendResponse) => {
-    console.log("[1-prompt] Received message:", message.action);
+// Handle messages from content// 1. Message Router
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.action === "PING") {
+    sendResponse({ status: "PONG", version: "1.0.4" });
+    return true;
+  }
+  console.log("[1-prompt] Received message:", msg.action);
 
-    switch (message.action) {
-      case "EXTRACT_PROMPTS":
-      case "SUMMARIZE_PROMPTS":
-      case "GET_STATUS": {
-        // Forward these to the sidepanel message handler
-        handleSidePanelMessage(message);
-        sendResponse({ success: true });
-        return true;
+  switch (msg.action) {
+    case "EXTRACT_PROMPTS":
+    case "SUMMARIZE_PROMPTS":
+    case "GET_STATUS": {
+      // Forward these to the sidepanel message handler
+      handleSidePanelMessage(msg);
+      sendResponse({ success: true });
+      return true;
+    }
+
+    case "SET_USER_ID": {
+      // Allow sidepanel/content to force-set user ID in local storage for background sync reliability
+      const { userId } = msg as SetUserIdMessage;
+      if (userId) {
+        chrome.storage.local.set({ firebase_current_user_id: userId }, () => {
+          console.log("[1-prompt SW] User ID set in local storage:", userId);
+          sendResponse({ success: true });
+        });
+      } else {
+        chrome.storage.local.remove("firebase_current_user_id", () => {
+          console.log("[1-prompt SW] User ID removed from local storage");
+          sendResponse({ success: true });
+        });
       }
+      return true;
+    }
 
-      case "SET_USER_ID": {
-        // Allow sidepanel/content to force-set user ID in local storage for background sync reliability
-        const { userId } = message as SetUserIdMessage;
-        if (userId) {
-          chrome.storage.local.set({ firebase_current_user_id: userId }, () => {
-            console.log("[1-prompt SW] User ID set in local storage:", userId);
-            sendResponse({ success: true });
+    case "SYNC_PROMPT_TO_CLOUD": {
+      const { prompt, platform } = msg as SyncPromptToCloudMessage;
+      handleSyncToCloud([prompt], platform, sendResponse);
+      return true;
+    }
+
+    case "SYNC_PROMPTS_TO_CLOUD": {
+      const { prompts, platform } = msg as SyncPromptsToCloudMessage;
+      handleSyncToCloud(prompts, platform, sendResponse);
+      return true;
+    }
+
+    case "COPY_TEXT": {
+      const { text } = msg as { text: string };
+      // Create an off-screen document or use active tab to copy if background can't directly
+      // Chrome Extension MV3 background service workers cannot access clipboard API directly.
+      // We must inject a script into the active tab to perform the copy.
+      (async () => {
+        try {
+          // Find active tab
+          const [tab] = await chrome.tabs.query({
+            active: true,
+            currentWindow: true,
           });
-        } else {
-          chrome.storage.local.remove("firebase_current_user_id", () => {
-            console.log("[1-prompt SW] User ID removed from local storage");
+          if (tab?.id) {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              func: (t) => {
+                // Try navigator.clipboard first
+                navigator.clipboard.writeText(t).catch(() => {
+                  // Fallback to execCommand if navigator fails (legacy but reliable in content scripts)
+                  const textArea = document.createElement("textarea");
+                  textArea.value = t;
+                  textArea.style.position = "fixed";
+                  textArea.style.left = "-9999px";
+                  document.body.appendChild(textArea);
+                  textArea.focus();
+                  textArea.select();
+                  try {
+                    document.execCommand("copy");
+                  } catch (err) {
+                    console.error("Fallback copy failed", err);
+                  }
+                  document.body.removeChild(textArea);
+                });
+              },
+              args: [text],
+            });
             sendResponse({ success: true });
-          });
+          } else {
+            throw new Error("No active tab found to execute copy");
+          }
+        } catch (e) {
+          console.error("Background copy failed", e);
+          sendResponse({ success: false, error: String(e) });
         }
-        return true;
-      }
+      })();
+      return true; // async response
+    }
 
-      case "SYNC_PROMPT_TO_CLOUD": {
-        const { prompt, platform } = message as SyncPromptToCloudMessage;
-        handleSyncToCloud([prompt], platform, sendResponse);
-        return true;
-      }
-
-      case "SYNC_PROMPTS_TO_CLOUD": {
-        const { prompts, platform } = message as SyncPromptsToCloudMessage;
-        handleSyncToCloud(prompts, platform, sendResponse);
-        return true;
-      }
-
-      case "COPY_TEXT": {
-        const { text } = message as { text: string };
-        // Create an off-screen document or use active tab to copy if background can't directly
-        // Chrome Extension MV3 background service workers cannot access clipboard API directly.
-        // We must inject a script into the active tab to perform the copy.
-        (async () => {
-          try {
-            // Find active tab
+    case "OPEN_SIDE_PANEL": {
+      (async () => {
+        try {
+          console.log(
+            "[1-prompt SW] OPEN_SIDE_PANEL received from tab:",
+            sender.tab?.id,
+          );
+          let windowId = sender.tab?.windowId;
+          if (!windowId) {
+            console.log("[1-prompt SW] No windowId from sender, querying active tab...");
             const [tab] = await chrome.tabs.query({
               active: true,
               currentWindow: true,
             });
-            if (tab?.id) {
-              await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: (t) => {
-                  // Try navigator.clipboard first
-                  navigator.clipboard.writeText(t).catch(() => {
-                    // Fallback to execCommand if navigator fails (legacy but reliable in content scripts)
-                    const textArea = document.createElement("textarea");
-                    textArea.value = t;
-                    textArea.style.position = "fixed";
-                    textArea.style.left = "-9999px";
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    try {
-                      document.execCommand("copy");
-                    } catch (err) {
-                      console.error("Fallback copy failed", err);
-                    }
-                    document.body.removeChild(textArea);
-                  });
-                },
-                args: [text],
-              });
-              sendResponse({ success: true });
-            } else {
-              throw new Error("No active tab found to execute copy");
-            }
-          } catch (e) {
-            console.error("Background copy failed", e);
-            sendResponse({ success: false, error: String(e) });
+            windowId = tab?.windowId;
+            console.log("[1-prompt SW] Got windowId from query:", windowId);
           }
-        })();
-        return true; // async response
-      }
 
-      case "OPEN_SIDE_PANEL": {
-        (async () => {
-          try {
-            console.log(
-              "[1-prompt SW] OPEN_SIDE_PANEL received from tab:",
-              sender.tab?.id,
+          if (windowId) {
+            console.log("[1-prompt SW] Opening side panel for window:", windowId);
+            if (chrome.sidePanel && chrome.sidePanel.open) {
+              await chrome.sidePanel.open({ windowId });
+              console.log("[1-prompt SW] Side panel open command sent");
+            } else {
+              console.error("[1-prompt SW] chrome.sidePanel.open is not available");
+            }
+          } else {
+            console.error(
+              "[1-prompt SW] Could not find windowId to open side panel",
             );
-            let windowId = sender.tab?.windowId;
-            if (!windowId) {
-              console.log("[1-prompt SW] No windowId from sender, querying active tab...");
-              const [tab] = await chrome.tabs.query({
-                active: true,
-                currentWindow: true,
-              });
-              windowId = tab?.windowId;
-              console.log("[1-prompt SW] Got windowId from query:", windowId);
-            }
-
-            if (windowId) {
-              console.log("[1-prompt SW] Opening side panel for window:", windowId);
-              if (chrome.sidePanel && chrome.sidePanel.open) {
-                await chrome.sidePanel.open({ windowId });
-                console.log("[1-prompt SW] Side panel open command sent");
-              } else {
-                console.error("[1-prompt SW] chrome.sidePanel.open is not available");
-              }
-            } else {
-              console.error(
-                "[1-prompt SW] Could not find windowId to open side panel",
-              );
-            }
-          } catch (err) {
-            console.error("[1-prompt SW] Failed to open side panel:", err);
           }
-        })();
-        sendResponse({ success: true });
-        break;
+        } catch (err) {
+          console.error("[1-prompt SW] Failed to open side panel:", err);
+        }
+      })();
+      sendResponse({ success: true });
+      break;
+    }
+
+    case "EXTRACTION_FROM_PAGE": {
+      // From floating buttons - extract prompts and open side panel
+      const { result, mode } = msg as ExtractionFromPageMessage;
+      lastExtractionResult = result;
+
+      console.log(
+        `[1-prompt SW] Received EXTRACTION_FROM_PAGE with ${result.prompts.length} prompts, mode: ${mode}`,
+      );
+
+      // Try to open side panel again just in case
+      const windowId = sender.tab?.windowId;
+      if (windowId) {
+        chrome.sidePanel.open({ windowId }).catch(() => { });
       }
 
-      case "EXTRACTION_FROM_PAGE": {
-        // From floating buttons - extract prompts and open side panel
-        const { result, mode } = message as ExtractionFromPageMessage;
-        lastExtractionResult = result;
-
+      // If mode is 'compile', run reliable compilation (local first, AI enhancement)
+      if (mode === "compile" && result.prompts.length > 0) {
         console.log(
-          `[1-prompt SW] Received EXTRACTION_FROM_PAGE with ${result.prompts.length} prompts, mode: ${mode}`,
+          "[1-prompt SW] Mode is COMPILE - using reliable summarization...",
         );
 
-        // Try to open side panel again just in case
-        const windowId = sender.tab?.windowId;
-        if (windowId) {
-          chrome.sidePanel.open({ windowId }).catch(() => { });
-        }
+        // Send extraction started message to side panel
+        chrome.runtime
+          .sendMessage({
+            action: "EXTRACTION_STARTED",
+            mode,
+          })
+          .catch(() => { });
 
-        // If mode is 'compile', run reliable compilation (local first, AI enhancement)
-        if (mode === "compile" && result.prompts.length > 0) {
-          console.log(
-            "[1-prompt SW] Mode is COMPILE - using reliable summarization...",
-          );
+        (async () => {
+          let localResult: any = null;
 
-          // Send extraction started message to side panel
-          chrome.runtime
-            .sendMessage({
-              action: "EXTRACTION_STARTED",
-              mode,
-            })
-            .catch(() => { });
+          try {
+            // Step 1: Immediate local summarization (fast and reliable)
+            console.log("[1-prompt SW] Running local summarization...");
+            localResult = await localSummarizer.summarize(result.prompts);
 
-          (async () => {
-            let localResult: any = null;
+            // Broadcast local result immediately
+            chrome.runtime
+              .sendMessage({
+                action: "EXTRACTION_FROM_PAGE_RESULT",
+                result: {
+                  ...result,
+                  summary: localResult.summary,
+                  promptCount: localResult.promptCount,
+                  model: "Local (Reliable)",
+                  provider: "client-side",
+                },
+                mode,
+              })
+              .catch(() => { });
 
-            try {
-              // Step 1: Immediate local summarization (fast and reliable)
-              console.log("[1-prompt SW] Running local summarization...");
-              localResult = await localSummarizer.summarize(result.prompts);
+            console.log("[1-prompt SW] Local compilation complete and broadcasted");
 
-              // Broadcast local result immediately
-              chrome.runtime
-                .sendMessage({
-                  action: "EXTRACTION_FROM_PAGE_RESULT",
-                  result: {
-                    ...result,
-                    summary: localResult.summary,
-                    promptCount: localResult.promptCount,
-                    model: "Local (Reliable)",
-                    provider: "client-side",
-                  },
-                  mode,
-                })
-                .catch(() => { });
+            // Step 2: Attempt AI enhancement in background (10s timeout)
+            console.log("[1-prompt SW] Attempting AI enhancement...");
+            const userId = await getCurrentUserId();
 
-              console.log("[1-prompt SW] Local compilation complete and broadcasted");
-
-              // Step 2: Attempt AI enhancement in background (10s timeout)
-              console.log("[1-prompt SW] Attempting AI enhancement...");
-              const userId = await getCurrentUserId();
-
-              const aiTimeoutPromise = new Promise<never>((_, reject) => {
-                setTimeout(() => reject(new Error("AI enhancement timed out after 10 seconds")), 10000);
-              });
-
-              const aiSummaryResult = await Promise.race([
-                aiSummarizer.summarize(result.prompts, { userId: userId || undefined }),
-                aiTimeoutPromise
-              ]);
-
-              console.log("[1-prompt SW] AI enhancement successful, broadcasting upgrade");
-
-              // Broadcast AI-enhanced result
-              chrome.runtime
-                .sendMessage({
-                  action: "EXTRACTION_FROM_PAGE_RESULT",
-                  result: {
-                    ...result,
-                    summary: aiSummaryResult.summary,
-                    promptCount: aiSummaryResult.promptCount,
-                    model: aiSummaryResult.model,
-                    provider: aiSummaryResult.provider,
-                  },
-                  mode,
-                })
-                .catch(() => { });
-            } catch (error: any) {
-              console.log("[1-prompt SW] AI enhancement failed, sending local result as final:", error.message);
-              // Send local result as the final result since AI failed
-              chrome.runtime
-                .sendMessage({
-                  action: "EXTRACTION_FROM_PAGE_RESULT",
-                  result: {
-                    ...result,
-                    summary: localResult.summary,
-                    promptCount: localResult.promptCount,
-                    model: "Local (AI Failed)",
-                    provider: "client-side-fallback",
-                  },
-                  mode,
-                })
-                .catch(() => { });
-            }
-          })();
-        } else {
-          // Mode is 'capture' - broadcast raw prompts immediately
-          console.log(
-            "[1-prompt SW] Broadcasting EXTRACTION_FROM_PAGE_RESULT via sendMessage...",
-          );
-          chrome.runtime
-            .sendMessage({
-              action: "EXTRACTION_FROM_PAGE_RESULT",
-              result,
-              mode,
-            })
-            .catch(() => {
-              // Ignore if no listeners yet
+            const aiTimeoutPromise = new Promise<never>((_, reject) => {
+              setTimeout(() => reject(new Error("AI enhancement timed out after 10 seconds")), 10000);
             });
-        }
 
-        console.log("[1-prompt SW] ✅ Result broadcast complete");
-        sendResponse({ success: true });
-        break;
-      }
+            const aiSummaryResult = await Promise.race([
+              aiSummarizer.summarize(result.prompts, { userId: userId || undefined }),
+              aiTimeoutPromise
+            ]);
 
-      case "EXTRACTION_RESULT": {
-        const { result, mode } = message as ExtractionResultMessage;
-        lastExtractionResult = result;
+            console.log("[1-prompt SW] AI enhancement successful, broadcasting upgrade");
 
-        // Only trigger summarization if the result comes from a tab (content script)
-        // AND we are in compile mode AND it hasn't been compiled yet.
-        if (
-          sender.tab &&
-          mode === "compile" &&
-          result.prompts.length > 0 &&
-          !result.summary
-        ) {
-          console.log(
-            "[1-prompt SW] Mode is COMPILE - using reliable summarization...",
-          );
-          (async () => {
-            try {
-              // Step 1: Immediate local summarization
-              console.log("[1-prompt SW] Running local summarization...");
-              const localResult = await localSummarizer.summarize(result.prompts);
-
-              const updatedResult = {
-                ...result,
-                summary: localResult.summary,
-                promptCount: localResult.promptCount,
-                model: "Local (Reliable)",
-                provider: "client-side",
-              };
-              lastExtractionResult = updatedResult;
-
-              broadcastToSidePanels({
-                action: "EXTRACTION_RESULT",
-                result: updatedResult,
+            // Broadcast AI-enhanced result
+            chrome.runtime
+              .sendMessage({
+                action: "EXTRACTION_FROM_PAGE_RESULT",
+                result: {
+                  ...result,
+                  summary: aiSummaryResult.summary,
+                  promptCount: aiSummaryResult.promptCount,
+                  model: aiSummaryResult.model,
+                  provider: aiSummaryResult.provider,
+                },
                 mode,
-              });
-
-              console.log("[1-prompt SW] Local compilation complete and broadcasted");
-
-              // Step 2: Attempt AI enhancement
-              console.log("[1-prompt SW] Attempting AI enhancement...");
-              const userId = await getCurrentUserId();
-
-              const aiTimeoutPromise = new Promise<never>((_, reject) => {
-                setTimeout(() => reject(new Error("AI enhancement timed out after 10 seconds")), 10000);
-              });
-
-              const aiSummaryResult = await Promise.race([
-                aiSummarizer.summarize(result.prompts, { userId: userId || undefined }),
-                aiTimeoutPromise,
-              ]);
-
-              console.log("[1-prompt SW] AI enhancement successful, broadcasting upgrade");
-
-              const aiUpdatedResult = {
-                ...result,
-                summary: aiSummaryResult.summary,
-                promptCount: aiSummaryResult.promptCount,
-                model: aiSummaryResult.model,
-                provider: aiSummaryResult.provider,
-              };
-              lastExtractionResult = aiUpdatedResult;
-
-              broadcastToSidePanels({
-                action: "EXTRACTION_RESULT",
-                result: aiUpdatedResult,
+              })
+              .catch(() => { });
+          } catch (error: any) {
+            console.log("[1-prompt SW] AI enhancement failed, sending local result as final:", error.message);
+            // Send local result as the final result since AI failed
+            chrome.runtime
+              .sendMessage({
+                action: "EXTRACTION_FROM_PAGE_RESULT",
+                result: {
+                  ...result,
+                  summary: localResult.summary,
+                  promptCount: localResult.promptCount,
+                  model: "Local (AI Failed)",
+                  provider: "client-side-fallback",
+                },
                 mode,
-              });
-            } catch (error: any) {
-              console.log("[1-prompt SW] AI enhancement failed, keeping local result:", error.message);
-              // Local result already broadcasted
-            }
-          })();
-        } else {
-          // Just broadcast if already compiled (or capture mode)
-          broadcastToSidePanels({
-            action: "EXTRACTION_RESULT",
+              })
+              .catch(() => { });
+          }
+        })();
+      } else {
+        // Mode is 'capture' - broadcast raw prompts immediately
+        console.log(
+          "[1-prompt SW] Broadcasting EXTRACTION_FROM_PAGE_RESULT via sendMessage...",
+        );
+        chrome.runtime
+          .sendMessage({
+            action: "EXTRACTION_FROM_PAGE_RESULT",
             result,
             mode,
+          })
+          .catch(() => {
+            // Ignore if no listeners yet
           });
-        }
-        sendResponse({ success: true });
-        break;
       }
 
-      case "RE_SUMMARIZE": {
-        if (!lastExtractionResult || !lastExtractionResult.prompts.length) {
-          sendResponse({
-            success: false,
-            error: "No prompts available to refine",
-          });
-          break;
-        }
+      console.log("[1-prompt SW] ✅ Result broadcast complete");
+      sendResponse({ success: true });
+      break;
+    }
 
-        console.log("[1-prompt SW] RE_SUMMARIZE requested");
+    case "EXTRACTION_RESULT": {
+      const { result, mode } = msg as ExtractionResultMessage;
+      lastExtractionResult = result;
+
+      // Only trigger summarization if the result comes from a tab (content script)
+      // AND we are in compile mode AND it hasn't been compiled yet.
+      if (
+        sender.tab &&
+        mode === "compile" &&
+        result.prompts.length > 0 &&
+        !result.summary
+      ) {
+        console.log(
+          "[1-prompt SW] Mode is COMPILE - using reliable summarization...",
+        );
         (async () => {
           try {
             // Step 1: Immediate local summarization
-            console.log("[1-prompt SW] Running local re-summarization...");
-            const localResult = await localSummarizer.summarize(lastExtractionResult!.prompts);
+            console.log("[1-prompt SW] Running local summarization...");
+            const localResult = await localSummarizer.summarize(result.prompts);
 
             const updatedResult = {
-              ...lastExtractionResult!,
+              ...result,
               summary: localResult.summary,
               promptCount: localResult.promptCount,
               model: "Local (Reliable)",
@@ -549,28 +473,28 @@ chrome.runtime.onMessage.addListener(
             broadcastToSidePanels({
               action: "EXTRACTION_RESULT",
               result: updatedResult,
-              mode: "compile",
+              mode,
             });
 
-            console.log("[1-prompt SW] Local re-summarization complete and broadcasted");
+            console.log("[1-prompt SW] Local compilation complete and broadcasted");
 
             // Step 2: Attempt AI enhancement
-            console.log("[1-prompt SW] Attempting AI re-enhancement...");
+            console.log("[1-prompt SW] Attempting AI enhancement...");
             const userId = await getCurrentUserId();
 
             const aiTimeoutPromise = new Promise<never>((_, reject) => {
-              setTimeout(() => reject(new Error("AI re-enhancement timed out after 10 seconds")), 10000);
+              setTimeout(() => reject(new Error("AI enhancement timed out after 10 seconds")), 10000);
             });
 
             const aiSummaryResult = await Promise.race([
-              aiSummarizer.summarize(lastExtractionResult!.prompts, { userId: userId || undefined }),
+              aiSummarizer.summarize(result.prompts, { userId: userId || undefined }),
               aiTimeoutPromise,
             ]);
 
-            console.log("[1-prompt SW] AI re-enhancement successful, broadcasting upgrade");
+            console.log("[1-prompt SW] AI enhancement successful, broadcasting upgrade");
 
             const aiUpdatedResult = {
-              ...lastExtractionResult!,
+              ...result,
               summary: aiSummaryResult.summary,
               promptCount: aiSummaryResult.promptCount,
               model: aiSummaryResult.model,
@@ -581,209 +505,288 @@ chrome.runtime.onMessage.addListener(
             broadcastToSidePanels({
               action: "EXTRACTION_RESULT",
               result: aiUpdatedResult,
-              mode: "compile",
+              mode,
             });
           } catch (error: any) {
-            console.log("[1-prompt SW] AI re-enhancement failed, keeping local result:", error.message);
+            console.log("[1-prompt SW] AI enhancement failed, keeping local result:", error.message);
             // Local result already broadcasted
           }
         })();
-        sendResponse({ success: true });
+      } else {
+        // Just broadcast if already compiled (or capture mode)
+        broadcastToSidePanels({
+          action: "EXTRACTION_RESULT",
+          result,
+          mode,
+        });
+      }
+      sendResponse({ success: true });
+      break;
+    }
+
+    case "RE_SUMMARIZE": {
+      if (!lastExtractionResult || !lastExtractionResult.prompts.length) {
+        sendResponse({
+          success: false,
+          error: "No prompts available to refine",
+        });
         break;
       }
 
-      case "STATUS_RESULT": {
-        // Content script reporting its status
-        broadcastToSidePanels(message);
-        sendResponse({ success: true });
-        break;
-      }
+      console.log("[1-prompt SW] RE_SUMMARIZE requested");
+      (async () => {
+        try {
+          // Step 1: Immediate local summarization
+          console.log("[1-prompt SW] Running local re-summarization...");
+          const localResult = await localSummarizer.summarize(lastExtractionResult!.prompts);
 
-      case "EXTRACT_TRIGERED_FROM_PAGE": {
-        console.log(
-          "[1-prompt] Broadcasting page extraction trigger to sidepanel",
+          const updatedResult = {
+            ...lastExtractionResult!,
+            summary: localResult.summary,
+            promptCount: localResult.promptCount,
+            model: "Local (Reliable)",
+            provider: "client-side",
+          };
+          lastExtractionResult = updatedResult;
+
+          broadcastToSidePanels({
+            action: "EXTRACTION_RESULT",
+            result: updatedResult,
+            mode: "compile",
+          });
+
+          console.log("[1-prompt SW] Local re-summarization complete and broadcasted");
+
+          // Step 2: Attempt AI enhancement
+          console.log("[1-prompt SW] Attempting AI re-enhancement...");
+          const userId = await getCurrentUserId();
+
+          const aiTimeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error("AI re-enhancement timed out after 10 seconds")), 10000);
+          });
+
+          const aiSummaryResult = await Promise.race([
+            aiSummarizer.summarize(lastExtractionResult!.prompts, { userId: userId || undefined }),
+            aiTimeoutPromise,
+          ]);
+
+          console.log("[1-prompt SW] AI re-enhancement successful, broadcasting upgrade");
+
+          const aiUpdatedResult = {
+            ...lastExtractionResult!,
+            summary: aiSummaryResult.summary,
+            promptCount: aiSummaryResult.promptCount,
+            model: aiSummaryResult.model,
+            provider: aiSummaryResult.provider,
+          };
+          lastExtractionResult = aiUpdatedResult;
+
+          broadcastToSidePanels({
+            action: "EXTRACTION_RESULT",
+            result: aiUpdatedResult,
+            mode: "compile",
+          });
+        } catch (error: any) {
+          console.log("[1-prompt SW] AI re-enhancement failed, keeping local result:", error.message);
+          // Local result already broadcasted
+        }
+      })();
+      sendResponse({ success: true });
+      break;
+    }
+
+    case "STATUS_RESULT": {
+      // Content script reporting its status
+      broadcastToSidePanels(msg);
+      sendResponse({ success: true });
+      break;
+    }
+
+    case "EXTRACT_TRIGERED_FROM_PAGE": {
+      console.log(
+        "[1-prompt] Broadcasting page extraction trigger to sidepanel",
+      );
+      pendingTrigger = { timestamp: Date.now() }; // Cache it
+      broadcastToSidePanels(msg);
+      sendResponse({ success: true });
+      break;
+    }
+
+    case "SAVE_SESSION_PROMPTS": {
+      const { prompts, platform, conversationId } = msg as {
+        prompts: any[];
+        platform: string;
+        conversationId?: string;
+      };
+
+      const today = new Date().toISOString().split("T")[0];
+      const key = conversationId
+        ? `keylog_${platform}_${conversationId}`
+        : `keylog_${platform}_${today}`;
+
+      chrome.storage.local.get([key], (result) => {
+        const existing = result[key] || [];
+
+        // Merge with deduplication
+        const merged = [...existing];
+        const existingContent = new Set(
+          existing.map((p: any) => normalizeContent(p.content)),
         );
-        pendingTrigger = { timestamp: Date.now() }; // Cache it
-        broadcastToSidePanels(message);
-        sendResponse({ success: true });
-        break;
-      }
 
-      case "SAVE_SESSION_PROMPTS": {
-        const { prompts, platform, conversationId } = message as {
-          prompts: any[];
+        for (const prompt of prompts) {
+          const normalized = normalizeContent(prompt.content);
+          if (!existingContent.has(normalized)) {
+            merged.push({
+              ...prompt,
+              conversationId: conversationId || prompt.conversationId,
+              savedAt: Date.now(),
+            });
+            existingContent.add(normalized);
+          }
+        }
+
+        chrome.storage.local.set({ [key]: merged });
+
+        // Sync to cloud if user is logged in
+        getCurrentUserId().then((_userId) => {
+          // Syncing logic disabled in current version
+          trackDailyMetrics(prompts.length);
+        });
+      });
+
+      sendResponse({ success: true });
+      break;
+    }
+
+    case "GET_CONVERSATION_LOGS":
+      {
+        const { platform, conversationId } = msg as {
           platform: string;
-          conversationId?: string;
+          conversationId: string;
         };
 
         const today = new Date().toISOString().split("T")[0];
-        const key = conversationId
-          ? `keylog_${platform}_${conversationId}`
-          : `keylog_${platform}_${today}`;
+        const specificKey = `keylog_${platform}_${conversationId}`;
+        const generalKey = `keylog_${platform}_${today}`;
 
-        chrome.storage.local.get([key], (result) => {
-          const existing = result[key] || [];
+        chrome.storage.local.get(
+          [specificKey, generalKey],
+          async (result) => {
+            let conversationLogs = result[specificKey] || [];
 
-          // Merge with deduplication
-          const merged = [...existing];
-          const existingContent = new Set(
-            existing.map((p: any) => normalizeContent(p.content)),
-          );
-
-          for (const prompt of prompts) {
-            const normalized = normalizeContent(prompt.content);
-            if (!existingContent.has(normalized)) {
-              merged.push({
-                ...prompt,
-                conversationId: conversationId || prompt.conversationId,
-                savedAt: Date.now(),
-              });
-              existingContent.add(normalized);
+            // If no specific logs, check general logs and filter
+            if (conversationLogs.length === 0 && result[generalKey]) {
+              conversationLogs = result[generalKey].filter(
+                (log: any) => log.conversationId === conversationId,
+              );
             }
-          }
 
-          chrome.storage.local.set({ [key]: merged });
-
-          // Sync to cloud if user is logged in
-          getCurrentUserId().then((_userId) => {
-            // Syncing logic disabled in current version
-            trackDailyMetrics(prompts.length);
-          });
-        });
-
-        sendResponse({ success: true });
-        break;
-      }
-
-      case "GET_CONVERSATION_LOGS":
-        {
-          const { platform, conversationId } = message as {
-            platform: string;
-            conversationId: string;
-          };
-
-          const today = new Date().toISOString().split("T")[0];
-          const specificKey = `keylog_${platform}_${conversationId}`;
-          const generalKey = `keylog_${platform}_${today}`;
-
-          chrome.storage.local.get(
-            [specificKey, generalKey],
-            async (result) => {
-              let conversationLogs = result[specificKey] || [];
-
-              // If no specific logs, check general logs and filter
-              if (conversationLogs.length === 0 && result[generalKey]) {
-                conversationLogs = result[generalKey].filter(
-                  (log: any) => log.conversationId === conversationId,
-                );
-              }
-
-              // If still no logs or very few, try fetching from cloud
-              const userId = await getCurrentUserId();
-              if (userId && conversationLogs.length < 5) {
-                console.log(
-                  "[1-prompt] Local logs sparse, fetching from cloud...",
-                );
-                const cloudLogs: any[] = []; // Keylogs disabled in current version
-
-                if (cloudLogs.length > 0) {
-                  // Merge cloud logs with local logs
-                  const localContent = new Set(
-                    conversationLogs.map((p: any) => p.content),
-                  );
-                  const merged = [...conversationLogs];
-
-                  for (const cloudPrompt of cloudLogs) {
-                    if (!localContent.has(cloudPrompt.content)) {
-                      merged.push(cloudPrompt);
-                    }
-                  }
-
-                  conversationLogs = merged.sort(
-                    (a, b) => a.timestamp - b.timestamp,
-                  );
-
-                  // Cache back to local for next time
-                  chrome.storage.local.set({ [specificKey]: conversationLogs });
-                }
-              }
-
-              sendResponse({
-                success: true,
-                prompts: conversationLogs,
-              });
-            },
-          );
-
-          return true; // Keep channel open for async response
-        }
-
-        async function handleSyncToCloud(
-          prompts: any[],
-          platform: string,
-          sendResponse: (response?: any) => void,
-        ) {
-          try {
+            // If still no logs or very few, try fetching from cloud
             const userId = await getCurrentUserId();
-            if (!userId) {
-              sendResponse({ success: false, error: "Not logged in" });
-              return;
-            }
+            if (userId && conversationLogs.length < 5) {
+              console.log(
+                "[1-prompt] Local logs sparse, fetching from cloud...",
+              );
+              const cloudLogs: any[] = []; // Keylogs disabled in current version
 
-            // Group prompts by conversation
-            const byConversation = new Map<string, any[]>();
-            for (const prompt of prompts) {
-              const convId = prompt.conversationId || "default";
-              if (!byConversation.has(convId)) {
-                byConversation.set(convId, []);
+              if (cloudLogs.length > 0) {
+                // Merge cloud logs with local logs
+                const localContent = new Set(
+                  conversationLogs.map((p: any) => p.content),
+                );
+                const merged = [...conversationLogs];
+
+                for (const cloudPrompt of cloudLogs) {
+                  if (!localContent.has(cloudPrompt.content)) {
+                    merged.push(cloudPrompt);
+                  }
+                }
+
+                conversationLogs = merged.sort(
+                  (a, b) => a.timestamp - b.timestamp,
+                );
+
+                // Cache back to local for next time
+                chrome.storage.local.set({ [specificKey]: conversationLogs });
               }
-              byConversation.get(convId)!.push({
-                content: prompt.content,
-                timestamp: prompt.timestamp,
-                conversationId: convId,
-                platform: platform,
-                captureMethod: prompt.captureMethod,
-              });
             }
 
-            // Syncing logic disabled in current version
-            console.log(
-              `[1-prompt] Processing ${prompts.length} prompts for sync (local only)`,
-            );
+            sendResponse({
+              success: true,
+              prompts: conversationLogs,
+            });
+          },
+        );
 
-            console.log(
-              `[1-prompt] Queued ${prompts.length} prompts for cloud sync`,
-            );
-            sendResponse({ success: true, synced: prompts.length });
-          } catch (err) {
-            console.error("[1-prompt] Sync error:", err);
-            sendResponse({ success: false, error: String(err) });
+        return true; // Keep channel open for async response
+      }
+
+      async function handleSyncToCloud(
+        prompts: any[],
+        platform: string,
+        sendResponse: (response?: any) => void,
+      ) {
+        try {
+          const userId = await getCurrentUserId();
+          if (!userId) {
+            sendResponse({ success: false, error: "Not logged in" });
+            return;
           }
+
+          // Group prompts by conversation
+          const byConversation = new Map<string, any[]>();
+          for (const prompt of prompts) {
+            const convId = prompt.conversationId || "default";
+            if (!byConversation.has(convId)) {
+              byConversation.set(convId, []);
+            }
+            byConversation.get(convId)!.push({
+              content: prompt.content,
+              timestamp: prompt.timestamp,
+              conversationId: convId,
+              platform: platform,
+              captureMethod: prompt.captureMethod,
+            });
+          }
+
+          // Syncing logic disabled in current version
+          console.log(
+            `[1-prompt] Processing ${prompts.length} prompts for sync (local only)`,
+          );
+
+          console.log(
+            `[1-prompt] Queued ${prompts.length} prompts for cloud sync`,
+          );
+          sendResponse({ success: true, synced: prompts.length });
+        } catch (err) {
+          console.error("[1-prompt] Sync error:", err);
+          sendResponse({ success: false, error: String(err) });
         }
-
-      case "CHECK_SIDEPANEL_OPEN": {
-        // We can't reliably track this without ports, so always return true
-        // The side panel will be open if the user interacts with it
-        sendResponse({ isOpen: true });
-        break;
       }
 
-      case "GET_SYNC_STATUS": {
-        // Return current sync queue status
-        sendResponse({
-          success: true,
-          queueSize: 0,
-          isWriting: false,
-        });
-        break;
-      }
-
-      default:
-        sendResponse({ success: false, error: "Unknown action" });
+    case "CHECK_SIDEPANEL_OPEN": {
+      // We can't reliably track this without ports, so always return true
+      // The side panel will be open if the user interacts with it
+      sendResponse({ isOpen: true });
+      break;
     }
 
-    return true;
-  },
+    case "GET_SYNC_STATUS": {
+      // Return current sync queue status
+      sendResponse({
+        success: true,
+        queueSize: 0,
+        isWriting: false,
+      });
+      break;
+    }
+
+    default:
+      sendResponse({ success: false, error: "Unknown action" });
+  }
+
+  return true;
+},
 );
 
 // Keep service worker alive during long operations

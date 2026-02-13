@@ -75,61 +75,53 @@ export default function OnePromptApp() {
 
     const unsubscribe = subscribeToAuthChanges((u) => setUser(u));
 
-    // Failsafe: When sidepanel opens, ping the content script to force an auth sync
-    findTargetTab((targetTab) => {
-      if (targetTab?.id) {
-        chrome.tabs.sendMessage(targetTab.id, { action: "SYNC_AUTH" }).catch(() => { });
-      }
-    });
-
     // Status polling & Event Listeners
     let pollInterval = 1000; // Start fast for immediate feedback
     let statusInterval: ReturnType<typeof setInterval>;
 
     const checkStatus = () => {
-      findTargetTab((targetTab) => {
-        if (!targetTab) {
-          setStatus({ supported: false, platform: null, hasPrompts: false });
-          return;
-        }
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const activeTab = tabs[0];
+        if (activeTab?.id) {
+          // Check URL first for better "Unconnected" vs "Unsupported" detection
+          const url = activeTab.url || "";
+          let tempPlatform: string | null = null;
+          if (url.includes("chatgpt.com")) tempPlatform = "chatgpt";
+          else if (url.includes("claude.ai")) tempPlatform = "claude";
+          else if (url.includes("deepseek.com")) tempPlatform = "deepseek";
+          else if (url.includes("perplexity.ai")) tempPlatform = "perplexity";
+          else if (url.includes("meta.ai")) tempPlatform = "meta-ai";
+          else if (url.includes("gemini.google.com")) tempPlatform = "gemini";
 
-        const url = targetTab.url || "";
-        let tempPlatform: string | null = null;
-        if (url.includes("chatgpt.com")) tempPlatform = "chatgpt";
-        else if (url.includes("claude.ai")) tempPlatform = "claude";
-        else if (url.includes("deepseek.com")) tempPlatform = "deepseek";
-        else if (url.includes("perplexity.ai")) tempPlatform = "perplexity";
-        else if (url.includes("meta.ai")) tempPlatform = "meta-ai";
-        else if (url.includes("gemini.google.com")) tempPlatform = "gemini";
-
-        try {
-          chrome.tabs.sendMessage(
-            targetTab.id!,
-            { action: "GET_STATUS" },
-            (response) => {
-              if (chrome.runtime.lastError) {
-                // If message fails but URL is supported -> Unconnected
-                if (tempPlatform) {
-                  setStatus({ supported: false, platform: tempPlatform, hasPrompts: false });
+          try {
+            chrome.tabs.sendMessage(
+              activeTab.id,
+              { action: "GET_STATUS" },
+              (response) => {
+                if (chrome.runtime.lastError) {
+                  // If message fails but URL is supported -> Unconnected
+                  if (tempPlatform) {
+                    setStatus({ supported: false, platform: tempPlatform, hasPrompts: false });
+                  } else {
+                    setStatus({ supported: false, platform: null, hasPrompts: false });
+                  }
                 } else {
-                  setStatus({ supported: false, platform: null, hasPrompts: false });
+                  setStatus(response || { supported: false, platform: null, hasPrompts: false });
+                  // Once connected, slow down polling to reduce load
+                  if (response?.supported && pollInterval === 1000) {
+                    pollInterval = 3000;
+                    clearInterval(statusInterval);
+                    statusInterval = setInterval(checkStatus, pollInterval);
+                  }
                 }
-              } else {
-                setStatus(response || { supported: false, platform: null, hasPrompts: false });
-                // Once connected, slow down polling to reduce load
-                if (response?.supported && pollInterval === 1000) {
-                  pollInterval = 3000;
-                  clearInterval(statusInterval);
-                  statusInterval = setInterval(checkStatus, pollInterval);
-                }
-              }
-            },
-          );
-        } catch (e) {
-          if (tempPlatform) {
-            setStatus({ supported: false, platform: tempPlatform, hasPrompts: false });
-          } else {
-            setStatus({ supported: false, platform: null, hasPrompts: false });
+              },
+            );
+          } catch (e) {
+            if (tempPlatform) {
+              setStatus({ supported: false, platform: tempPlatform, hasPrompts: false });
+            } else {
+              setStatus({ supported: false, platform: null, hasPrompts: false });
+            }
           }
         }
       });
@@ -176,18 +168,13 @@ export default function OnePromptApp() {
     };
   }, []);
 
-  // Load Pricing Tier & Clear results on logout
+  // Load Pricing Tier
   useEffect(() => {
     const loadTier = async () => {
       const t = await fetchUserTier();
       setTier(t);
     };
     loadTier();
-
-    if (!user) {
-      setExtractionResult(null);
-      setCurrentHistoryId(null);
-    }
   }, [user]);
 
   // Load History - show immediately, fetch cloud async
@@ -209,27 +196,6 @@ export default function OnePromptApp() {
         // Keep local items on error
       }
     }
-  };
-
-  // Helper to find suitable content tab (not extension URLs)
-  const findTargetTab = (callback: (tab: chrome.tabs.Tab | null) => void) => {
-    chrome.tabs.query({ lastFocusedWindow: true }, (tabs) => {
-      const isExtensionTab = (tab: chrome.tabs.Tab) => {
-        if (!tab.url) return true; // No URL means it's likely an extension tab
-        try {
-          const url = new URL(tab.url);
-          // Exclude extension URLs
-          return url.protocol === "chrome-extension:";
-        } catch {
-          return true; // Invalid URL, likely extension tab
-        }
-      };
-
-      // Prefer active tab if it's not an extension tab, otherwise first non-extension tab
-      const targetTab = tabs.find(tab => tab.active && !isExtensionTab(tab)) ||
-                       tabs.find(tab => !isExtensionTab(tab));
-      callback(targetTab || null);
-    });
   };
 
   // Timer Functions
@@ -262,6 +228,7 @@ export default function OnePromptApp() {
       ) {
         if (msg.action === "EXTRACTION_STARTED") {
           setLoading(true);
+          setAiError(null);
           setAiEnhancing(msg.mode === "compile");
           startTimer();
           return;
@@ -412,9 +379,9 @@ export default function OnePromptApp() {
     setLoading(true);
     startTimer();
 
-    findTargetTab((targetTab) => {
-      if (targetTab?.id) {
-        chrome.tabs.sendMessage(targetTab.id, {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.tabs.sendMessage(tabs[0].id, {
           action: "EXTRACT_PROMPTS",
           mode: m,
           extractionSource,
@@ -751,9 +718,10 @@ export default function OnePromptApp() {
       <button
         className="kb-btn-refresh"
         onClick={() =>
-          findTargetTab((targetTab) => {
-            if (targetTab?.id) chrome.tabs.reload(targetTab.id);
-          })
+          chrome.tabs.query(
+            { active: true, currentWindow: true },
+            (tabs) => tabs[0]?.id && chrome.tabs.reload(tabs[0].id),
+          )
         }
       >
         Refresh
