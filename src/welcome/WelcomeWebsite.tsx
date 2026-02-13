@@ -197,12 +197,15 @@ const WelcomeWebsite: React.FC = () => {
     };
 
     const signOut = async () => {
-        await signOutFromBackend();
+        // Remove local login state only (no firebase dependency)
         setLoginSuccess(false);
         setUserEmail(null);
-        if (typeof chrome !== 'undefined' && chrome.storage) {
-            chrome.storage.local.remove(['firebase_user_email', 'firebase_current_user_id']);
-        }
+        try {
+            localStorage.removeItem('oneprompt_user');
+            if (typeof chrome !== 'undefined' && chrome.storage) {
+                chrome.storage.local.remove(['firebase_user_email', 'firebase_current_user_id']);
+            }
+        } catch (e) { }
     };
 
     const platforms = [

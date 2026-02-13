@@ -1,3 +1,13 @@
+/*
+   !!! CRITICAL: DO NOT MODIFY THIS FILE WITHOUT EXPLICIT USER PERMISSION !!!
+   
+   This file defines the "Classic 1-prompt Layout" (Commit 1f87098).
+   - Font: Inter (NOT Outfit)
+   - Primary Color: #005ae2 (Vibrant Blue)
+   - Layout: Spacious (24px padding), Centered alignment.
+   
+   ANY CHANGES TO FONT, SPACING, OR COLOR WILL BREAK THE USER'S PREFERRED UI.
+*/
 :root {
   --kb-font:
     "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,

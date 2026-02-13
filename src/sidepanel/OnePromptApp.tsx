@@ -1,3 +1,8 @@
+/*
+   !!! CRITICAL: LAYOUT LOCKED (Commit 1f87098) !!!
+   The structure of this component (ClassName structure, Layout hierarchy) is specifically designed to work with "oneprompt.css".
+   Do not introduce "Outfit" font, tight padding, or flex-start alignment.
+*/
 import { useState, useEffect, useRef } from "react";
 import type { ExtractionResult, HistoryItem, Mode } from "../types";
 import {
