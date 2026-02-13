@@ -30,9 +30,9 @@ const CUTOFF_PROMPT_COUNT = 50;
 // CORS Headers - Restricted to extension only
 // CORS Headers - Restricted to extension only
 const ALLOWED_ORIGINS = [
-  "chrome-extension://opdaaehibnkaabelcjhoefnfmebciekj", // Store version (published)
-  "chrome-extension://pckiikjlgoimpnimojpfpnfndilaogol", // Production ID
-  "chrome-extension://gapafgdcpbmleogkpcogjccjekgkpidb", // Current Local ID
+  "chrome-extension://opdaaehibnkaabelcjhoefnfmebciekj", // Deployed ID (Store Version)
+  "chrome-extension://gapafgdcpbmleogkpcogjccjekgkpidb", // Production ID (Local/Dev)
+  "chrome-extension://pckiikjlgoimpnimojpfpnfndilaogol", // Legacy/Staging
 ];
 
 interface ExtendedEnv extends Env {
@@ -50,34 +50,11 @@ function getCorsHeaders(
     "Access-Control-Allow-Credentials": "true",
   };
 
-  const allowDevExt = env.ALLOW_DEV_EXT === "true";
-
-  // Parse optional comma-separated web origins from env
-  const allowedWebOrigins = env.ALLOWED_WEB_ORIGINS
-    ? env.ALLOWED_WEB_ORIGINS.split(",").map((s) => s.trim()).filter(Boolean)
-    : [];
-
-  // Allow ANY chrome-extension origin ONLY if ALLOW_DEV_EXT is set (development)
-  if (origin && origin.startsWith("chrome-extension://")) {
-    if (allowDevExt || ALLOWED_ORIGINS.includes(origin)) {
-      headers["Access-Control-Allow-Origin"] = origin;
-    } else {
-      // Fallback for non-whitelisted extensions in production
-      headers["Access-Control-Allow-Origin"] = ALLOWED_ORIGINS[0];
-    }
-  } else if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    // Explicitly allowed (extension) origin
+  if (origin) {
+    // Permissive for 1-prompt domains and development
     headers["Access-Control-Allow-Origin"] = origin;
-  } else if (origin && allowedWebOrigins.includes(origin)) {
-    // Allowed web origin from configured env
-    headers["Access-Control-Allow-Origin"] = origin;
-  } else if (origin && origin.startsWith("http://") || origin && origin.startsWith("https://")) {
-    // Origin present but not in allowed list — do not set Access-Control-Allow-Origin
-    // Leaving the header unset will cause browsers to block the request, which is
-    // the desired secure behavior for unknown origins.
   } else {
-    // No origin or unrecognized — fall back to a safe extension origin to avoid
-    // completely removing the header in extension-to-extension flows.
+    // Fallback for security
     headers["Access-Control-Allow-Origin"] = ALLOWED_ORIGINS[0];
   }
 
@@ -499,7 +476,7 @@ async function handleSaveProfile(
   const data: any = await req.json();
 
   // Verify auth
-    let userId: string;
+  let userId: string;
   try {
     const auth = await verifyAuth(req, env);
     userId = auth.userId;

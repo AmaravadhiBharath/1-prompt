@@ -2,7 +2,6 @@
 
 import {
   signOutFromBackend,
-  saveUserProfile,
   getQuotas,
   setCurrentUser,
   checkUserTier,
@@ -94,15 +93,17 @@ export async function getStoredUser(): Promise<ChromeUser | null> {
 }
 
 // Store user data
-async function storeUser(user: ChromeUser | null): Promise<void> {
+async function storeUser(user: ChromeUser | null, token?: string | null): Promise<void> {
   const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
   if (!hasChromeStorage) {
     return new Promise((resolve) => {
       try {
         if (user) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+          if (token) localStorage.setItem("firebase_id_token", token);
         } else {
           localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem("firebase_id_token");
         }
       } catch (e) {
         console.warn("[Auth] localStorage unavailable", e);
@@ -113,9 +114,11 @@ async function storeUser(user: ChromeUser | null): Promise<void> {
 
   return new Promise((resolve) => {
     if (user) {
-      chrome.storage.local.set({ [STORAGE_KEY]: user }, resolve);
+      const data: any = { [STORAGE_KEY]: user };
+      if (token) data["firebase_id_token"] = token;
+      chrome.storage.local.set(data, resolve);
     } else {
-      chrome.storage.local.remove([STORAGE_KEY], resolve);
+      chrome.storage.local.remove([STORAGE_KEY, "firebase_id_token"], resolve);
     }
   });
 }
@@ -275,112 +278,90 @@ export async function canExtract(tier: UserTier): Promise<boolean> {
   return usage < limit;
 }
 
-// Sign in with Google
+// Sign in with Google (Uses Chrome Identity for Extension, Firebase for Web)
 export async function signInWithGoogle(): Promise<ChromeUser> {
-  console.log("[Auth] Starting Google Sign-In flow...");
-  return new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({ interactive: true }, async (token) => {
-      if (chrome.runtime.lastError || !token) {
-        console.error(
-          "[Auth] Google Auth Token failed:",
-          chrome.runtime.lastError,
-        );
-        reject(
-          new Error(
-            chrome.runtime.lastError?.message || "Failed to get auth token",
-          ),
-        );
-        return;
-      }
+  const isExtension =
+    typeof chrome !== "undefined" &&
+    chrome.identity &&
+    chrome.identity.getAuthToken;
 
-      console.log("[Auth] Google token obtained, fetching user info...");
-      try {
-        // Fetch user info from Google first
-        const response = await fetch(
-          "https://www.googleapis.com/oauth2/v2/userinfo",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
-
-        if (!response.ok) {
-          const errBody = await response.text();
-          console.error(
-            "[Auth] User info fetch failed:",
-            response.status,
-            errBody,
-          );
-          throw new Error("Failed to fetch user info from Google");
+  if (isExtension) {
+    console.log("[Auth] Starting Native Extension Sign-In...");
+    return new Promise((resolve, reject) => {
+      chrome.identity.getAuthToken({ interactive: true }, async (token) => {
+        if (chrome.runtime.lastError || !token) {
+          reject(new Error(chrome.runtime.lastError?.message || "Internal identity error"));
+          return;
         }
 
-        const data = await response.json();
-        const user: ChromeUser = {
-          id: data.id,
-          email: data.email,
-          name: data.name || data.email.split("@")[0],
-          picture: data.picture,
-        };
-
-        console.log("[Auth] Authenticated as:", user.email);
-
-        // Set the current user ID for subsequent requests
-        await setCurrentUser(user.id);
-
-        // Save user profile to backend
-        await saveUserProfile(user);
-
-        // Store locally for UI
-        await storeUser(user);
-
-        // Resolve IMMEDIATELY for instant UI feedback
-        // Quotas and backend profile sync can happen in background
-        resolve(user);
-
-        // Background tasks
-        saveUserProfile(user).catch(err => console.error("[Auth] Background profile save failed:", err));
-        loadQuotas().catch(err => console.error("[Auth] Background quota load failed:", err));
-
-        console.log("[Auth] Basic sign-in flow finished, background tasks started");
-      } catch (error: any) {
-        console.error("[Auth] Sign-in flow interrupted:", error);
-        // Revoke the token on error so the user can try again fresh
-        if (token) {
-          chrome.identity.removeCachedAuthToken({ token }, () => {
-            console.log("[Auth] Cached token removed due to error");
+        try {
+          // Fetch user info from Google using the token
+          const response = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: { Authorization: `Bearer ${token}` }
           });
+
+          if (!response.ok) throw new Error("Failed to fetch Google profile");
+
+          const profile = await response.json();
+          const user: ChromeUser = {
+            id: profile.sub,
+            email: profile.email,
+            name: profile.name,
+            picture: profile.picture
+          };
+
+          // Store and trigger sync
+          await storeUser(user, token);
+          await setCurrentUser(user.id);
+
+          // Post profile to backend
+          const { config } = await import("../config");
+          await fetch(`${config.backend.url}/user/profile`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(user)
+          }).catch(err => console.warn("[Auth] Profile sync failed:", err));
+
+          resolve(user);
+        } catch (e) {
+          reject(e);
         }
-        reject(error);
-      }
+      });
     });
-  });
+  }
+
+  console.log("[Auth] Starting Unified Firebase Sign-In (Web Only)...");
+  // We use the web sign-in logic for everything now
+  const { signInWithGoogleWeb } = await import("./firebase");
+  const result = await signInWithGoogleWeb();
+
+  if (!result.user) {
+    throw new Error("Firebase sign-in failed: No user returned");
+  }
+
+  // Set the current user ID for the background/API services
+  await setCurrentUser(result.user.id);
+
+  return result.user;
 }
 
 // Sign out
 export async function signOut(): Promise<void> {
-  // Clear current user
-  await setCurrentUser(null);
+  console.log("[Auth] Signing out...");
 
-  // Sign out from Backend
+  // 1. Notify Backend
   await signOutFromBackend();
 
-  return new Promise((resolve) => {
-    // If not an extension environment, simply clear stored user
-    if (typeof chrome === "undefined" || !chrome.identity) {
-      storeUser(null).then(resolve);
-      return;
-    }
+  // 2. Clear Session ID
+  await setCurrentUser(null);
 
-    chrome.identity.getAuthToken({ interactive: false }, (token) => {
-      if (token) {
-        // Revoke the token
-        chrome.identity.removeCachedAuthToken({ token }, () => {
-          // Also revoke from Google
-          fetch(`https://accounts.google.com/o/oauth2/revoke?token=${token}`);
-        });
-      }
-      storeUser(null).then(resolve);
-    });
-  });
+  // 3. Clear Storage
+  await storeUser(null);
+
+  console.log("[Auth] Sign-out complete");
 }
 
 // Subscribe to auth changes

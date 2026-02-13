@@ -60,6 +60,14 @@ try {
   console.error("[1-prompt] Critical error initializing remote config:", err);
 }
 
+// Ensure sidepanel is enabled globally on startup
+if (chrome.sidePanel && chrome.sidePanel.setOptions) {
+  chrome.sidePanel.setOptions({
+    enabled: true,
+    path: "sidepanel/index.html",
+  }).catch(err => console.error("[1-prompt SW] Failed to set sidepanel options:", err));
+}
+
 // Prevent unhandled rejections from crashing the service worker
 self.addEventListener("unhandledrejection", (event) => {
   console.error(
@@ -272,33 +280,35 @@ chrome.runtime.onMessage.addListener(
         (async () => {
           try {
             console.log(
-              "[1-prompt] OPEN_SIDE_PANEL received from tab:",
+              "[1-prompt SW] OPEN_SIDE_PANEL received from tab:",
               sender.tab?.id,
             );
             let windowId = sender.tab?.windowId;
             if (!windowId) {
-              console.log(
-                "[1-prompt] No windowId from sender, querying active tab...",
-              );
+              console.log("[1-prompt SW] No windowId from sender, querying active tab...");
               const [tab] = await chrome.tabs.query({
                 active: true,
                 currentWindow: true,
               });
               windowId = tab?.windowId;
-              console.log("[1-prompt] Got windowId from query:", windowId);
+              console.log("[1-prompt SW] Got windowId from query:", windowId);
             }
 
             if (windowId) {
-              console.log("[1-prompt] Opening side panel for window:", windowId);
-              await chrome.sidePanel.open({ windowId });
-              console.log("[1-prompt] Side panel opened successfully");
+              console.log("[1-prompt SW] Opening side panel for window:", windowId);
+              if (chrome.sidePanel && chrome.sidePanel.open) {
+                await chrome.sidePanel.open({ windowId });
+                console.log("[1-prompt SW] Side panel open command sent");
+              } else {
+                console.error("[1-prompt SW] chrome.sidePanel.open is not available");
+              }
             } else {
               console.error(
-                "[1-prompt] Could not find windowId to open side panel",
+                "[1-prompt SW] Could not find windowId to open side panel",
               );
             }
           } catch (err) {
-            console.error("[1-prompt] Failed to open side panel:", err);
+            console.error("[1-prompt SW] Failed to open side panel:", err);
           }
         })();
         sendResponse({ success: true });
@@ -1016,6 +1026,14 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     if (!hasSeenWelcome) {
       chrome.tabs.create({ url: "https://1-prompt.in/install" });
       chrome.storage.local.set({ hasSeenWelcome: true });
+    }
+
+    // Ensure sidepanel is enabled globally
+    if (chrome.sidePanel && chrome.sidePanel.setOptions) {
+      chrome.sidePanel.setOptions({
+        enabled: true,
+        path: "sidepanel/index.html",
+      });
     }
   }
 });

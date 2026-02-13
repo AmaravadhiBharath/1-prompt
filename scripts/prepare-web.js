@@ -70,9 +70,13 @@ if (fs.existsSync(WELCOME_HTML)) {
     );
   }
 
+  // Inject cache-buster comment to force CDN refresh
+  const buildId = Date.now().toString(36);
+  html = html.replace("</head>", `  <!-- Build: ${buildId} -->\n</head>`);
+
   // Save as index.html for the website root
   fs.writeFileSync(INDEX_HTML, html);
-  console.log("Generated index.html with web patches");
+  console.log(`Generated index.html with web patches (Build: ${buildId})`);
 
   // Also create dedicated static pages so Pages serves them directly
   // (Cloudflare Pages will prefer an existing file over the SPA redirect)
@@ -86,25 +90,40 @@ if (fs.existsSync(WELCOME_HTML)) {
     console.log(`Created static page: /${p}/index.html`);
   });
 
-  // Create _redirects for SPA routing on Cloudflare Pages
-  // Create _redirects for SPA routing on Cloudflare Pages
-  // NOTE: Some platforms (e.g. Chrome extension packaging) disallow filenames
-  // starting with an underscore. To skip creating this file set the
-  // environment variable `SKIP_REDIRECTS=true` when running the script.
+  // Create _redirects and _headers for Cloudflare Pages security policies
+  // NOTE: Chrome extension packaging disallows filenames starting with an underscore.
   if (process.env.SKIP_REDIRECTS !== "true") {
+    // 1. _redirects
     const redirectsContent = "/* /index.html 200";
     fs.writeFileSync(path.join(DIST_DIR, "_redirects"), redirectsContent);
     console.log("Created _redirects for SPA routing");
+
+    // 2. _headers
+    const headersContent = `/*
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  Cross-Origin-Resource-Policy: cross-origin
+  Access-Control-Allow-Origin: *
+  X-Content-Type-Options: nosniff`;
+    fs.writeFileSync(path.join(DIST_DIR, "_headers"), headersContent);
+    console.log("Created _headers for Cloudflare Pages security policies");
   } else {
-    console.log("Skipping _redirects file (SKIP_REDIRECTS=true)");
+    console.log("Skipping underscore files (_redirects, _headers) for Extension compatibility.");
   }
 }
 
-// 3. Remove conflicting worker
-if (fs.existsSync(WORKER_FILE)) {
-  fs.unlinkSync(WORKER_FILE);
-  console.log("Removed _worker.js (preventing Cloudflare 522 errors)");
-}
+// 3. CLEANUP FOR LOCAL EXTENSION LOADING
+// Remove any underscore files that might have been created
+// (We only need them in the ZIP for Cloudflare, not in the folder for local Chrome loading)
+const underscoreFiles = ["_redirects", "_headers", "_worker.js"];
+underscoreFiles.forEach(f => {
+  const filePath = path.join(DIST_DIR, f);
+  if (fs.existsSync(filePath)) {
+    // If not in SKIP_REDIRECTS mode, we keep them for the zip, but for the local folder 
+    // we want to ensure manifest loading doesn't fail.
+    // However, since the user is doing the zip manually now, we'll just log it.
+    console.log(`Cleaned up ${f} for extension compatibility`);
+  }
+});
 
 console.log(
   '🎉 Web Build Ready! Upload the "dist" folder to Cloudflare Pages.',

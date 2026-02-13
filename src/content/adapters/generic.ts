@@ -6,7 +6,10 @@ export class GenericAdapter extends BaseAdapter {
   name = "generic";
 
   detect(): boolean {
-    // Always returns true as fallback
+    // Fallback for unknown platforms, but skip our own domain to avoid errors on the dashboard/landing page
+    if (window.location.hostname.includes("1-prompt.in")) {
+      return false;
+    }
     return true;
   }
 

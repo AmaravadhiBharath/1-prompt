@@ -75,6 +75,14 @@ export default function OnePromptApp() {
 
     const unsubscribe = subscribeToAuthChanges((u) => setUser(u));
 
+    // Failsafe: When sidepanel opens, ping the website bridge to force an auth sync
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const activeTab = tabs[0];
+      if (activeTab?.id) {
+        chrome.tabs.sendMessage(activeTab.id, { action: "SYNC_AUTH" }).catch(() => { });
+      }
+    });
+
     // Status polling & Event Listeners
     let pollInterval = 1000; // Start fast for immediate feedback
     let statusInterval: ReturnType<typeof setInterval>;
@@ -168,13 +176,18 @@ export default function OnePromptApp() {
     };
   }, []);
 
-  // Load Pricing Tier
+  // Load Pricing Tier & Clear results on logout
   useEffect(() => {
     const loadTier = async () => {
       const t = await fetchUserTier();
       setTier(t);
     };
     loadTier();
+
+    if (!user) {
+      setExtractionResult(null);
+      setCurrentHistoryId(null);
+    }
   }, [user]);
 
   // Load History - show immediately, fetch cloud async

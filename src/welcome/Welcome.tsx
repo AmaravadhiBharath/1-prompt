@@ -214,65 +214,6 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
     startAutoPlay(12000);
   };
 
-  useEffect(() => {
-    // Handle URL-based routing (Simple Client-Side Router)
-    const handleRouting = () => {
-      const path = window.location.pathname;
-      const hash = window.location.hash;
-      const combined = path + hash;
-
-      if (combined.includes("can't-say-goodbye")) {
-        setActiveSection("uninstall");
-      } else if (combined.includes("install")) {
-        setActiveSection("setup");
-      } else if (combined.includes("supported-sites")) {
-        setActiveSection("dashboard");
-      } else if (combined.includes("home")) {
-        setActiveSection("landing");
-      } else {
-        setActiveSection("landing");
-      }
-    };
-
-    handleRouting();
-    window.addEventListener("popstate", handleRouting);
-
-    // AUTH CHECK on mount
-    getStoredUser().then((user) => {
-      if (user) {
-        setLoginSuccess(true);
-        setUserEmail(user.email);
-      }
-    });
-
-    // Real-time Auth Listening
-    const unsubscribeAuth = subscribeToAuthChanges((user) => {
-      setLoginSuccess(!!user);
-      setUserEmail(user?.email || null);
-    });
-
-    const checkPinnedStatus = async () => {
-      if (chrome.action && chrome.action.getUserSettings) {
-        const settings = await chrome.action.getUserSettings();
-        setIsPinned(settings.isOnToolbar);
-      }
-    };
-    checkPinnedStatus();
-    const interval = setInterval(checkPinnedStatus, 1000);
-    return () => {
-      clearInterval(interval);
-      unsubscribeAuth();
-      window.removeEventListener("popstate", handleRouting);
-    };
-  }, []);
-
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -320,7 +261,143 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
     window.dispatchEvent(event);
   };
 
-  const isHomePath = window.location.pathname.includes("home") || window.location.hash.includes("home");
+  // VERSION MARKER FOR CACHE DEBUGGING
+  const WELCOME_VERSION = "6.2.C";
+
+  const isMarketingPath =
+    ["/", "", "/index.html", "/home", "/home/"].includes(window.location.pathname) ||
+    window.location.hash.includes("home");
+
+  useEffect(() => {
+    console.log(`[1-prompt] Engine ${WELCOME_VERSION} active at: ${window.location.pathname} on ${window.location.hostname}`);
+    // 1. Handle URL-based routing
+    const handleRouting = () => {
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      const combined = path + hash;
+
+      if (combined.includes("can't-say-goodbye")) {
+        setActiveSection("uninstall");
+      } else if (combined.includes("install")) {
+        setActiveSection("setup");
+      } else if (combined.includes("supported-sites")) {
+        setActiveSection("dashboard");
+      } else if (combined.includes("home")) {
+        setActiveSection("landing");
+      } else {
+        setActiveSection("landing");
+      }
+    };
+
+    // 2. REDIRECT IF INSTALLED: Move to internal extension space if possible
+    const checkInstallation = () => {
+      const isExtension = window.location.protocol === "chrome-extension:";
+      const hasExtensionApi = typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.id;
+      const hasMarker = document.documentElement.getAttribute("data-1-prompt-installed") === "true";
+
+      const isInstalled = hasExtensionApi || hasMarker;
+
+      if (!isExtension && isInstalled && !isMarketingPath) {
+        // Get base URL from DOM or API
+        let extensionUrl = document.documentElement.getAttribute("data-1-prompt-url");
+        if (!extensionUrl && hasExtensionApi) {
+          extensionUrl = chrome.runtime.getURL("");
+        }
+
+        if (extensionUrl) {
+          // Ensure we don't have double slashes
+          const baseUrl = extensionUrl.endsWith('/') ? extensionUrl : `${extensionUrl}/`;
+          let targetHash = "install";
+          if (window.location.pathname.includes("supported-sites")) {
+            targetHash = "supported-sites";
+          } else if (window.location.pathname.includes("can't-say-goodbye")) {
+            targetHash = "can't-say-goodbye";
+          }
+
+          const redirectUrl = `${baseUrl}welcome.html#${targetHash}`;
+          console.log("[1-prompt] Executing Smart Redirect to:", redirectUrl);
+          window.location.href = redirectUrl;
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // 3. Status Polling (Pins, Auth, etc)
+    const checkPinnedStatus = async () => {
+      if (
+        typeof chrome !== "undefined" &&
+        chrome.action &&
+        chrome.action.getUserSettings
+      ) {
+        const settings = await chrome.action.getUserSettings();
+        setIsPinned(settings.isOnToolbar);
+      }
+    };
+
+    // Init
+    handleRouting();
+    window.addEventListener("popstate", handleRouting);
+
+    getStoredUser().then((user) => {
+      if (user) {
+        setLoginSuccess(true);
+        setUserEmail(user.email);
+      }
+    });
+
+    const unsubscribeAuth = subscribeToAuthChanges((user) => {
+      setLoginSuccess(!!user);
+      setUserEmail(user?.email || null);
+    });
+
+    checkPinnedStatus();
+    const pinInterval = setInterval(checkPinnedStatus, 1000);
+
+    // Redirect logic
+    if (!checkInstallation()) {
+      const installPoll = setInterval(() => {
+        if (checkInstallation()) clearInterval(installPoll);
+      }, 500);
+      setTimeout(() => clearInterval(installPoll), 5000);
+    }
+
+    // Listener for sidepanel sync
+    let messageListener: any = null;
+    if (
+      typeof chrome !== "undefined" &&
+      chrome.runtime &&
+      chrome.runtime.onMessage
+    ) {
+      messageListener = (message: any) => {
+        if (
+          message.action === "SIDEPANEL_OPENED" &&
+          (activeSection === "setup" ||
+            window.location.pathname.includes("install"))
+        ) {
+          navigate("/supported-sites");
+        }
+      };
+      chrome.runtime.onMessage.addListener(messageListener);
+    }
+
+    return () => {
+      clearInterval(pinInterval);
+      unsubscribeAuth();
+      window.removeEventListener("popstate", handleRouting);
+      if (messageListener)
+        chrome.runtime.onMessage.removeListener(messageListener);
+    };
+  }, [activeSection, isMarketingPath, onComplete]);
+
+
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   const handleGoogleLogin = async () => {
     // 1. Browser check
@@ -356,7 +433,12 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
       setIsLoggingIn(false);
 
       // Open sidepanel (Task 3)
-      if (!onComplete) openSidePanel(false);
+      if (!onComplete) {
+        // First sync auth state via postMessage to ensure extension has it
+        window.postMessage({ type: 'ONE_PROMPT_MSG', action: 'SYNC_AUTH' }, '*');
+        // Then open sidepanel with a small grace period for storage sync
+        setTimeout(() => openSidePanel(false), 300);
+      }
 
       if (onComplete) {
         onComplete();
@@ -419,6 +501,10 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
         return;
       }
 
+      // Bridge: Always send postMessage to content script. 
+      // This works on the web app where chrome.windows/runtime are missing.
+      window.postMessage({ type: 'ONE_PROMPT_MSG', action: 'OPEN_SIDE_PANEL' }, '*');
+
       // Detection
       const hasExtension = typeof chrome !== "undefined" && chrome.runtime;
       if (!hasExtension) return;
@@ -438,62 +524,6 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
       console.log("Could not open sidepanel automatically:", e);
     }
   };
-
-  useEffect(() => {
-    const detectExtension = () => {
-      const isPolyfill = (window as any).is1PromptPolyfill === true;
-      const hasExtensionAPI =
-        !!(window.chrome && chrome.runtime && chrome.runtime.id) && !isPolyfill;
-      const hasMarkerAttribute = document.documentElement.hasAttribute(
-        "data-1-prompt-installed",
-      );
-      const installed = hasExtensionAPI || hasMarkerAttribute;
-
-      // AUTO-REDIRECT: If installed and user is on marketing landing, skip to app flow
-      // But allow if they are explicitly on /home
-      if (installed && activeSection === "landing" && !isHomePath) {
-        navigate("/install");
-      }
-
-      return installed;
-    };
-    detectExtension();
-    const pollTimer = setInterval(() => {
-      if (detectExtension()) clearInterval(pollTimer);
-    }, 500);
-    setTimeout(() => clearInterval(pollTimer), 5000);
-
-    if (window.chrome && chrome.runtime && chrome.runtime.sendMessage) {
-      chrome.runtime.sendMessage(
-        { action: "CHECK_SIDEPANEL_OPEN" },
-        (response) => {
-          if (
-            response &&
-            response.isOpen &&
-            window.location.pathname.includes("install")
-          ) {
-            navigate("/supported-sites");
-          }
-        },
-      );
-      const messageListener = (message: any) => {
-        if (
-          message.action === "SIDEPANEL_OPENED" &&
-          window.location.pathname.includes("install")
-        ) {
-          navigate("/supported-sites");
-        }
-      };
-      chrome.runtime.onMessage.addListener(messageListener);
-      return () => {
-        chrome.runtime.onMessage.removeListener(messageListener);
-        clearInterval(pollTimer);
-      };
-    }
-    return () => clearInterval(pollTimer);
-  }, []);
-
-
 
   const showFinalStage = loginSuccess && isPinned;
   const isLandingPage = ["landing", "uninstall", "pricing", "contact"].includes(
@@ -1036,6 +1066,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
                           onClick={(e) => {
                             e.preventDefault();
                             signOut();
+                            window.postMessage({ type: 'ONE_PROMPT_MSG', action: 'SYNC_AUTH' }, '*');
                           }}
                           style={{
                             color: "#ef4444",

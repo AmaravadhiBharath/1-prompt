@@ -63,15 +63,23 @@ async function getHeaders() {
 export async function getAuthToken(): Promise<string | null> {
   // Prefer Chrome Identity in extension environment
   if (typeof chrome !== "undefined" && chrome.identity) {
-    return new Promise((resolve) => {
-      chrome.identity.getAuthToken({ interactive: false }, (token) => {
-        if (chrome.runtime.lastError || !token) {
+    const token: string | null = await new Promise((resolve) => {
+      chrome.identity.getAuthToken({ interactive: false }, (t) => {
+        if (chrome.runtime.lastError || !t) {
           resolve(null);
           return;
         }
-        resolve(token);
+        resolve(t);
       });
     });
+
+    if (token) return token;
+
+    // Fallback: Check if we have a synced firebase_id_token in storage
+    const storageRes = await chrome.storage.local.get(["firebase_id_token"]);
+    if (storageRes.firebase_id_token) return storageRes.firebase_id_token;
+
+    return null;
   }
 
   // Web path: try to read stored Firebase ID token
