@@ -174,7 +174,7 @@ const WelcomeWebsite: React.FC = () => {
                     const extId = e.data.extensionId;
                     if (extId) {
                         // Open extension install page / anchor inside extension
-                        const url = `chrome-extension://${extId}/#install.html`;
+                        const url = `chrome-extension://${extId}/welcome.html#install`;
                         window.open(url, '_blank');
                         return;
                     }
