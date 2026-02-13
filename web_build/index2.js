@@ -235,10 +235,12 @@ const Welcome = ({ onComplete }) => {
     const event = new PopStateEvent("popstate");
     window.dispatchEvent(event);
   };
-  const WELCOME_VERSION = "6.2.A";
-  const isMarketingPath = window.location.pathname === "/" || window.location.pathname === "/index.html" || window.location.pathname === "" || window.location.pathname.includes("/home") || window.location.hash.includes("home");
+  const WELCOME_VERSION = "7.0.FINAL";
+  const isMarketingPath = ["/", "", "/index.html", "/home", "/home/"].includes(window.location.pathname) || window.location.hash.includes("home");
   reactExports.useEffect(() => {
-    console.log(`[1-prompt] Welcome Engine ${WELCOME_VERSION} active at:`, window.location.pathname);
+    document.title = `1-prompt | v${WELCOME_VERSION}`;
+    console.log(`%c[1-prompt] ENGINE ${WELCOME_VERSION} ACTIVE`, "color: white; background: #ff4785; padding: 4px; border-radius: 4px; font-weight: bold;");
+    console.log(`Path: ${window.location.pathname}, Host: ${window.location.hostname}`);
     const handleRouting = () => {
       const path = window.location.pathname;
       const hash = window.location.hash;

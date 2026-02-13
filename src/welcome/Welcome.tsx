@@ -262,14 +262,17 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
   };
 
   // VERSION MARKER FOR CACHE DEBUGGING
-  const WELCOME_VERSION = "6.2.C";
+  const WELCOME_VERSION = "7.0.FINAL";
 
   const isMarketingPath =
     ["/", "", "/index.html", "/home", "/home/"].includes(window.location.pathname) ||
     window.location.hash.includes("home");
 
   useEffect(() => {
-    console.log(`[1-prompt] Engine ${WELCOME_VERSION} active at: ${window.location.pathname} on ${window.location.hostname}`);
+    // VISUAL PROOF FOR USER
+    document.title = `1-prompt | v${WELCOME_VERSION}`;
+    console.log(`%c[1-prompt] ENGINE ${WELCOME_VERSION} ACTIVE`, "color: white; background: #ff4785; padding: 4px; border-radius: 4px; font-weight: bold;");
+    console.log(`Path: ${window.location.pathname}, Host: ${window.location.hostname}`);
     // 1. Handle URL-based routing
     const handleRouting = () => {
       const path = window.location.pathname;
@@ -501,8 +504,8 @@ const Welcome: React.FC<WelcomeProps> = ({ onComplete }) => {
         return;
       }
 
-      // Bridge: Always send postMessage to content script. 
-      // This works on the web app where chrome.windows/runtime are missing.
+      // Extension communication: Send postMessage to content script.
+      // This works on extension pages where chrome.windows/runtime are available.
       window.postMessage({ type: 'ONE_PROMPT_MSG', action: 'OPEN_SIDE_PANEL' }, '*');
 
       // Detection

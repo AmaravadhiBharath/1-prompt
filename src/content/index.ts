@@ -3,18 +3,6 @@ import { RemoteConfigService } from "../services/remote-config";
 import { getScrollConfig, getConfigTier } from "./scroll-config";
 import type { ExtractionResult, ScrapedPrompt } from "../types";
 
-// Detect if on our own domains (Landing, Dashboard, or Dev)
-const bridgeDomains = ["1-prompt.in", "pages.dev", "tiger-superextension", "localhost", "127.0.0.1"];
-const isOurDomain = bridgeDomains.some(d => window.location.hostname.includes(d));
-
-if (isOurDomain) {
-  document.documentElement.setAttribute("data-1-prompt-installed", "true");
-  document.documentElement.setAttribute("data-1-prompt-url", chrome.runtime.getURL(""));
-  console.log("%c[1-prompt] BRIDGE ACTIVE on " + window.location.hostname, "color: #ff4785; font-weight: bold; font-size: 14px;");
-}
-
-let isBridgeOnly = isOurDomain;
-
 // A. FROM Website TO Extension
 const syncToExtension = () => {
   const userJson = localStorage.getItem("oneprompt_user");
@@ -101,15 +89,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.action === 'SYNC_AUTH') {
     syncToExtension();
     sendResponse({ success: true });
-  } else if (msg.action === 'GET_STATUS') {
-    // Bridge domains are always "supported" effectively
-    sendResponse({ supported: true, platform: 'bridge', hasPrompts: false });
   }
 });
 
-if (!isBridgeOnly) {
-  // Global lock to prevent concurrent extractions
-  let isExtracting = false;
+// Global lock to prevent concurrent extractions
+let isExtracting = false;
 
   // Get the current adapter
   // Get the current adapter
@@ -1931,4 +1915,3 @@ if (!isBridgeOnly) {
 
   initZonedLayout();
   initRealTimeCapture();
-}
