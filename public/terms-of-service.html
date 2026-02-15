@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms of Service - 1-prompt</title>
+  <style>
+    :root {
+      --bg: #0f0f14;
+      --surface: #1a1a24;
+      --border: #2a2a3a;
+      --text: #e0e0e8;
+      --text-muted: #9090a8;
+      --accent: #7c5cfc;
+      --accent-light: #9b80ff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 0;
+    }
+
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-inner {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-inner h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .header-inner span {
+      color: var(--accent-light);
+      font-weight: 700;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .last-updated {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-top: 40px;
+      margin-bottom: 16px;
+      color: var(--accent-light);
+    }
+
+    h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin-bottom: 14px;
+      color: var(--text);
+    }
+
+    ul, ol {
+      margin-bottom: 14px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    strong {
+      color: #fff;
+    }
+
+    a {
+      color: var(--accent-light);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .highlight-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+
+    .highlight-box p {
+      margin-bottom: 0;
+    }
+
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 32px;
+    }
+
+    .toc h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+
+    .toc ol {
+      margin-bottom: 0;
+    }
+
+    .toc li {
+      margin-bottom: 4px;
+    }
+
+    .toc a {
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .toc a:hover {
+      color: var(--accent-light);
+    }
+
+    @media print {
+      :root {
+        --bg: #ffffff;
+        --surface: #f5f5f5;
+        --border: #ddd;
+        --text: #222;
+        --text-muted: #666;
+        --accent: #4a33b5;
+        --accent-light: #4a33b5;
+      }
+
+      body {
+        background: #fff;
+        color: #222;
+      }
+
+      .header {
+        position: static;
+        background: #fff;
+        border-bottom: 2px solid #4a33b5;
+      }
+
+      .header-inner span {
+        color: #4a33b5;
+      }
+
+      .header-inner h1 {
+        color: #222;
+      }
+
+      h2 {
+        color: #4a33b5;
+      }
+
+      h3 {
+        color: #333;
+      }
+
+      p, li {
+        color: #222;
+      }
+
+      strong {
+        color: #000;
+      }
+
+      a {
+        color: #4a33b5;
+      }
+
+      .highlight-box {
+        background: #f8f7ff;
+        border: 1px solid #ddd;
+        border-left: 3px solid #4a33b5;
+      }
+
+      .toc {
+        background: #f8f7ff;
+        border: 1px solid #ddd;
+      }
+
+      .toc a {
+        color: #222;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 24px 16px 60px;
+      }
+
+      h2 {
+        font-size: 19px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-inner">
+      <span>1-prompt</span>
+      <h1>Terms of Service</h1>
+    </div>
+  </div>
+
+  <div class="container">
+    <p class="last-updated">Last updated: February 15, 2026</p>
+
+    <div class="highlight-box">
+      <p><strong>Summary:</strong> By using 1-prompt, you agree to use the extension responsibly, respect the usage limits of your plan, and acknowledge that AI-compiled outputs may not be perfect. You own your prompts. We may update these terms as the product evolves.</p>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#acceptance">Acceptance of Terms</a></li>
+        <li><a href="#description">Description of Service</a></li>
+        <li><a href="#accounts">Accounts and Registration</a></li>
+        <li><a href="#usage">Acceptable Use</a></li>
+        <li><a href="#plans">Plans and Pricing</a></li>
+        <li><a href="#intellectual-property">Intellectual Property</a></li>
+        <li><a href="#ai-disclaimer">AI Compilation Disclaimer</a></li>
+        <li><a href="#third-party">Third-Party Platforms</a></li>
+        <li><a href="#limitation">Limitation of Liability</a></li>
+        <li><a href="#termination">Termination</a></li>
+        <li><a href="#changes">Changes to These Terms</a></li>
+        <li><a href="#governing-law">Governing Law</a></li>
+        <li><a href="#contact">Contact Us</a></li>
+      </ol>
+    </div>
+
+    <!-- 1. Acceptance -->
+    <h2 id="acceptance">1. Acceptance of Terms</h2>
+    <p>By installing, accessing, or using the 1-prompt Chrome extension ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, please do not use the Service.</p>
+    <p>These Terms constitute a legal agreement between you and Cursor Layout LLP ("Company", "we", "our", "us"), the operator of 1-prompt.</p>
+
+    <!-- 2. Description -->
+    <h2 id="description">2. Description of Service</h2>
+    <p>1-prompt is a Chrome browser extension that provides two core capabilities:</p>
+    <ul>
+      <li><strong>Capture:</strong> Extracts your prompts (user messages) from supported AI chat platforms such as ChatGPT, Claude, Gemini, Perplexity, and others.</li>
+      <li><strong>Compile:</strong> Uses AI to analyze your captured prompts and produce a single, deduplicated, intent-preserving compiled prompt that you can use in any new conversation or LLM.</li>
+    </ul>
+    <p>The Service may also include cloud synchronization, a personal prompt library, and cross-device access for registered users.</p>
+
+    <!-- 3. Accounts -->
+    <h2 id="accounts">3. Accounts and Registration</h2>
+    <p>Some features of the Service require you to sign in with a Google account. By creating an account, you agree to:</p>
+    <ul>
+      <li>Provide accurate and current information.</li>
+      <li>Keep your account credentials secure.</li>
+      <li>Accept responsibility for all activity that occurs under your account.</li>
+    </ul>
+    <p>You may use 1-prompt as a guest without signing in, with limited functionality (local storage only, no cloud sync).</p>
+
+    <!-- 4. Acceptable Use -->
+    <h2 id="usage">4. Acceptable Use</h2>
+    <p>You agree not to:</p>
+    <ul>
+      <li>Use the Service for any unlawful purpose or in violation of any applicable laws.</li>
+      <li>Attempt to reverse-engineer, decompile, or disassemble the Service.</li>
+      <li>Circumvent or attempt to circumvent usage limits, rate limits, or other technical restrictions.</li>
+      <li>Use automated scripts, bots, or tools to interact with the Service beyond its intended use.</li>
+      <li>Distribute, sublicense, or resell access to the Service without written permission.</li>
+      <li>Interfere with or disrupt the integrity or performance of the Service.</li>
+    </ul>
+
+    <!-- 5. Plans and Pricing -->
+    <h2 id="plans">5. Plans and Pricing</h2>
+    <p>1-prompt offers multiple tiers:</p>
+    <ul>
+      <li><strong>Basic (Free):</strong> 10 daily captures, local workspace, clipboard export.</li>
+      <li><strong>Go:</strong> Unlimited captures, AI orchestrations, cloud sync, personal library. Pricing and promotional offers are displayed on the extension's pricing page and may change.</li>
+      <li><strong>Pro:</strong> Higher orchestration limits, integrations, and priority support. Pricing is displayed on the extension's pricing page and may change.</li>
+    </ul>
+    <p>We reserve the right to modify pricing, features, or plan limits at any time. If a change materially affects your current plan, we will provide reasonable notice.</p>
+
+    <!-- 6. Intellectual Property -->
+    <h2 id="intellectual-property">6. Intellectual Property</h2>
+
+    <h3>6.1 Your Content</h3>
+    <p>You retain full ownership of your prompts, compiled outputs, and any content you create or extract using the Service. We do not claim any intellectual property rights over your content.</p>
+
+    <h3>6.2 Our Service</h3>
+    <p>The Service, including its design, code, interface, branding, and documentation, is owned by Cursor Layout LLP and protected by applicable intellectual property laws. You may not copy, modify, or create derivative works of the Service except as expressly permitted.</p>
+
+    <!-- 7. AI Disclaimer -->
+    <h2 id="ai-disclaimer">7. AI Compilation Disclaimer</h2>
+    <p>The Compile feature uses third-party AI services (Google Gemini, Cloudflare Workers AI) to process and consolidate your prompts. You acknowledge that:</p>
+    <ul>
+      <li>AI-generated compilations are produced automatically and may not perfectly reflect your intent.</li>
+      <li>You should review compiled prompts before using them in critical or sensitive contexts.</li>
+      <li>We are not responsible for the accuracy, completeness, or suitability of AI-generated outputs.</li>
+      <li>AI providers process your prompt data transiently in accordance with their own terms of service and privacy policies.</li>
+    </ul>
+
+    <!-- 8. Third-Party Platforms -->
+    <h2 id="third-party">8. Third-Party Platforms</h2>
+    <p>1-prompt interacts with third-party AI platforms (ChatGPT, Claude, Gemini, etc.) to extract your prompts. You are responsible for complying with the terms of service of each platform you use. We are not affiliated with, endorsed by, or responsible for any third-party platform.</p>
+    <p>The availability of prompt extraction on any platform depends on that platform's structure and may be affected by changes they make at any time.</p>
+
+    <!-- 9. Limitation of Liability -->
+    <h2 id="limitation">9. Limitation of Liability</h2>
+    <p>To the maximum extent permitted by law:</p>
+    <ul>
+      <li>The Service is provided <strong>"as is"</strong> and <strong>"as available"</strong> without warranties of any kind, whether express or implied.</li>
+      <li>We do not warrant that the Service will be uninterrupted, error-free, or free of harmful components.</li>
+      <li>In no event shall Cursor Layout LLP be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service.</li>
+      <li>Our total liability shall not exceed the amount you paid for the Service in the 12 months preceding the claim.</li>
+    </ul>
+
+    <!-- 10. Termination -->
+    <h2 id="termination">10. Termination</h2>
+    <p>You may stop using the Service at any time by uninstalling the extension. We reserve the right to suspend or terminate your access if you violate these Terms or engage in conduct that is harmful to other users or the Service.</p>
+    <p>Upon termination:</p>
+    <ul>
+      <li>Your local data remains on your device until you clear it.</li>
+      <li>Cloud data may be deleted after a reasonable retention period, or upon your request.</li>
+    </ul>
+
+    <!-- 11. Changes -->
+    <h2 id="changes">11. Changes to These Terms</h2>
+    <p>We may update these Terms from time to time. When we make material changes, we will update the "Last updated" date at the top of this page. Your continued use of the Service after changes constitutes acceptance of the updated Terms.</p>
+
+    <!-- 12. Governing Law -->
+    <h2 id="governing-law">12. Governing Law</h2>
+    <p>These Terms shall be governed by and construed in accordance with the laws of India. Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the courts in Hyderabad, Telangana, India.</p>
+
+    <!-- 13. Contact -->
+    <h2 id="contact">13. Contact Us</h2>
+    <p>If you have questions about these Terms of Service, please contact us:</p>
+    <ul>
+      <li><strong>Email:</strong> <a href="mailto:hello@1-prompt.in">hello@1-prompt.in</a></li>
+      <li><strong>Website:</strong> <a href="https://1-prompt.in" target="_blank" rel="noopener">https://1-prompt.in</a></li>
+      <li><strong>Address:</strong> Cursor Layout LLP, Plot 58 Hastinapuram, Hyderabad, Telangana, India, 500079</li>
+    </ul>
+  </div>
+
+</body>
+</html>

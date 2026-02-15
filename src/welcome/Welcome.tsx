@@ -788,6 +788,22 @@ const Welcome: React.FC = () => {
                   >
                     Contact
                   </a>
+                  <a
+                    href="/terms-of-service.html"
+                    className="footer-link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Terms of Service
+                  </a>
+                  <a
+                    href="/privacy-policy.html"
+                    className="footer-link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Privacy Policy
+                  </a>
                 </div>
               </div>
               <div className="footer-address">
