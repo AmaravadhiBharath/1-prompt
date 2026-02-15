@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1-Prompt — Marquee Promo Tile (1400x560)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #1a1a1a;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  .tile {
+    width: 1400px;
+    height: 560px;
+    background: linear-gradient(135deg, #001945 0%, #0243a3 35%, #0265dc 55%, #3b8af5 80%, #adc6ff 100%);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 100px;
+  }
+
+  /* Subtle grid pattern overlay */
+  .tile::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 80%, rgba(173, 198, 255, 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 40%);
+    z-index: 1;
+  }
+
+  /* Decorative floating shapes */
+  .shape {
+    position: absolute;
+    border-radius: 20px;
+    opacity: 0.06;
+    background: white;
+    z-index: 1;
+  }
+  .shape-1 { width: 300px; height: 300px; top: -80px; right: 200px; transform: rotate(25deg); border-radius: 40px; }
+  .shape-2 { width: 200px; height: 200px; bottom: -60px; left: 300px; transform: rotate(-15deg); border-radius: 30px; }
+  .shape-3 { width: 150px; height: 150px; top: 60px; right: 500px; transform: rotate(45deg); border-radius: 24px; opacity: 0.04; }
+
+  /* Dotted accent lines */
+  .dots {
+    position: absolute;
+    z-index: 1;
+  }
+  .dots-top {
+    top: 40px;
+    left: 100px;
+    display: flex;
+    gap: 8px;
+  }
+  .dots-bottom {
+    bottom: 40px;
+    right: 100px;
+    display: flex;
+    gap: 8px;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+  }
+
+  .content {
+    position: relative;
+    z-index: 2;
+    max-width: 750px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 100px;
+    padding: 8px 20px;
+    margin-bottom: 28px;
+  }
+  .badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #6eff9e;
+    box-shadow: 0 0 8px rgba(110, 255, 158, 0.5);
+  }
+  .badge-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .headline {
+    font-size: 56px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    letter-spacing: -1.5px;
+  }
+  .headline em {
+    font-style: normal;
+    color: #adc6ff;
+  }
+
+  .subline {
+    font-size: 20px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.5;
+    max-width: 580px;
+  }
+
+  .platforms {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 32px;
+  }
+  .platforms-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .platform-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: 100px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  /* Right side — Logo & visual */
+  .visual {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .logo-container {
+    width: 220px;
+    height: 220px;
+    border-radius: 48px;
+    background: linear-gradient(145deg, #1a5bbf, #0a3d8f);
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .logo-container::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 51px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.15), transparent 60%);
+    z-index: -1;
+  }
+
+  .logo-number {
+    font-size: 140px;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1;
+    margin-top: -4px;
+  }
+
+  .logo-wordmark {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+
+  /* Floating feature cards */
+  .feature-card {
+    position: absolute;
+    z-index: 3;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .feature-card-icon {
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+  }
+  .feature-card-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    white-space: nowrap;
+  }
+
+  .card-capture { top: 100px; right: 60px; }
+  .card-compile { bottom: 80px; right: 30px; }
+</style>
+</head>
+<body>
+
+<div class="tile">
+  <!-- Decorative elements -->
+  <div class="shape shape-1"></div>
+  <div class="shape shape-2"></div>
+  <div class="shape shape-3"></div>
+
+  <div class="dots dots-top">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div>
+  </div>
+  <div class="dots dots-bottom">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div>
+  </div>
+
+  <!-- Left: Text content -->
+  <div class="content">
+    <div class="badge">
+      <div class="badge-dot"></div>
+      <span class="badge-text">Intent Engine&trade; Powered</span>
+    </div>
+
+    <h1 class="headline">
+      Many prompts.<br>
+      <em>One instruction.</em>
+    </h1>
+
+    <p class="subline">
+      Extract all your AI chat prompts and compile them into a single, clear, actionable instruction — ready to paste anywhere.
+    </p>
+
+    <div class="platforms">
+      <span class="platforms-label">Works with</span>
+      <span class="platform-pill">ChatGPT</span>
+      <span class="platform-pill">Claude</span>
+      <span class="platform-pill">Gemini</span>
+      <span class="platform-pill">DeepSeek</span>
+      <span class="platform-pill">+6 more</span>
+    </div>
+  </div>
+
+  <!-- Right: Logo visual -->
+  <div class="visual">
+    <div class="logo-container">
+      <span class="logo-number">1</span>
+    </div>
+    <span class="logo-wordmark">1-prompt</span>
+  </div>
+
+  <!-- Floating feature cards -->
+  <div class="feature-card card-capture">
+    <div class="feature-card-icon">&#9998;</div>
+    <span class="feature-card-text">Capture Prompts</span>
+  </div>
+  <div class="feature-card card-compile">
+    <div class="feature-card-icon">&#10024;</div>
+    <span class="feature-card-text">Compile Intent</span>
+  </div>
+</div>
+
+</body>
+</html>
